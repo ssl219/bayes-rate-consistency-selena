@@ -21,7 +21,7 @@ source("../R/stan-utility.R")
 
 ## Setup
 ```{r}
-covimod <- load_covimod_data("~/Imperial/covimod-gp")
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
 dt.part <- covimod$part
 dt.nhh <- covimod$nhh
 dt.hh <- covimod$hh
@@ -38,7 +38,7 @@ dt.hh <- dt.hh[wave <= 5]
 dt.part <- dt.part[!is.na(gender) & !is.na(age_strata)]
 
 # The number of times a participant repeatedly participated in the survey
-dt.part[, rep := seq_len(.N), by=.(new_id)]
+dt.part[, rep := seq_len(.N), by=.(new_id)] # what is the dot?, what is N
 dt.part[, rep := rep - 1]
 dt.part[, rep := ifelse(rep > 4, 4, rep)]
 

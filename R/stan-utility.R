@@ -125,10 +125,10 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD"){
   }
 
   if (survey == "POLYMOD"){
-    d <- contacts[order(age, alter_age, gender, alter_gender)]
+    d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
 
     d[, age_idx := age + 1]
-    d[, age_strata_idx := alter_age + 1]
+    d[, age_strata_idx := as.numeric(alter_age_strata) + 1]
     d[, row_major_idx := (age_idx-1)*85 + age_strata_idx]
 
     stan_data$ROW_MAJOR_IDX_MM <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
@@ -137,7 +137,23 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD"){
     stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
 
     return(stan_data)
+    
   }
+    
+    if (survey == "POLYMOD_2"){
+      d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
+      
+      d[, age_idx := age + 1]
+      d[, age_strata_idx := as.numeric(alter_age_strata)]
+      d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+      
+      stan_data$ROW_MAJOR_IDX_MM <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FF <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
+      
+      return(stan_data)
+      }
 }
 
 

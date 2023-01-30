@@ -17,7 +17,7 @@ source("../R/stan-utility.R")
 ```
 
 ```{r}
-covimod <- load_covimod_data("~/Imperial/covimod-gp")
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
 df.part <- covimod$part
 df.nhh <- covimod$nhh
 df.hh <- covimod$hh
@@ -26,6 +26,14 @@ df.hh <- covimod$hh
 df.part <- filter(df.part, wave <= 5)
 df.nhh <- filter(df.nhh, wave <= 5)
 df.hh <- filter(df.hh, wave <= 5)
+```
+
+```{r}
+df.part
+```
+
+```{r}
+df.hh
 ```
 
 ## Number of complete contact records

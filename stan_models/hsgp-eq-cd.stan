@@ -93,7 +93,7 @@ transformed parameters
   log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
   log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
-  log_cnt_rate[FM] = beta_0[FM] + f_MF';
+  log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
 
   alpha_strata[MM] = exp(log_cnt_rate[MM] + log_offset[MM]) * map_age_to_strata / nu + epsilon;
   alpha_strata[FF] = exp(log_cnt_rate[FF] + log_offset[FF]) * map_age_to_strata / nu + epsilon;

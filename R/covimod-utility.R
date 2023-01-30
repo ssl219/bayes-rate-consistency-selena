@@ -3,10 +3,12 @@
 # TODO: Consider group contacts
 
 load_covimod_data <- function(path){
-  covimod.path <- file.path(path, "data/COVIMOD/COVIMOD_data_2022-10-17.RData")
+  covimod.path <- file.path(path, "data/COVIMOD/COVIMOD_data_2022-10-17.RData") 
+  # path for covimod data is outside the bayesian_consistency_rate repository
   load(covimod.path)
 
-  pop.path <- file.path(path, "data/germany-population-2011.csv")
+  pop.path <- file.path(path, "bayes_consistency_rate/bayes-rate-consistency-selena/data/germany-population-2011.csv") 
+  # different path within the bayesian_consistency_rate repository
   dt.pop <- as.data.table(read.csv(pop.path))
 
   # Convert to data.table
