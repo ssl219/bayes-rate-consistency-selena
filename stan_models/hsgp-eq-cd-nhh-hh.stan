@@ -34,7 +34,7 @@ data
 
   vector[A] log_N_M, log_N_F; // Participant size offsets
   vector[A] log_S_M_1, log_S_F_1, log_S_M_2, log_S_F_2; // Group contact offsets, replace log_S_M_1 with 1's? 
-  row_vector[A] log_P_M_1, log_P_F_1, log_P_M_2, log_P_F_2; // Population size offsets
+  row_vector[A] log_P_M, log_P_F; // Population size offsets
 
   vector[A] age_idx_std;         // Standardized age index
   matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata
@@ -56,15 +56,15 @@ transformed data
 
   // Precompute offset terms
   array[G] matrix[A,A] log_offset;
-  log_offset[MM_1] = rep_matrix(log_N_M + log_S_M_1, A) + rep_matrix(log_P_M_1, A);
-  log_offset[FF_1] = rep_matrix(log_N_F + log_S_F_1, A) + rep_matrix(log_P_F_1, A);
-  log_offset[MF_1] = rep_matrix(log_N_M + log_S_M_1, A) + rep_matrix(log_P_F_1, A);
-  log_offset[FM_1] = rep_matrix(log_N_F + log_S_F_1, A) + rep_matrix(log_P_M_1, A);
+  log_offset[MM_1] = rep_matrix(log_N_M + log_S_M_1, A) + rep_matrix(log_P_M, A);
+  log_offset[FF_1] = rep_matrix(log_N_F + log_S_F_1, A) + rep_matrix(log_P_F, A);
+  log_offset[MF_1] = rep_matrix(log_N_M + log_S_M_1, A) + rep_matrix(log_P_F, A);
+  log_offset[FM_1] = rep_matrix(log_N_F + log_S_F_1, A) + rep_matrix(log_P_M, A);
   
-  log_offset[MM_2] = rep_matrix(log_N_M + log_S_M_2, A) + rep_matrix(log_P_M_2, A);
-  log_offset[FF_2] = rep_matrix(log_N_F + log_S_F_2, A) + rep_matrix(log_P_F_2, A);
-  log_offset[MF_2] = rep_matrix(log_N_M + log_S_M_2, A) + rep_matrix(log_P_F_2, A);
-  log_offset[FM_2] = rep_matrix(log_N_F + log_S_F_2, A) + rep_matrix(log_P_M_2, A);
+  log_offset[MM_2] = rep_matrix(log_N_M + log_S_M_2, A) + rep_matrix(log_P_M, A);
+  log_offset[FF_2] = rep_matrix(log_N_F + log_S_F_2, A) + rep_matrix(log_P_F, A);
+  log_offset[MF_2] = rep_matrix(log_N_M + log_S_M_2, A) + rep_matrix(log_P_F, A);
+  log_offset[FM_2] = rep_matrix(log_N_F + log_S_F_2, A) + rep_matrix(log_P_M, A);
 
   real L1, L2;
   matrix[A,M1] PHI1;

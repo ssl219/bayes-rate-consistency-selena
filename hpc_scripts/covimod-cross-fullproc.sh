@@ -5,7 +5,7 @@
 
 REPO_PATH=/rds/general/user/sd121/home/covimod-gp
 WAVE=5
-MODEL="rd-hsgp"
+MODEL="lrd-hsgp"
 HSGP_C=1.5
 HSGP_M=20
 

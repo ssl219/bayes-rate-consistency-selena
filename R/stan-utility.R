@@ -57,7 +57,7 @@ make_grid <- function(A, U = NULL, gender = FALSE){
   return(g)
 }
 
-add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMOD"){
+add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMOD", household_cnt=FALSE){
   if(survey == "COVIMOD"){
     if(!single){
       d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
@@ -68,6 +68,23 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       stan_data$Y_FM <- d[gender == "Female" & alter_gender == "Male"]$y
 
       return(stan_data)
+    
+      if(household_cnt){
+        d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
+        
+        stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
+        stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
+        stan_data$Y_MF_1 <- d[gender == "Male" & alter_gender == "Female" & o == 1]$y
+        stan_data$Y_FM_1 <- d[gender == "Female" & alter_gender == "Male" & o == 1]$y
+        
+        stan_data$Y_MM_2 <- d[gender == "Male" & alter_gender == "Male" & o == 2]$y
+        stan_data$Y_FF_2 <- d[gender == "Female" & alter_gender == "Female" & o == 2]$y
+        stan_data$Y_MF_2 <- d[gender == "Male" & alter_gender == "Female" & o == 2]$y
+        stan_data$Y_FM_2 <- d[gender == "Female" & alter_gender == "Male" & o == 2]$y
+        
+        return(stan_data)
+      }
+      
     } else { # Single wave
       d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
 
@@ -93,7 +110,7 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
 }
 
 # Add obs count
-add_N <- function(stan_data, survey = "COVIMOD"){
+add_N <- function(stan_data, survey = "COVIMOD", household_cnt=FALSE){
 
   if(survey == "COVIMOD"){
     stan_data$N_M <- length(stan_data$Y_MM)
@@ -101,12 +118,25 @@ add_N <- function(stan_data, survey = "COVIMOD"){
   }
 
   if(survey == "POLYMOD"){
-    stan_data$N_MM <- length(stan_data$Y_MM)
-    stan_data$N_FF <- length(stan_data$Y_FF)
-    stan_data$N_MF <- length(stan_data$Y_MF)
-    stan_data$N_FM <- length(stan_data$Y_FM)
+    if (household_cnt){
+      stan_data$N_MM_1 <- length(stan_data$Y_MM_1)
+      stan_data$N_FF_1 <- length(stan_data$Y_FF_1)
+      stan_data$N_MF_1 <- length(stan_data$Y_MF_1)
+      stan_data$N_FM_1 <- length(stan_data$Y_FM_1)
+      
+      stan_data$N_MM_2 <- length(stan_data$Y_MM_2)
+      stan_data$N_FF_2 <- length(stan_data$Y_FF_2)
+      stan_data$N_MF_2 <- length(stan_data$Y_MF_2)
+      stan_data$N_FM_2 <- length(stan_data$Y_FM_2)
+    }
+   
+    else{
+     stan_data$N_MM <- length(stan_data$Y_MM)
+     stan_data$N_FF <- length(stan_data$Y_FF)
+     stan_data$N_MF <- length(stan_data$Y_MF)
+     stan_data$N_FM <- length(stan_data$Y_FM)
+   }
   }
-
   return(stan_data)
 }
 
@@ -140,20 +170,40 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD"){
     
   }
     
-    if (survey == "POLYMOD_2"){
+  if (survey == "POLYMOD_2"){
+    if (household_cnt){
       d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
       
       d[, age_idx := age + 1]
       d[, age_strata_idx := as.numeric(alter_age_strata)]
       d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
       
-      stan_data$ROW_MAJOR_IDX_MM <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
-      stan_data$ROW_MAJOR_IDX_FF <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
-      stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
-      stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_MM_1 <- d[gender == "Male" & alter_gender == "Male", o == 1]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FF_1 <- d[gender == "Female" & alter_gender == "Female", o == 1]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_MF_1 <- d[gender == "Male" & alter_gender == "Female", o == 1]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FM_1 <- d[gender == "Female" & alter_gender == "Male", o == 1]$row_major_idx
+      
+      stan_data$ROW_MAJOR_IDX_MM_2 <- d[gender == "Male" & alter_gender == "Male", o == 2]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FF_2 <- d[gender == "Female" & alter_gender == "Female", o == 2]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_MF_2 <- d[gender == "Male" & alter_gender == "Female", o == 2]$row_major_idx
+      stan_data$ROW_MAJOR_IDX_FM_2 <- d[gender == "Female" & alter_gender == "Male", o == 2]$row_major_idx
       
       return(stan_data)
-      }
+      
+    }
+    else{
+    d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
+    
+    d[, age_idx := age + 1]
+    d[, age_strata_idx := as.numeric(alter_age_strata)]
+    d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+    
+    stan_data$ROW_MAJOR_IDX_MM <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FF <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
+    }
+    }
 }
 
 
@@ -232,7 +282,7 @@ add_partsize_offsets <- function(stan_data, offsets, survey = "COVIMOD"){
   return(stan_data)
 }
 
-add_part_offsets <- function(stan_data, contacts, offsets = NULL, survey = "COVIMOD"){
+add_part_offsets <- function(stan_data, contacts, offsets = NULL, survey = "COVIMOD", household_cnt=FALSE){
   d <- contacts
 
   if(survey == "COVIMOD"){
@@ -244,15 +294,29 @@ add_part_offsets <- function(stan_data, contacts, offsets = NULL, survey = "COVI
   }
 
   if(survey == "POLYMOD"){
-
-    d1 <- complete(offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
-    d2 <- complete(offsets[gender == "Female"], age = 0:84, fill = list(N = 1, zeta = 1))
     
-    stan_data$log_N_M <- log( d1$N )
-    stan_data$log_N_F <- log( d2$N )
-
-    stan_data$log_S_M <- log( d1$zeta )
-    stan_data$log_S_F <- log( d2$zeta )
+    if(household_cnt){
+      d1 <- complete(offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
+      d2 <- complete(offsets[gender == "Female"], age = 0:84, fill = list(N = 1, zeta = 1))
+      
+      stan_data$log_N_M <- log( d1$N )
+      stan_data$log_N_F <- log( d2$N )
+      
+      stan_data$log_S_M_1 <- log( d1[o == 1]$zeta )
+      stan_data$log_S_F_1 <- log( d2[o == 1]$zeta )
+      stan_data$log_S_M_2 <- log( d1[o == 2]$zeta )
+      stan_data$log_S_F_2 <- log( d2[o == 2]$zeta )
+    }
+    else{
+      d1 <- complete(offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
+      d2 <- complete(offsets[gender == "Female"], age = 0:84, fill = list(N = 1, zeta = 1))
+      
+      stan_data$log_N_M <- log( d1$N )
+      stan_data$log_N_F <- log( d2$N )
+      
+      stan_data$log_S_M <- log( d1$zeta )
+      stan_data$log_S_F <- log( d2$zeta )
+    }
   }
 
   return(stan_data)
