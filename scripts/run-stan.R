@@ -7,7 +7,7 @@ cat("\n---------- Compiling and Running Stan Model ----------\n")
 library(optparse)
 library(data.table)
 library(stringr)
-library(cmdstanr)
+library(rstan)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
@@ -38,6 +38,9 @@ option_list <- list(
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                         dest = 'repo.path'),
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                        dest = 'data.path'),
   optparse::make_option("--waves", type = "integer", default = 5,
                         help = "The number of waves to include",
                         dest = "waves")
@@ -51,7 +54,7 @@ source(file.path(args$repo.path, "R/stan-utility.R"))
 source(file.path(args$repo.path, "R/covimod-utility.R"))
 
 # Load data
-covimod <- readRDS(file.path(args$repo.path, "data/COVIMOD/COVIMOD-multi.rds"))
+covimod <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-multi.rds"))
 
 dt.cnt <- covimod$contacts[wave <= args$waves]
 dt.offsets <- covimod$offsets[wave <= args$waves]

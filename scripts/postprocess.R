@@ -18,6 +18,9 @@ option_list <- list(
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                         dest = 'repo.path'),
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                        dest = 'repo.path'),
   optparse::make_option("--model", type = "character", default = NA_character_,
                         help = "Name of the model",
                         dest = "model.name"),
@@ -38,7 +41,7 @@ option_list <- list(
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$repo.path, "data/COVIMOD/COVIMOD-multi.rds")
+data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-multi.rds")
 
 # Error handling
 if(!file.exists(model.path)) {
