@@ -505,7 +505,6 @@ model {
   target += normal_lpdf(beta_0 | 0, 10); // Baseline contact rate
   target += normal_lpdf(tau | 0, 1);  // Survey wave
   target += normal_lpdf(rho | 0, 1);  // Repeated response
-  target += normal_lpdf(zeta | 0, 1);
 
   // GP parameters
   target += inv_gamma_lpdf( to_vector(gp_rho_1) | 10, 10);
