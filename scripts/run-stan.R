@@ -7,7 +7,7 @@ cat("\n---------- Compiling and Running Stan Model ----------\n")
 library(optparse)
 library(data.table)
 library(stringr)
-library(rstan)
+library(cmdstanr)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
