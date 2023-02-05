@@ -3,8 +3,8 @@
 #PBS -l walltime=08:00:00
 #PBS -l select=1:ncpus=10:mem=512gb
 
-REPO_PATH=/rds/general/user/sd121/home/covimod-gp
-MODEL="hsgp-m52-lrd-noadj"
+REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
+MODEL="hsgp-eq-lrd"
 WAVES=5
 MIXING=FALSE
 PPC=FALSE

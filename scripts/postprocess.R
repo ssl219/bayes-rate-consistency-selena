@@ -15,7 +15,7 @@ library(pammtools)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/sd121/home/covimod-gp",
+  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                         dest = 'repo.path'),
   optparse::make_option("--model", type = "character", default = NA_character_,
