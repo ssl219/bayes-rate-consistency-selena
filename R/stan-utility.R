@@ -140,7 +140,7 @@ add_N <- function(stan_data, survey = "COVIMOD", household_cnt=FALSE){
   return(stan_data)
 }
 
-add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD"){
+add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
   if (survey == "COVIMOD"){
     d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
 
