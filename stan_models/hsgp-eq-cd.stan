@@ -1,6 +1,6 @@
 functions
 {
-#include gp-functions.stan
+  #include gp-functions.stan
 }
 
 data
