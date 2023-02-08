@@ -206,7 +206,7 @@ covimod.single <- list(
   pop = covimod$pop
 )
 
-data.path = "/Users/mac/Documents/M4R/code"
+data.path = "/Users/mac/Documents/M4R/bayes_consistency_rate/code"
 saveRDS(covimod.single, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-nhh.rds"))
 ```
 
