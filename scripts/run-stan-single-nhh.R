@@ -43,6 +43,8 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+# args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
@@ -83,7 +85,7 @@ dt.cnt[, u := fcase(wave == 1, 1)]
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
 # Add participant offsets
-stan_data <- add_part_offsets(stan_data, dt.cnt, dt.offsets, survey = 'POLYMOD')
+stan_data <- add_part_offsets(stan_data, dt.cnt, offsets=dt.offsets, survey = 'POLYMOD')
 
 # Add population offsets
 stan_data <- add_pop_offsets(stan_data, dt.pop, survey = 'POLYMOD')

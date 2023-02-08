@@ -59,6 +59,23 @@ make_grid <- function(A, U = NULL, gender = FALSE){
 
 add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMOD", household_cnt=FALSE){
   if(survey == "COVIMOD"){
+    
+    if(household_cnt){
+      d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
+      
+      stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
+      stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
+      stan_data$Y_MF_1 <- d[gender == "Male" & alter_gender == "Female" & o == 1]$y
+      stan_data$Y_FM_1 <- d[gender == "Female" & alter_gender == "Male" & o == 1]$y
+      
+      stan_data$Y_MM_2 <- d[gender == "Male" & alter_gender == "Male" & o == 2]$y
+      stan_data$Y_FF_2 <- d[gender == "Female" & alter_gender == "Female" & o == 2]$y
+      stan_data$Y_MF_2 <- d[gender == "Male" & alter_gender == "Female" & o == 2]$y
+      stan_data$Y_FM_2 <- d[gender == "Female" & alter_gender == "Male" & o == 2]$y
+      
+      return(stan_data)
+    }
+    
     if(!single){
       d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
 
@@ -68,24 +85,9 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       stan_data$Y_FM <- d[gender == "Female" & alter_gender == "Male"]$y
 
       return(stan_data)
-    
-      if(household_cnt){
-        d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
-        
-        stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
-        stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
-        stan_data$Y_MF_1 <- d[gender == "Male" & alter_gender == "Female" & o == 1]$y
-        stan_data$Y_FM_1 <- d[gender == "Female" & alter_gender == "Male" & o == 1]$y
-        
-        stan_data$Y_MM_2 <- d[gender == "Male" & alter_gender == "Male" & o == 2]$y
-        stan_data$Y_FF_2 <- d[gender == "Female" & alter_gender == "Female" & o == 2]$y
-        stan_data$Y_MF_2 <- d[gender == "Male" & alter_gender == "Female" & o == 2]$y
-        stan_data$Y_FM_2 <- d[gender == "Female" & alter_gender == "Male" & o == 2]$y
-        
-        return(stan_data)
-      }
       
-    } else { # Single wave
+      } 
+    else { # Single wave
       d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
 
       stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
@@ -150,8 +152,6 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
 
     stan_data$ROW_MAJOR_IDX_M <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_F <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
-
-    return(stan_data)
   }
 
   if (survey == "POLYMOD"){
@@ -165,9 +165,6 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     stan_data$ROW_MAJOR_IDX_FF <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
-
-    return(stan_data)
-    
   }
     
   if (survey == "POLYMOD_2"){
@@ -188,8 +185,6 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
       stan_data$ROW_MAJOR_IDX_MF_2 <- d[gender == "Male" & alter_gender == "Female", o == 2]$row_major_idx
       stan_data$ROW_MAJOR_IDX_FM_2 <- d[gender == "Female" & alter_gender == "Male", o == 2]$row_major_idx
       
-      return(stan_data)
-      
     }
     else{
     d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
@@ -203,7 +198,8 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
     }
-    }
+  }
+  return(stan_data)
 }
 
 
