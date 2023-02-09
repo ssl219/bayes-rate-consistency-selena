@@ -45,6 +45,8 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
 full.data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-nhh.rds")
+print(model.path)
+print(full.data.path)
 
 # Error handling
 if(!file.exists(model.path)) {
