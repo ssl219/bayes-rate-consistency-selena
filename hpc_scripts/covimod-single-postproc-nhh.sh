@@ -4,7 +4,7 @@
 #PBS -l select=1:ncpus=8:ompthreads=1:mem=50gb
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
-WAVE=4
+WAVE=5
 MODEL="hsgp-eq-cd"
 
 # Post-processing
