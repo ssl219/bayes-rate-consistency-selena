@@ -71,7 +71,7 @@ extract_posterior_predictions <- function(fit, dt){
   po <- fit$draws("yhat", inc_warmup = FALSE, format = "draws_matrix")
   dt.po <- as.data.table(reshape2::melt(po))
 
-  # Extract indicies
+  # Extract indices
   .pattern <- "yhat\\[([0-9]+),([0-9]+),([0-9]+)\\]"
 
   dt.po[, comb_idx := as.numeric(gsub(.pattern, "\\1", variable))]

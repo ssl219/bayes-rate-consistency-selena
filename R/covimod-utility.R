@@ -3,11 +3,11 @@
 # TODO: Consider group contacts
 
 load_covimod_data <- function(path){
-  covimod.path <- file.path(path, "data/COVIMOD/COVIMOD_data_2022-10-17.RData") 
+  covimod.path <- file.path(path, "bayes_consistency_rate/data/COVIMOD/COVIMOD_data_2022-10-17.RData") 
   # path for covimod data is outside the bayesian_consistency_rate repository
   load(covimod.path)
 
-  pop.path <- file.path(path, "bayes_consistency_rate/bayes-rate-consistency-selena/data/germany-population-2011.csv") 
+  pop.path <- file.path(path, "bayes_consistency_rate/data/germany-population-2011.csv") 
   # different path within the bayesian_consistency_rate repository
   dt.pop <- as.data.table(read.csv(pop.path))
 
@@ -256,10 +256,10 @@ impute_child_age <- function(dt.part, seed=1527){
   set.seed(seed)
 
   tmp <- unique(dt.part[, list(new_id, wave, age, age_strata)])
-  tmp[, min_age := as.numeric(stringr::str_extract(age_strata, "[0-9]{1,2}"))]
-  tmp[, max_age := as.numeric(stringr::str_extract(age_strata, "[0-9]{1,2}$"))]
-
-  tmp[is.na(age), imp_age := runif.int(min_age, max_age), by=.(new_id)]
+  tmp[, min_age := as.numeric(stringr::str_extract(age_strata, "[0-9]{1,2}"))] # extracts minimum age of age_strata and creates new column
+  tmp[, max_age := as.numeric(stringr::str_extract(age_strata, "[0-9]{1,2}$"))] # extracts maximum age of age_strata and creates new column
+  
+  tmp[is.na(age), imp_age := runif.int(min_age, max_age), by=.(new_id)] # impute age if it is missing with uniform distribution, not necessarily child age strata?
   tmp[!is.na(age), imp_age := age]
 
   dt.part <- merge(dt.part, tmp[, list(new_id, wave, imp_age)])
