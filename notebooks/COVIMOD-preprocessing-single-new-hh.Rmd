@@ -28,9 +28,10 @@ dt.nhh <- covimod$nhh
 dt.hh <- covimod$hh
 
 # Limit to first 5 waves
-dt.part <- dt.part[wave <= 5]
-dt.nhh <- dt.nhh[wave <= 5]
-dt.hh <- dt.hh[wave <= 5]
+n_waves = 5
+dt.part <- dt.part[wave <= n_waves]
+dt.nhh <- dt.nhh[wave <= n_waves]
+dt.hh <- dt.hh[wave <= n_waves]
 ```
 
 ```{r}
@@ -76,7 +77,9 @@ dt.part
 ```{r}
 # Remove household contacts with missing age and gender (only 149 hh contacts with missing age and gender info)
 dt.hh <- dt.hh[!is.na(alter_age_strata) & !is.na(alter_gender)]
-dt.hh
+
+# Remove participants with missing hh contact count information
+dt.hh <- dt.hh[!is.na(hh_met_this_day)]
 
 # Merge participant data and household contacts
 dt.hh <- merge(dt.hh, dt.part, by=c("new_id", "wave"), all.x=TRUE)
@@ -116,17 +119,21 @@ d_comb
 d_comb[is.na(n), n := 1]
 d_comb
 ```
+```{r}
+d_comb[d_comb$alter_age_strata=="85+",]
+```
 
 
 ```{r}
-age_col <- seq(from=1, to=84, by=1)
-gender_col <- c("Male", "Female")
-alter_age_col <- seq(from=1, to=84, by=1)
+# age_col <- seq(from=1, to=84, by=1)
+# gender_col <- c("Male", "Female")
+alter_age_col <- seq(from=1, to=85, by=1)
 alter_gender_col <- c("Male", "Female")
-# id_col <- unique(d_comb$new_id)
+wave_col <- seq(from=1, to=n_waves, by=1)
+id_col <- unique(d_comb$new_id)
 
-dt.hh.structure <- expand.grid(age_col, gender_col, alter_age_col, alter_gender_col)
-setnames(dt.hh.structure, c("Var1", "Var2", "Var3", "Var4"), c("age", "gender", "alter_age", "alter_gender"))
+dt.hh.structure <- expand.grid(id_col, alter_age_col, alter_gender_col, wave_col)
+setnames(dt.hh.structure, c("Var1", "Var2", "Var3", "Var4"), c("new_id", "alter_age", "alter_gender", "wave"))
 dt.hh.structure.table <- as.data.table(dt.hh.structure)
 
 dt.hh.structure.table[, alter_age_strata := fcase(
@@ -168,129 +175,83 @@ d_comb_no_dupl  %>% filter(n>1)
 
 ```{r}
 # merge datasets
-d.everything <- merge(dt.hh.structure, d_comb_no_dupl, by=c("age", "gender", "alter_gender", "alter_age_strata"), all=TRUE)
-d.everything
+d.everything <- merge(dt.hh.structure, d_comb_no_dupl, by=c("new_id", "alter_gender", "alter_age_strata", "wave"), all.y=TRUE)
+# View(d.everything)
+```
+```{r}
+d.everything[is.na(d.everything$alter_age),]
+```
+```{r}
+# check
+d.everything[d.everything$new_id=="86be2e09",]
 ```
 
-## Combine household and non-household data
 ```{r}
-setnames(dt.hh, "hh_met_this_day", "y")
-dt.hh$type <- "hh"
-
-dt.nhh$y <- 1
-dt.nhh$type <- "nhh"
-
-# Combine household and non-household contacts
-dt.cmb <- rbind(dt.nhh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)], 
-                dt.hh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)])
-
-dt.cmb$type <- factor(dt.cmb$type, levels=c("hh", "nhh"))
-setorder(dt.cmb, wave, new_id)
-
-# Merge with participant data
-dt.cmb <- merge(dt.cmb, dt.part, by=c("new_id", "wave"), all.x = TRUE)
-
-# Sanity check
-sum(dt.cmb$y, na.rm = T) + sum(dt.amb$y_amb) + sum(dt.grp$y)
+# View(d.everything[d.everything$alter_age_strata=="85+",])
 ```
 
 
 ```{r}
-dt.cmb
-```
+d.everything.table <- as.data.table(d.everything)
 
-## Aggregate contacts
+d.everything.table[, Hic_b := fcase(
+    alter_age_strata == "0-4", as.numeric(n/5),
+    alter_age_strata == "5-9", as.numeric(n/5),
+    alter_age_strata == "10-14", as.numeric(n/5),
+    alter_age_strata == "15-19", as.numeric(n/5),
+    alter_age_strata == "20-24", as.numeric(n/5),
+    alter_age_strata == "25-34", as.numeric(n/10),
+    alter_age_strata == "35-44", as.numeric(n/10),
+    alter_age_strata == "45-54", as.numeric(n/10),
+    alter_age_strata == "55-64", as.numeric(n/10),
+    alter_age_strata == "65-69", as.numeric(n/5),
+    alter_age_strata == "70-74", as.numeric(n/5),
+    alter_age_strata == "75-79", as.numeric(n/5),
+    alter_age_strata == "80-84", as.numeric(n/5),
+    alter_age_strata =="85+", as.numeric(n),
+    default = NA
+  )]
+
+d.everything <- as.data.frame(d.everything.table)
+```
 ```{r}
-# Participant size by wave and repetition
-dt.part.size <- dt.part[, .(N = .N), by=.(wave, imp_age, gender)]
-setnames(dt.part.size, "imp_age", "age")
-
-# dt.part
-# dt.part.size
-
-# Aggregate by household type
-dt.cmb.h <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, type, imp_age, gender, alter_age_strata, alter_gender)]
-setnames(dt.cmb.h, "imp_age", "age")
-
-# dt.cmb.household
-
-# Aggregate ambiguous contacts
-dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
-setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
-
+#View(d.everything[d.everything$alter_age_strata=="25-34",])
 ```
-
-```{r}
-# Aggregate age-gender-specific contacts
-dt.cmb.agg <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, imp_age, gender, alter_age_strata, alter_gender)]
-setnames(dt.cmb.agg, "imp_age", "age")
-
-# dt.cmb.agg
-# dt.cmb.agg[(is.na(alter_age_strata) | is.na(alter_gender))]
-
-# Aggregate ambiguous contacts
-dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
-setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
-
-# Total number of contacts (specific + ambiguous + group)
-dt.cmb.agg.margin <- dt.cmb.agg[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
-dt.tot <- rbind(dt.cmb.agg.margin, dt.amb.agg, dt.grp)
-dt.tot <- dt.tot[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
-setnames(dt.tot, "y", "y_tot")
-
-# Calculate zeta term, proportion of detailed age information S_{ta}^g
-dt.amb.agg.margin <- merge(dt.cmb.agg.margin, dt.tot, by=c("wave", "age","gender"), all.x=TRUE)
-dt.amb.agg.margin[, zeta := y/y_tot]
-dt.amb.agg.margin[, zeta := ifelse(is.nan(zeta), 1, zeta)]
-
-# Offset terms
-dt.offsets <- merge(dt.part.size, dt.amb.agg.margin[,.(wave, age, gender, zeta)], 
-                    by=c("wave","age","gender"), all.x = T)
-dt.offsets[is.na(zeta), zeta := 1]
-
-dt.tot[, .(y = sum(y_tot)), by=.(wave)]
-```
-
-```{r}
-dt.offsets
-```
-
 
 ```{r}
 # Remove participants and contacts 85+
-dt.cmb.agg <- dt.cmb.agg[!(age > 84 | alter_age_strata == "85+")]
-dt.offsets <- dt.offsets[!(age > 84)]
+d.everything <- d.everything[!( d.everything$age > 84 |  d.everything$alter_age_strata == "85+"),]
+d_comb_no_dupl <- d_comb_no_dupl[!(d_comb_no_dupl$age > 84 | d_comb_no_dupl$alter_age_strata == "85+"),] 
 
 # Remove remaining NAs
-dt.cmb.agg <- dt.cmb.agg[!is.na(alter_gender)]
+d.everything[!is.na(d.everything$new_id), ]
 
-g <- make_grid(85, 5, gender = TRUE)
-setnames(g, "u", "wave")
-d <- merge(g, dt.cmb.agg, by=c("wave", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
-d <- merge(d, dt.offsets, by = c("wave", "age", "gender"), all.x = TRUE)
-
-# Impute true zeroes
-d <- d[!is.na(N)]
-d <- d[is.na(y), zeta := 1]
-d <- d[is.na(y), y := 0]
 ```
 
 
 
 
 ```{r}
-d
+d_comb_no_dupl
 ```
+
+
+
+```{r}
+d.everything
+```
+
 
 
 ## Export data
 ```{r}
-covimod.single <- list(
-  contacts = d,
-  offsets = dt.offsets,
+covimod.single.new.hh <- list(
+  contacts = d_comb_no_dupl,
+  offsets = d.everything,
   pop = covimod$pop
 )
 
-saveRDS(covimod.single, file="../data/COVIMOD/COVIMOD-single.rds")
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds"))
 ```
 
