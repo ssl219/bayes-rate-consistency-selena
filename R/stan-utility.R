@@ -187,7 +187,7 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
       
     }
     else{
-    d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
+    d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
     
     d[, age_idx := age + 1]
     d[, age_strata_idx := as.numeric(alter_age_strata)]
