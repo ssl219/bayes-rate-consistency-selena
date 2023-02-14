@@ -236,12 +236,27 @@ d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 
 
 ```{r}
-is.data.table(d_comb_no_dupl)
+d_comb_no_dupl
 ```
 
 
 ```{r}
-is.data.table(d.everything)
+d.everything
+```
+
+# Experimentation for STAN model single wave new hh
+```{r}
+d_comb_no_dupl[wave==1 & new_id=="00635408"]
+```
+
+```{r}
+# calculating the row major index
+tmp <- d_comb_no_dupl[wave==1]
+tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
+tmp[, age_idx := age + 1]
+tmp[, age_strata_idx := as.numeric(alter_age_strata)]
+tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+tmp[,list(new_id, alter_age_strata, alter_gender, age, gender, y, n, age_idx, age_strata_idx, row_major_idx)]
 ```
 
 
