@@ -10,7 +10,7 @@ data
   int<lower=1> A;       // Number of age inputs
   int<lower=1> C;       // Number of age strata
 
-  array[N_MM] int Y_MM; // Contacts for participant i to ageband b
+  array[N_MM] int Y_MM; // Contacts for participant i to ageband c
   array[N_FF] int Y_FF;
   array[N_MF] int Y_MF;
   array[N_FM] int Y_FM;
@@ -20,9 +20,7 @@ data
   array[N_MF] int ROW_MAJOR_IDX_MF;
   array[N_FM] int ROW_MAJOR_IDX_FM;
 
-  vector[A] log_N_M, log_N_F; // Participant size offsets
-  vector[A] log_S_M, log_S_F; // Group contact offsets
-  row_vector[A] log_P_M, log_P_F; // Population size offsets
+  vector[A] log_H_M, log_H_F; // Household size offsets
 
   vector[A] age_idx_std;         // Standardized age index
   matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata

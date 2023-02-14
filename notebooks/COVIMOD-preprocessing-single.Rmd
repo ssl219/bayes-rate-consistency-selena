@@ -232,8 +232,19 @@ d <- d[is.na(y), y := 0]
 
 
 ```{r}
-d
+View(d)
 ```
+
+```{r}
+View(d[gender == "Male" & alter_gender == "Male"])
+```
+
+```{r}
+d1 <- complete(dt.offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
+View(dt.offsets[gender == "Male"])
+View(d1)
+```
+
 
 
 ## Export data

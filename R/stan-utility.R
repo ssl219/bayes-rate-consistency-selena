@@ -304,6 +304,7 @@ add_part_offsets <- function(stan_data, contacts, offsets = NULL, survey = "COVI
       stan_data$log_S_F_2 <- log( d2[o == 2]$zeta )
     }
     else{
+      # need the complete() function as we are missing age 83
       d1 <- complete(offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
       d2 <- complete(offsets[gender == "Female"], age = 0:84, fill = list(N = 1, zeta = 1))
       

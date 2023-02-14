@@ -224,7 +224,11 @@ d.everything <- d.everything[!( d.everything$age > 84 |  d.everything$alter_age_
 d_comb_no_dupl <- d_comb_no_dupl[!(d_comb_no_dupl$age > 84 | d_comb_no_dupl$alter_age_strata == "85+"),] 
 
 # Remove remaining NAs
-d.everything[!is.na(d.everything$new_id), ]
+d.everything <- d.everything[!is.na(d.everything$new_id), ]
+
+# Convert data frames to data tables to make it compatible to the rest of the pipeline
+d.everything <- as.data.table(d.everything)
+d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 
 ```
 
@@ -232,13 +236,12 @@ d.everything[!is.na(d.everything$new_id), ]
 
 
 ```{r}
-d_comb_no_dupl
+is.data.table(d_comb_no_dupl)
 ```
 
 
-
 ```{r}
-d.everything
+is.data.table(d.everything)
 ```
 
 
