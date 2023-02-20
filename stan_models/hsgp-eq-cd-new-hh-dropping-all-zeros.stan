@@ -5,19 +5,22 @@ functions
 
 data
 {
-  int<lower=1> N_M, N_F; // Number of observations for all participants for each gender of the contact
-  
-  int<lower=1> P;       // Number of participants
+  int<lower=1> N_MM, N_FF, N_MF, N_FM; // Number of observations for each gender pair
+
   int<lower=1> A;       // Number of age inputs
   int<lower=1> C;       // Number of age strata
 
-  array[N_M] int Y_M; // Contacts for all participants (ordered) to strata c
-  array[N_F] int Y_F;
-  
-  array[P] int map_indiv_to_age; // array of ages of each participant
-  vector[P] int vec_gender_M, vec_gender_F; // vectors encoding gender of each participant
+  array[N_MM] int Y_MM; // Contacts for participant i to ageband c
+  array[N_FF] int Y_FF;
+  array[N_MF] int Y_MF;
+  array[N_FM] int Y_FM;
 
-  matrix[P, A] H_M, H_F; // Household size offsets
+  array[N_MM] int ROW_MAJOR_IDX_MM;
+  array[N_FF] int ROW_MAJOR_IDX_FF;
+  array[N_MF] int ROW_MAJOR_IDX_MF;
+  array[N_FM] int ROW_MAJOR_IDX_FM;
+
+  vector[A] log_H_M, log_H_F; // Household size offsets
 
   vector[A] age_idx_std;         // Standardized age index
   matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata
@@ -31,18 +34,18 @@ data
 
 transformed data
 {
-  int N = N_M + N_F;  // Total number of observations
-  int M = 1, F = 2; // gender indexes
-  int MM = 1, FF = 2, MF = 3, FM = 4;
-  int G = 2; // gender combinations
-  int G_gp = 4
+  int N = N_MM + N_FF + N_MF + N_FM;  // Total number of observations
+  int MM = 1, FF = 2, MF = 3, FM = 4; // gender indexes
+  int G = 4;                          // gender combinations
   real gp_delta = 1e-9;               // GP nugget
   real epsilon = 1e-13;               // Prevent shape parameter to be 0
 
   // Precompute offset terms
-  array[G] matrix[P,A] offset;
-  offset[M] = H_M;
-  offset[F] = H_F;
+  array[G] matrix[A,A] log_offset;
+  log_offset[MM] = rep_matrix(log_N_M + log_S_M, A) + rep_matrix(log_P_M, A);
+  log_offset[FF] = rep_matrix(log_N_F + log_S_F, A) + rep_matrix(log_P_F, A);
+  log_offset[MF] = rep_matrix(log_N_M + log_S_M, A) + rep_matrix(log_P_F, A);
+  log_offset[FM] = rep_matrix(log_N_F + log_S_F, A) + rep_matrix(log_P_M, A);
 
   real L1, L2;
   matrix[A,M1] PHI1;
@@ -55,7 +58,7 @@ transformed data
   PHI2 = PHI(A, M2, L2, age_idx_std);
 
   // append data
-  array[N] int Y = append_array(Y_M, Y_F);
+  array[N] int Y = append_array( append_array( append_array(Y_MM, Y_FF), Y_MF), Y_FM);
 }
 
 parameters
@@ -63,22 +66,20 @@ parameters
   vector[G] beta_0;
   real<lower=0> nu;
 
-  vector<lower=0>[G_gp] gp_rho_1;
-  vector<lower=0>[G_gp] gp_rho_2;
-  vector<lower=0, upper=pi()/2>[G_gp] gp_alpha_unif;
+  vector<lower=0>[G-1] gp_rho_1;
+  vector<lower=0>[G-1] gp_rho_2;
+  vector<lower=0, upper=pi()/2>[G-1] gp_alpha_unif;
 
-  matrix[(G_gp)*M1, M2] z; // HSGP basis function coefficients
+  matrix[(G-1)*M1, M2] z; // HSGP basis function coefficients
 }
 
 transformed parameters
 {
-  vector<lower=0>[G_gp] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
+  vector<lower=0>[G-1] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
-  matrix[A,A] f_MM, f_FF, f_MF, f_FM;
-  array[G] matrix[P,C] log_m_h;
-  array[G] matrix<lower=0>[P,C] alpha_strata_h;
-  row_vector[A] vec_f_MM, vec_f_FF, vec_f_FM, vec_f_MF;
-  
+  matrix[A,A] f_MM, f_FF, f_MF;
+  array[G] matrix[A,A] log_cnt_rate;
+  array[G] matrix<lower=0>[A,C] alpha_strata;
 
   f_MM = hsgp(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
               L1, L2, M1, M2, PHI1, PHI2, z[1:M1,]);
@@ -86,17 +87,16 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(M1+1):2*M1,]);
   f_MF = hsgp(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
-              
-  vec_f_MM[1, :] = f_MM[map_indiv_to_age, :]
-  vec_f_FF[1, :] = f_FF[map_indiv_to_age, :]
-  vec_f_FM[1, :] = f_FM[map_indiv_to_age, :]
-  vec_f_MF[1, :] = f_MF[map_indiv_to_age, :]
 
-  log_m_h[M] =  beta_0[M] + vec_gender_M * vec_f_MM + vec_gender_F * vec_f_FM
-  log_m_h[F] =  beta_0[F] + vec_gender_F * vec_f_MF + vec_gender_F * vec_f_FF
-  
-  alpha_strata_i[M] = exp(log_cnt_rate_i[M] + log_offset_i[M]) * map_age_to_strata / nu + epsilon;
-  alpha_strata_i[F] = exp(log_cnt_rate_i[F] + log_offset_i[F]) * map_age_to_strata / nu + epsilon;
+  log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
+  log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
+  log_cnt_rate[MF] = beta_0[MF] + f_MF;
+  log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
+
+  alpha_strata[MM] = exp(log_cnt_rate[MM] + log_offset[MM]) * map_age_to_strata / nu + epsilon;
+  alpha_strata[FF] = exp(log_cnt_rate[FF] + log_offset[FF]) * map_age_to_strata / nu + epsilon;
+  alpha_strata[MF] = exp(log_cnt_rate[MF] + log_offset[MF]) * map_age_to_strata / nu + epsilon;
+  alpha_strata[FM] = exp(log_cnt_rate[FM] + log_offset[FM]) * map_age_to_strata / nu + epsilon;
 }
 
 model
@@ -133,13 +133,6 @@ generated quantities
 {
   array[N] real log_lik;
   array[G,A,C] int yhat_strata;
-  array[G_gp] matrix[A,A] log_cnt_rate;
-  
-  log_cnt_rate[MM] = beta_0[M] + symmetrize_from_lower_tri(f_MM);
-  log_cnt_rate[FF] = beta_0[F] + symmetrize_from_lower_tri(f_FF);
-  log_cnt_rate[MF] = beta_0[F] + f_MF;
-  log_cnt_rate[FM] = beta_0[M] + f_MF'; 
-  
 
   for(g in 1:G){
     for(i in 1:A){

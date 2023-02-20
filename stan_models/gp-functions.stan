@@ -186,13 +186,13 @@ matrix gp2d_matern52_restruct(array[] real x1, array[] real x2,
 
 /** Hilbert Space approximate 2D Gaussian process
   *
-  * @param A: Number of ages for particiapnts
+  * @param A: Number of ages for participants
   * @param alpha: GP scaling parameter
   * @param rho1, rho2: GP length-scale parameter on participants and contacts age dimensions
   * @param L1, L2: HSGP parameters
   * @param M1, M2: HSGP parameters
   * @param z:
-  * @return A two dimensional Gaussian process fuction
+  * @return A two dimensional Gaussian process function
   */
 matrix hsgp(int A, real alpha, real rho1, real rho2, real L1, real L2, int M1, int M2,
             matrix PHI1, matrix PHI2, matrix z)
