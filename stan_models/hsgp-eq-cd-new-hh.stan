@@ -95,8 +95,8 @@ transformed parameters
   log_m_h[M] =  beta_0[M] + vec_gender_M * vec_f_MM + vec_gender_F * vec_f_FM
   log_m_h[F] =  beta_0[F] + vec_gender_F * vec_f_MF + vec_gender_F * vec_f_FF
   
-  alpha_strata_i[M] = exp(log_cnt_rate_i[M] + log_offset_i[M]) * map_age_to_strata / nu + epsilon;
-  alpha_strata_i[F] = exp(log_cnt_rate_i[F] + log_offset_i[F]) * map_age_to_strata / nu + epsilon;
+  alpha_strata_h[M] = (exp(log_m_h[M]).* offset[M]) * map_age_to_strata / nu + epsilon;
+  alpha_strata_h[F] = (exp(log_m_h[F]).* offset[F]) * map_age_to_strata / nu + epsilon;
 }
 
 model
