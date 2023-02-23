@@ -110,11 +110,12 @@ transformed parameters
   print("part_f_FM =", part_f_FM)
   print("part_f_MF =", part_f_MF)
 
-  log_m_M[M] =  beta_0[MM] + part_f_MM
-  log_m_M[F] =  beta_0[MF] + part_f_MF
-  log_m_F[M] =  beta_0[FM] + part_f_FM
-  log_m_F[F] =  beta_0[FF] + part_f_FF
+  log_m_MM =  beta_0[MM] + part_f_MM
+  log_m_MF =  beta_0[MF] + part_f_MF
+  log_m_FM =  beta_0[FM] + part_f_FM
+  log_m_FF =  beta_0[FF] + part_f_FF
   
+  # will have to change this to a double for loop checking when Hib_c = 0, otherwise values of exp(log_m_MM) are too small!!
   alpha_strata_MM = (exp(log_m_MM).* H_MM) * map_age_to_strata / nu + epsilon;
   alpha_strata_MF = (exp(log_m_MF).* H_MF) * map_age_to_strata / nu + epsilon;
   alpha_strata_FM = (exp(log_m_FM).* H_FM) * map_age_to_strata / nu + epsilon;
