@@ -75,9 +75,9 @@ transformed parameters
   vector<lower=0>[G_gp] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
   matrix[A,A] f_MM, f_FF, f_MF, f_FM;
-  array[G] matrix[P,C] log_m_h;
+  array[G] matrix[P,A] log_m_h;
   array[G] matrix<lower=0>[P,C] alpha_strata_h;
-  row_vector[A] vec_f_MM, vec_f_FF, vec_f_FM, vec_f_MF;
+  matrix[P, A] part_f_MM, part_f_FF, part_f_FM, part_f_MF;
   
 
   f_MM = hsgp(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
@@ -86,14 +86,26 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(M1+1):2*M1,]);
   f_MF = hsgp(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
+  f_FM = hsgp(A, gp_alpha[FM], gp_rho_1[FM], gp_rho_2[FM],
+              L1, L2, M1, M2, PHI1, PHI2, z[(3*M1+1):4*M1,]);
               
-  vec_f_MM[1, :] = f_MM[map_indiv_to_age, :]
-  vec_f_FF[1, :] = f_FF[map_indiv_to_age, :]
-  vec_f_FM[1, :] = f_FM[map_indiv_to_age, :]
-  vec_f_MF[1, :] = f_MF[map_indiv_to_age, :]
+  part_f_MM[:, :] = f_MM[map_indiv_to_age, :]
+  part_f_FF[:, :] = f_FF[map_indiv_to_age, :]
+  part_f_FM[:, :] = f_FM[map_indiv_to_age, :]
+  part_f_MF[:, :] = f_MF[map_indiv_to_age, :]
+  
+  print("part_f_MM =", part_f_MM)
+  print("part_f_FF =", part_f_FF)
+  print("part_f_FM =", part_f_FM)
+  print("part_f_MF =", part_f_MF)
+  print(vec_gender_M = "vec_gender_M")
+  print(vec_gender_F = "vec_gender_F")
+  print("vec_gender_M * part_f_MM =", vec_gender_M * part_f_MM)
+  print("vec_gender_F * part_f_FM =", vec_gender_F * part_f_FM )
+  
 
-  log_m_h[M] =  beta_0[M] + vec_gender_M * vec_f_MM + vec_gender_F * vec_f_FM
-  log_m_h[F] =  beta_0[F] + vec_gender_F * vec_f_MF + vec_gender_F * vec_f_FF
+  log_m_h[M] =  beta_0[M] + vec_gender_M * part_f_MM + vec_gender_F * part_f_FM
+  log_m_h[F] =  beta_0[F] + vec_gender_F * part_f_MF + vec_gender_F * part_f_FF
   
   alpha_strata_h[M] = (exp(log_m_h[M]).* offset[M]) * map_age_to_strata / nu + epsilon;
   alpha_strata_h[F] = (exp(log_m_h[F]).* offset[F]) * map_age_to_strata / nu + epsilon;
@@ -135,10 +147,10 @@ generated quantities
   array[G,A,C] int yhat_strata;
   array[G_gp] matrix[A,A] log_cnt_rate;
   
-  log_cnt_rate[MM] = beta_0[M] + symmetrize_from_lower_tri(f_MM);
-  log_cnt_rate[FF] = beta_0[F] + symmetrize_from_lower_tri(f_FF);
+  log_cnt_rate[MM] = beta_0[M] + f_MM;
+  log_cnt_rate[FF] = beta_0[F] + f_FF;
   log_cnt_rate[MF] = beta_0[F] + f_MF;
-  log_cnt_rate[FM] = beta_0[M] + f_MF'; 
+  log_cnt_rate[FM] = beta_0[M] + f_FM; 
   
 
   for(g in 1:G){
