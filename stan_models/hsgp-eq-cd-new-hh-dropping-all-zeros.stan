@@ -211,6 +211,7 @@ generated quantities
   // 
   // alpha_strata_flat_full = alpha_strata_flat_full * map_indiv_to_age_full;
   
+  // yhat_strata's in individual space
   for(i in 1:P_MM){
       yhat_strata[MM,i,:] = neg_binomial_rng( alpha_strata_MM[i,:], inv(nu) );
       }
