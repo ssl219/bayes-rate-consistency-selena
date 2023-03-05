@@ -57,27 +57,11 @@ make_grid <- function(A, U = NULL, gender = FALSE){
   return(g)
 }
 
-add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMOD", household_cnt=FALSE){
+add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMOD", household_cnt=FALSE, new_hh=FALSE){
   if(survey == "COVIMOD"){
     
-    if(household_cnt){
-      d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
-      
-      stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
-      stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
-      stan_data$Y_MF_1 <- d[gender == "Male" & alter_gender == "Female" & o == 1]$y
-      stan_data$Y_FM_1 <- d[gender == "Female" & alter_gender == "Male" & o == 1]$y
-      
-      stan_data$Y_MM_2 <- d[gender == "Male" & alter_gender == "Male" & o == 2]$y
-      stan_data$Y_FF_2 <- d[gender == "Female" & alter_gender == "Female" & o == 2]$y
-      stan_data$Y_MF_2 <- d[gender == "Male" & alter_gender == "Female" & o == 2]$y
-      stan_data$Y_FM_2 <- d[gender == "Female" & alter_gender == "Male" & o == 2]$y
-      
-      return(stan_data)
-    }
-    
     if(!single){
-      d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
+      d <- contacts[order(u, age, new_id, alter_age_strata, gender, alter_gender)]
 
       stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
       stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
@@ -88,14 +72,46 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       
       } 
     else { # Single wave
+      
+      # new household model that accounts for individual level households
+      if(new_hh){
+        d <- contacts[order(new_id, alter_age_strata, gender, alter_gender)]
+        
+        stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
+        stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
+        stan_data$Y_MF <- d[gender == "Male" & alter_gender == "Female"]$y
+        stan_data$Y_FM <- d[gender == "Female" & alter_gender == "Male"]$y
+        
+      }
+      
+      # household_cnt was the index for the old model, the model that doesn't account for individual level households
+      if(household_cnt){
+        d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
+        
+        stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
+        stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
+        stan_data$Y_MF_1 <- d[gender == "Male" & alter_gender == "Female" & o == 1]$y
+        stan_data$Y_FM_1 <- d[gender == "Female" & alter_gender == "Male" & o == 1]$y
+        
+        stan_data$Y_MM_2 <- d[gender == "Male" & alter_gender == "Male" & o == 2]$y
+        stan_data$Y_FF_2 <- d[gender == "Female" & alter_gender == "Female" & o == 2]$y
+        stan_data$Y_MF_2 <- d[gender == "Male" & alter_gender == "Female" & o == 2]$y
+        stan_data$Y_FM_2 <- d[gender == "Female" & alter_gender == "Male" & o == 2]$y
+        
+        return(stan_data)
+      }
+      
+    else{
       d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
-
+      
       stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
       stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
       stan_data$Y_MF <- d[gender == "Male" & alter_gender == "Female"]$y
       stan_data$Y_FM <- d[gender == "Female" & alter_gender == "Male"]$y
-
+      
       return(stan_data)
+    }  
+      
     }
   }
 
@@ -109,17 +125,14 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
 
     return(stan_data)
   }
+
+
 }
 
 # Add obs count
-add_N <- function(stan_data, survey = "COVIMOD", household_cnt=FALSE){
+add_N <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE, new_hh=FALSE){
 
   if(survey == "COVIMOD"){
-    stan_data$N_M <- length(stan_data$Y_MM)
-    stan_data$N_F <- length(stan_data$Y_FF)
-  }
-
-  if(survey == "POLYMOD"){
     if (household_cnt){
       stan_data$N_MM_1 <- length(stan_data$Y_MM_1)
       stan_data$N_FF_1 <- length(stan_data$Y_FF_1)
@@ -131,15 +144,93 @@ add_N <- function(stan_data, survey = "COVIMOD", household_cnt=FALSE){
       stan_data$N_MF_2 <- length(stan_data$Y_MF_2)
       stan_data$N_FM_2 <- length(stan_data$Y_FM_2)
     }
-   
+    
+    if(new_hh){
+      
+      stan_data$N_MM <- length(stan_data$Y_MM)
+      stan_data$N_FF <- length(stan_data$Y_FF)
+      stan_data$N_MF <- length(stan_data$Y_MF)
+      stan_data$N_FM <- length(stan_data$Y_FM)
+      
+      d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+      stan_data$P_MM <- length(unique(d[gender == "Male" & alter_gender == "Male"]$new_id))
+      stan_data$P_FF <- length(unique(d[gender == "Female" & alter_gender == "Female"]$new_id))
+      stan_data$P_MF <- length(unique(d[gender == "Male" & alter_gender == "Female"]$new_id))
+      stan_data$P_FM <- length(unique(d[gender == "Female" & alter_gender == "Male"]$new_id))
+      
+    }
     else{
+      stan_data$N_M <- length(stan_data$Y_MM)
+      stan_data$N_F <- length(stan_data$Y_FF)
+    }
+    
+  }
+
+  if(survey == "POLYMOD"){
      stan_data$N_MM <- length(stan_data$Y_MM)
      stan_data$N_FF <- length(stan_data$Y_FF)
      stan_data$N_MF <- length(stan_data$Y_MF)
      stan_data$N_FM <- length(stan_data$Y_FM)
-   }
+
   }
   return(stan_data)
+}
+
+create_cumulative_list <- function(d_ordered_everything, no_participants, gender_comb="MM"){
+  if (gender_comb = "MM"){
+    d_ordered_everything <- d_ordered_everything[gender=="Male" & alter_gender=="Male"]
+    d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
+  }
+
+  if (gender_comb = "FF"){
+    d_ordered_everything <- d_ordered_everything[gender=="Female" & alter_gender=="Female"]
+    d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
+  }
+  
+  if (gender_comb = "MF"){
+    d_ordered_everything <- d_ordered_everything[gender=="Male" & alter_gender=="Female"]
+    d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
+  }
+  
+  if (gender_comb = "FM"){
+    d_ordered_everything <- d_ordered_everything[gender=="Female" & alter_gender=="Male"]
+    d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
+  }
+  
+  id_list = as.character(d_ordered_everything$new_id)
+  duplicated_id_list = duplicated(id_list)
+  cum_list = rep(0, no_participants + 1)
+  j = 2 # R starts indexing at 1
+  cum_list[1] = 0
+  
+  for (duplicated in duplicated_id_list){
+    if (duplicated){
+      cum_list[j-1] = cum_list[j-1] + 1
+    }
+    else{
+      cum_list[j] = cum_list[j-1] + 1
+      j = j + 1
+    }
+  }
+  return(cum_list)
+}
+
+
+# for new household model and covimod survey only
+# note we have to order the participants
+# note we are using the dt.everything or aka the offsets dataframe for this
+add_ages_contacts <- function(stan_data, everything){
+  
+  d <- everything[order(age, new_id, alter_age, gender, alter_gender)]
+  stan_data$B_MM <- d[gender == "Male" & alter_gender == "Male"]$alter_age
+  stan_data$B_FF <- d[gender == "Female" & alter_gender == "Female"]$alter_age
+  stan_data$B_MF <- d[gender == "Male" & alter_gender == "Female"]$alter_age
+  stan_data$B_FM <- d[gender == "Female" & alter_gender == "Male"]$alter_age
+  
+  stan_data$cum_MM <- create_cumulative_list(d_ordered_everything, stan_data$P_MM, gender_comb="MM")
+  stan_data$cum_FF <- create_cumulative_list(d_ordered_everything, stan_data$P_FF, gender_comb="FF")
+  stan_data$cum_MF <- create_cumulative_list(d_ordered_everything, stan_data$P_MF, gender_comb="MF")
+  stan_data$cum_FM <- create_cumulative_list(d_ordered_everything, stan_data$P_FM, gender_comb="FM")
 }
 
 add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
@@ -200,6 +291,10 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     }
   }
   return(stan_data)
+}
+
+add_household_offsets <- function(stan_data, everything){
+  
 }
 
 

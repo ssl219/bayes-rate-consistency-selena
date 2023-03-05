@@ -17,7 +17,7 @@ data
   array[N_MF] int Y_MF;
   array[N_FM] int Y_FM;
 
-  array[N_MM] int B_MM; // flattened list of ages of contacts (ordered, ascending) in MM gender combinations
+  array[N_MM] int B_MM; // flattened list of ages of contacts (ordered, ascending) in all gender combinations
   array[N_FF] int B_FF;
   array[N_MF] int B_MF;
   array[N_FM] int B_FM;
@@ -26,8 +26,13 @@ data
   array[P_FF + 1] int cum_FF;
   array[P_FM + 1] int cum_FM;
   array[P_MF + 1] int cum_MF;
+  
+  array[N_MM] int ROW_MAJOR_IDX_MM;
+  array[N_FF] int ROW_MAJOR_IDX_FF;
+  array[N_MF] int ROW_MAJOR_IDX_MF;
+  array[N_FM] int ROW_MAJOR_IDX_FM;
 
-  array[P_MM] int map_indiv_to_age_MM; // map of ages of each participant of gender M with contacts of gender M
+  array[P_MM] int map_indiv_to_age_MM; // array of ages of each participant of gender M with contacts of gender M
   array[P_FF] int map_indiv_to_age_FF; 
   array[P_FM] int map_indiv_to_age_FF; 
   array[P_MF] int map_indiv_to_age_MF; 
@@ -109,25 +114,25 @@ transformed parameters
   alpha_strata_FM = rep_matrix(0, P_FM, C);
 
   for (i in 1:P_MM){
-    for (j in cum[i]+1:cum[i+1]){
+    for (j in cum_MM[i]+1:cum_MM[i+1]){
     alpha_strata_MM[i, B_MM[j]]=(beta_0[MM] + f_MM[map_indiv_to_age_MM[i], B_MM[j]] + log_H_MM[j]) * map_age_to_strata / nu + epsilon;
     }
   }
 
   for (i in 1:P_MF){
-    for (j in cum[i]+1:cum[i+1]){
+    for (j in cum_MF[i]+1:cum_MF[i+1]){
     alpha_strata_MF[i, B_MF[j]]=(beta_0[MF] + f_MF[map_indiv_to_age_MF[i], B_MF[j]] + log_H_MF[j]) * map_age_to_strata / nu + epsilon;
     }
   }
 
   for (i in 1:P_FM){
-    for (j in cum[i]+1:cum[i+1]){
+    for (j in cum_FM[i]+1:cum_FM[i+1]){
     alpha_strata_FM[i, B_FM[j]]=(beta_0[FM] + f_FM[map_indiv_to_age_FM[i], B_FM[j]] + log_H_FM[j]) * map_age_to_strata / nu + epsilon;
     }
   }
 
   for (i in 1:P_FF){
-    for (j in cum[i]+1:cum[i+1]){
+    for (j in cum_FF[i]+1:cum_FF[i+1]){
     alpha_strata_FF[i, B_FF[j]]=(beta_0[FF] + f_FF[map_indiv_to_age_FF[i], B_FF[j]] + log_H_FF[j]) * map_age_to_strata / nu + epsilon;
     }
   }

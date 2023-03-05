@@ -239,9 +239,89 @@ d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 d_comb_no_dupl
 ```
 
+```{r}
+# how to order contact vector?
+d_order_test <- d_comb_no_dupl[wave==1]
+d_order_test <- d_order_test[order(new_id, alter_age_strata, gender, alter_gender)]
+d_order_test_MM <- d_order_test[gender=="Male" & alter_gender=="Male"]
+d_order_test_MM
+```
+
+```{r}
+# finding P_MM
+length(unique(d_order_test_MM$new_id))
+```
+
 
 ```{r}
 d.everything
+```
+
+```{r}
+# finding B_MM, flattened list of ages of contacts
+d_order_test_everything <- d.everything[wave==1]
+d_order_test_everything <- d_order_test_everything[order(new_id, alter_age_strata, gender, alter_gender)]
+d_order_test_everything_MM <- d_order_test_everything[gender=="Male" & alter_gender=="Male"]
+d_order_test_everything_MM <- d_order_test_everything_MM[order(age, new_id, alter_age)]
+d_order_test_everything_MM
+```
+```{r}
+id_MM_list = as.character(d_order_test_everything_MM$new_id)
+duplicated(id_MM_list)
+```
+
+
+
+```{r}
+# finding cum_MM
+# print("01ac7fd1" == unique(d_order_test_everything_MM$new_id)[3])
+# print(unique(d_order_test_everything_MM$new_id)[2])
+
+id_MM_list = as.character(d_order_test_everything_MM$new_id)
+unique_id_MM_list = unique(id_MM_list)
+unique_id_MM_list
+duplicated_id_MM_list = duplicated(id_MM_list)
+P_MM = 609
+cum_MM = rep(0, P_MM +1)
+j = 2 # R starts indexing at 1
+cum_MM[1] = 0
+
+for (duplicated in duplicated_id_MM_list){
+  # print(j)
+  # print(unique_id_MM_list[j-1])
+    if (duplicated){
+      cum_MM[j-1] = cum_MM[j-1] + 1
+      }
+    else{
+      cum_MM[j] = cum_MM[j-1] + 1
+      j = j + 1
+      }
+
+  # print(cum_MM)
+}
+
+
+
+print(cum_MM)
+# unique_id_MM_list
+# # unique_id_MM_list[609]
+# 
+# id_MM_list[605:611]
+# # length(id_MM_list)
+# id_MM_list
+# unique_id_MM_list
+
+```
+```{r}
+# sanity check
+N_MM = length(d_order_test_everything_MM$y)
+print(N_MM)
+```
+
+```{r}
+list_test = c(1, 6, 7, 3, 5, 7, 4, 33, 33, 33, 2, 2, 1)
+list_test = as.character(list_test)
+unique(list_test)
 ```
 
 # Experimentation for STAN model single wave new hh
@@ -259,6 +339,14 @@ tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
 tmp[,list(new_id, alter_age_strata, alter_gender, age, gender, y, n, age_idx, age_strata_idx, row_major_idx)]
 ```
 
+```{r}
+# finding the log of the household offsets
+d_order_test_everything <- d.everything[wave==1]
+d_order_test_everything <- d_order_test_everything[order(new_id, alter_age_strata, gender, alter_gender)]
+d_order_test_everything_MM <- d_order_test_everything[gender=="Male" & alter_gender=="Male"]
+d_order_test_everything_MM <- d_order_test_everything_MM[order(age, new_id,  alter_age)]
+d_order_test_everything_MM
+```
 
 
 ## Export data

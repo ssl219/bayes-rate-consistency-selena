@@ -71,19 +71,22 @@ cat(" Configuring Stan data ...")
 stan_data <- init_stan_data()
 
 # Add contact counts
-stan_data <- add_contact_vector(stan_data, dt.cnt, single = TRUE)
+stan_data <- add_contact_vector(stan_data, dt.cnt, survey="COVIMOD", single = TRUE, new_hh = TRUE)
 
 # Add obs counts
-stan_data <- add_N(stan_data, survey = "POLYMOD")
-# 
+stan_data <- add_N(stan_data, dt.cnt, survey = "COVIMOD", new_hh=TRUE)
+
 # # Add missing u index
 # dt.cnt[, u := fcase(wave == 1, 1)]
+
+# Add flattened list of ages of contacts and corresponding cumulative list
+stan_data <- add_ages_contacts(stan_data, dt.offsets)
 
 # Add row major index
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
-# Add participant offsets
-stan_data <- add_part_offsets(stan_data, dt.cnt, dt.offsets, survey = 'POLYMOD')
+# Add household offsets
+stan_data <- add_household_offsets(stan_data, dt.cnt, dt.offsets, survey = 'POLYMOD')
 
 # # Add population offsets
 # stan_data <- add_pop_offsets(stan_data, dt.pop, survey = 'POLYMOD')
