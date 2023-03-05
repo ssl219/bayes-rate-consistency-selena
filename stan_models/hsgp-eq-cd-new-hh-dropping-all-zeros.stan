@@ -16,19 +16,29 @@ data
   array[N_FF] int Y_FF;
   array[N_MF] int Y_MF;
   array[N_FM] int Y_FM;
-  
-  array[P_MM] int map_indiv_to_age_MM; // array of ages of each participant of gender M with contacts of gender M
+
+  array[N_MM] int B_MM; // flattened list of ages of contacts (ordered, ascending) in MM gender combinations
+  array[N_FF] int B_FF;
+  array[N_MF] int B_MF;
+  array[N_FM] int B_FM;
+
+  array[P_MM + 1] int cum_MM; // list of cumulative indices for participants in B_MM
+  array[P_FF + 1] int cum_FF;
+  array[P_FM + 1] int cum_FM;
+  array[P_MF + 1] int cum_MF;
+
+  array[P_MM] int map_indiv_to_age_MM; // map of ages of each participant of gender M with contacts of gender M
   array[P_FF] int map_indiv_to_age_FF; 
   array[P_FM] int map_indiv_to_age_FF; 
   array[P_MF] int map_indiv_to_age_MF; 
   
   matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age // map individual-age space to age-age space
 
-  matrix[P_MM, A] H_MM // Household size offsets
-  matrix[P_FF, A] H_FF
-  matrix[P_FM, A] H_FM
-  matrix[P_MF, A] H_MF;
-
+  array[N_MM] log_H_MM; // Log of household offsets (ordered in ascending order of participant age then contact age)
+  array[N_FF] log_H_FF;
+  array[N_MF] log_H_MF;
+  array[N_FM] log_H_FM;
+ 
   vector[A] age_idx_std;         // Standardized age index
   matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata
 
@@ -78,18 +88,11 @@ transformed parameters
   vector<lower=0>[G] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
   matrix[A,A] f_MM, f_FF, f_MF, f_FM;
-  matrix[P_MM,A] log_m_MM;
-  matrix[P_FF,A] log_m_FF;
-  matrix[P_FM,A] log_m_FM;
-  matrix[P_MF,A] log_m_MF;
   matrix<lower=0>[P_MM,C] alpha_strata_MM;
   matrix<lower=0>[P_FF,C] alpha_strata_FF;
   matrix<lower=0>[P_FM,C] alpha_strata_FM;
   matrix<lower=0>[P_MF,C] alpha_strata_MF;
-  matrix[P_MM, A] part_f_MM;
-  matrix[P_MF, A] part_f_MF;
-  matrix[P_FF, A] part_f_FF;
-  matrix[P_FM, A] part_f_FM;
+
 
   f_MM = hsgp(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
               L1, L2, M1, M2, PHI1, PHI2, z[1:M1,]);
@@ -99,26 +102,36 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
   f_FM = hsgp(A, gp_alpha[FM], gp_rho_1[FM], gp_rho_2[FM],
               L1, L2, M1, M2, PHI1, PHI2, z[(3*M1+1):4*M1,]);
-              
-  part_f_MM[:, :] = f_MM[map_indiv_to_age_M, :]
-  part_f_FF[:, :] = f_FF[map_indiv_to_age_F, :]
-  part_f_FM[:, :] = f_FM[map_indiv_to_age_F, :]
-  part_f_MF[:, :] = f_MF[map_indiv_to_age_M, :]
-  
-  print("part_f_MM =", part_f_MM)
-  print("part_f_FF =", part_f_FF)
-  print("part_f_FM =", part_f_FM)
-  print("part_f_MF =", part_f_MF)
 
-  log_m_MM =  beta_0[MM] + part_f_MM
-  log_m_MF =  beta_0[MF] + part_f_MF
-  log_m_FM =  beta_0[FM] + part_f_FM
-  log_m_FF =  beta_0[FF] + part_f_FF
-  
-  alpha_strata_MM = (exp(log_m_MM).* H_MM) * map_age_to_strata / nu + epsilon;
-  alpha_strata_MF = (exp(log_m_MF).* H_MF) * map_age_to_strata / nu + epsilon;
-  alpha_strata_FM = (exp(log_m_FM).* H_FM) * map_age_to_strata / nu + epsilon;
-  alpha_strata_FF = (exp(log_m_FF).* H_FF) * map_age_to_strata / nu + epsilon;
+  alpha_strata_MM = rep_matrix(0, P_MM, C); // initialize alpha_strata to zeros
+  alpha_strata_FF = rep_matrix(0, P_FF, C);
+  alpha_strata_MF = rep_matrix(0, P_MF, C);
+  alpha_strata_FM = rep_matrix(0, P_FM, C);
+
+  for (i in 1:P_MM){
+    for (j in cum[i]+1:cum[i+1]){
+    alpha_strata_MM[i, B_MM[j]]=(beta_0[MM] + f_MM[map_indiv_to_age_MM[i], B_MM[j]] + log_H_MM[j]) * map_age_to_strata / nu + epsilon;
+    }
+  }
+
+  for (i in 1:P_MF){
+    for (j in cum[i]+1:cum[i+1]){
+    alpha_strata_MF[i, B_MF[j]]=(beta_0[MF] + f_MF[map_indiv_to_age_MF[i], B_MF[j]] + log_H_MF[j]) * map_age_to_strata / nu + epsilon;
+    }
+  }
+
+  for (i in 1:P_FM){
+    for (j in cum[i]+1:cum[i+1]){
+    alpha_strata_FM[i, B_FM[j]]=(beta_0[FM] + f_FM[map_indiv_to_age_FM[i], B_FM[j]] + log_H_FM[j]) * map_age_to_strata / nu + epsilon;
+    }
+  }
+
+  for (i in 1:P_FF){
+    for (j in cum[i]+1:cum[i+1]){
+    alpha_strata_FF[i, B_FF[j]]=(beta_0[FF] + f_FF[map_indiv_to_age_FF[i], B_FF[j]] + log_H_FF[j]) * map_age_to_strata / nu + epsilon;
+    }
+  }
+
 }
 
 model
@@ -175,8 +188,8 @@ generated quantities
       to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]
     );
     
-    vector[U] alpha_strata_flat = alpha_strata_flat_indiv * map_indiv_to_age
-    vector[U] Y_age = Y * map_indiv_to_age
+    vector[U] alpha_strata_flat = alpha_strata_flat_indiv * map_indiv_to_age;
+    vector[U] Y_age = Y * map_indiv_to_age;
 
     for(i in 1:U) {
       log_lik[i] = neg_binomial_lpmf( Y_age[i] | alpha_strata_flat[i], inv(nu) );
@@ -184,26 +197,35 @@ generated quantities
   }
   
   {
-    alpha_strata_flat_full_indiv = 
-    append_row(
-        append_row(
-          append_row(
-            to_vector(alpha_strata_MM'),
-            to_vector(alpha_strata_FF')
-          ),
-          to_vector(alpha_strata_MF')
-        ),
-      to_vector(alpha_strata_FM')
-    );
+  //   alpha_strata_flat_full_indiv = 
+  //   append_row(
+  //       append_row(
+  //         append_row(
+  //           to_vector(alpha_strata_MM'),
+  //           to_vector(alpha_strata_FF')
+  //         ),
+  //         to_vector(alpha_strata_MF')
+  //       ),
+  //     to_vector(alpha_strata_FM')
+  //   );
+  // 
+  // alpha_strata_flat_full = alpha_strata_flat_full * map_indiv_to_age_full;
   
-  alpha_strata_flat_full = alpha_strata_flat_full * map_indiv_to_age_full
-  
-   for(g in 1:G){
-    for(i in 1:A){
-      yhat_strata[g,i,:] = neg_binomial_rng( alpha_strata[g,i,:], inv(nu) );
+  for(i in 1:P_MM){
+      yhat_strata[MM,i,:] = neg_binomial_rng( alpha_strata_MM[i,:], inv(nu) );
       }
+  for(i in 1:P_FF){
+      yhat_strata[FF,i,:] = neg_binomial_rng( alpha_strata_FF[i,:], inv(nu) );
+      }
+  for(i in 1:P_MF){
+      yhat_strata[MF,i,:] = neg_binomial_rng( alpha_strata_MF[i,:], inv(nu) );
+      }
+  for(i in 1:P_FM){
+      yhat_strata[FM,i,:] = neg_binomial_rng( alpha_strata_FM[i,:], inv(nu) );
+      }
+  
     }
   }
-}
+
 
  
