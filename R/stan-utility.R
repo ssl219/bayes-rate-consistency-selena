@@ -294,7 +294,16 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
 }
 
 add_household_offsets <- function(stan_data, everything){
-  
+  d_everything <- everything[order(age, new_id, alter_age, gender, alter_gender)]
+  d_everything_MM <- d_everything[gender=="Male" & alter_gender=="Male"]
+  d_everything_FF <- d_everything[gender=="Female" & alter_gender=="Female"]
+  d_everything_MF <- d_everything[gender=="Male" & alter_gender=="Female"]
+  d_everything_FM <- d_everything[gender=="Female" & alter_gender=="Male"]
+
+  stan_data$log_H_MM <- log(d_order_test_everything_MM$Hic_b)
+  stan_data$log_H_FF <- log(d_order_test_everything_FF$Hic_b)
+  stan_data$log_H_MF <- log(d_order_test_everything_MF$Hic_b)
+  stan_data$log_H_FM <- log(d_order_test_everything_FM$Hic_b)
 }
 
 

@@ -346,7 +346,12 @@ d_order_test_everything <- d_order_test_everything[order(new_id, alter_age_strat
 d_order_test_everything_MM <- d_order_test_everything[gender=="Male" & alter_gender=="Male"]
 d_order_test_everything_MM <- d_order_test_everything_MM[order(age, new_id,  alter_age)]
 d_order_test_everything_MM
+d_everything_logH_MM <- log(d_order_test_everything_MM$Hic_b)
 ```
+```{r}
+d_everything_logH_MM
+```
+
 
 
 ## Export data
