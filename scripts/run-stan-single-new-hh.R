@@ -88,11 +88,11 @@ stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 # Add household offsets
 stan_data <- add_household_offsets(stan_data, dt.cnt, dt.offsets, survey = 'POLYMOD')
 
-# # Add population offsets
-# stan_data <- add_pop_offsets(stan_data, dt.pop, survey = 'POLYMOD')
-
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data)
+
+# Map individual to age for each gender combination
+stan_data <- add_map_indiv_to_age(stan_data, dt.offsets)
 
 # Add Non-nuisance index
 stan_data <- add_nn_idx(stan_data)

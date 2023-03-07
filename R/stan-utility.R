@@ -75,7 +75,7 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       
       # new household model that accounts for individual level households
       if(new_hh){
-        d <- contacts[order(new_id, alter_age_strata, gender, alter_gender)]
+        d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
         
         stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
         stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
@@ -544,6 +544,59 @@ add_map_tr_to_u <- function(stan_data){
   return(stan_data)
 }
 
+# Map array of ages of each participant of gender M with contacts of gender M
+
+add_map_indiv_to_age <- function(stan_data, contact, everything){
+  d <- everything[order(age, new_id, alter_age, gender, alter_gender)]
+  d_MM <- d[gender=="Male" & alter_gender=="Male"]
+  d_FF <- d[gender=="Female" & alter_gender=="Female"]
+  d_MF <- d[gender=="Male" & alter_gender=="Female"]
+  d_FM <- d[gender=="Female" & alter_gender=="Male"]
+  
+  d_MM_unique_ages <- d_MM %>% distinct(new_id, .keep_all=TRUE)
+  d_FF_unique_ages <- d_FF %>% distinct(new_id, .keep_all=TRUE)
+  d_MF_unique_ages <- d_MF %>% distinct(new_id, .keep_all=TRUE)
+  d_FM_unique_ages <- d_FM %>% distinct(new_id, .keep_all=TRUE)
+  
+  stan_data$map_indiv_to_age_MM <- d_MM_unique_ages$age
+  stan_data$map_indiv_to_age_FF <- d_FF_unique_ages$age
+  stan_data$map_indiv_to_age_FM <- d_FM_unique_ages$age
+  stan_data$map_indiv_to_age_MF <- d_MF_unique_ages$age
+  
+  # finding general map individual to age 
+  tmp <- contact
+  tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
+  tmp[, age_idx := age + 1]
+  tmp[, age_strata_idx := as.numeric(alter_age_strata)]
+  tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+  tmp[, gender_comb_idx := fcase(
+    gender == "Male" & alter_gender == "Male", 1,
+    gender == "Female" & alter_gender == "Female", 2,
+    gender == "Male" & alter_gender == "Female", 3,
+    gender == "Female" & alter_gender == "Male", 4,
+    default = NA
+  )]
+  tmp[, f:=row_major_idx*4 + gender_comb_idx]
+  
+  f_list = tmp$f
+  unique_f_list = unique(f_list)
+  nb_f = length(unique_f_list)
+  N = length(tmp$y)
+  
+  map_indiv_to_age = matrix(0, N, nb_f)
+  # print(map_indiv_to_age)
+  # creating map individual to age matrix
+  
+  for (i in 1:N){
+    for (w in which(unique_f_list==f_list[i])){
+      map_indiv_to_age[i, w] = 1
+    }
+  }
+  
+  stan_data$U <- nb_f
+  stan_data$map_indiv_to_age <- map_indiv_to_age
+
+}
 # Map age to age strata
 add_map_age_to_strata <- function(stan_data, survey = "COVIMOD"){
   if (survey == "COVIMOD"){

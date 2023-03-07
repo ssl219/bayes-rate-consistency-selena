@@ -315,7 +315,7 @@ print(cum_MM)
 ```{r}
 # sanity check
 N_MM = length(d_order_test_everything_MM$y)
-print(N_MM)
+print(N_MM) # THIS IS NOTE N_MM, as we are not in strata space
 ```
 
 ```{r}
@@ -342,17 +342,70 @@ tmp[,list(new_id, alter_age_strata, alter_gender, age, gender, y, n, age_idx, ag
 ```{r}
 # finding the log of the household offsets
 d_order_test_everything <- d.everything[wave==1]
-d_order_test_everything <- d_order_test_everything[order(new_id, alter_age_strata, gender, alter_gender)]
+d_order_test_everything <- d_order_test_everything[order(age, new_id, alter_age, gender, alter_gender)]
 d_order_test_everything_MM <- d_order_test_everything[gender=="Male" & alter_gender=="Male"]
-d_order_test_everything_MM <- d_order_test_everything_MM[order(age, new_id,  alter_age)]
 d_order_test_everything_MM
 d_everything_logH_MM <- log(d_order_test_everything_MM$Hic_b)
 ```
 ```{r}
 d_everything_logH_MM
 ```
+```{r}
+# findings maps from individual to age for each gender combination
+d_order_test_everything_MM
+d_order_test_everything_MM_unique_part_ages <- d_order_test_everything_MM %>% distinct(new_id, .keep_all=TRUE)
+map_indiv_to_age_MM <- d_order_test_everything_MM_unique_part_ages$age
+```
+
+```{r}
+# finding general map individual to age 
+tmp <- d_comb_no_dupl[wave==1]
+tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
+tmp[, age_idx := age + 1]
+tmp[, age_strata_idx := as.numeric(alter_age_strata)]
+tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+tmp[, gender_comb_idx := fcase(
+  gender == "Male" & alter_gender == "Male", 1,
+  gender == "Female" & alter_gender == "Female", 2,
+  gender == "Male" & alter_gender == "Female", 3,
+  gender == "Female" & alter_gender == "Male", 4,
+  default = NA
+  )]
+tmp[, f:=row_major_idx*4 + gender_comb_idx]
+tmp[,list(new_id, alter_age_strata, alter_gender, age, gender, y, n, age_idx, age_strata_idx, row_major_idx, gender_comb_idx, f)]
+```
+
+```{r}
+f_list = tmp$f
+f_list
+unique_f_list = unique(f_list)
+unique_f_list
+```
+
+```{r}
+nb_f = length(unique_f_list)
+nb_f
+# sanity check
+length(f_list) == length(tmp$y)
+N = length(tmp$y)
+```
+
+```{r}
+# creating map individual to age
+# initialising 
+map_indiv_to_age = matrix(0, N, nb_f)
+# print(map_indiv_to_age)
+# creating map individual to age matrix
+
+for (i in 1:N){
+  for (w in which(unique_f_list==f_list[i])){
+    map_indiv_to_age[i, w] = 1
+    }
+  }
 
 
+# map_indiv_to_age[1:40, 1:30]
+```
 
 ## Export data
 ```{r}
