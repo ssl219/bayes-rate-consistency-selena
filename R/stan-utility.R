@@ -231,6 +231,7 @@ add_ages_contacts <- function(stan_data, everything){
   stan_data$cum_FF <- create_cumulative_list(d, stan_data$P_FF, gender_comb="FF")
   stan_data$cum_MF <- create_cumulative_list(d, stan_data$P_MF, gender_comb="MF")
   stan_data$cum_FM <- create_cumulative_list(d, stan_data$P_FM, gender_comb="FM")
+  return(stan_data)
 }
 
 add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
@@ -304,6 +305,7 @@ add_household_offsets <- function(stan_data, everything){
   stan_data$log_H_FF <- log(d_everything_FF$Hic_b)
   stan_data$log_H_MF <- log(d_everything_MF$Hic_b)
   stan_data$log_H_FM <- log(d_everything_FM$Hic_b)
+  return(stan_data)
 }
 
 
@@ -583,18 +585,20 @@ add_map_indiv_to_age <- function(stan_data, contact, everything){
   nb_f = length(unique_f_list)
   N = length(tmp$y)
   
-  map_indiv_to_age = matrix(0, N, nb_f)
+  map_indiv_to_age = matrix(0, nrow=N, ncol=nb_f)
   # print(map_indiv_to_age)
   # creating map individual to age matrix
   
   for (i in 1:N){
     for (w in which(unique_f_list==f_list[i])){
-      map_indiv_to_age[i, w] = 1
+      map_indiv_to_age[i, w] <- 1
     }
   }
   
   stan_data$U <- nb_f
   stan_data$map_indiv_to_age <- map_indiv_to_age
+  
+  return(stan_data)
 
 }
 # Map age to age strata

@@ -22,7 +22,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -79,14 +79,14 @@ stan_data <- add_N(stan_data, dt.cnt, survey = "COVIMOD", new_hh=TRUE)
 # # Add missing u index
 # dt.cnt[, u := fcase(wave == 1, 1)]
 
-# # Add flattened list of ages of contacts and corresponding cumulative list
-# stan_data <- add_ages_contacts(stan_data, dt.offsets)
+# Add flattened list of ages of contacts and corresponding cumulative list
+stan_data <- add_ages_contacts(stan_data, dt.offsets)
 
 # Add row major index
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
-# # Add household offsets
-# stan_data <- add_household_offsets(stan_data, dt.offsets)
+# Add household offsets
+stan_data <- add_household_offsets(stan_data, dt.offsets)
 
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data)
