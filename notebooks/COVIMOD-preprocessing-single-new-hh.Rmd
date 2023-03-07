@@ -406,6 +406,21 @@ for (i in 1:N){
 
 # map_indiv_to_age[1:40, 1:30]
 ```
+```{r}
+
+d <- d.everything[order(age, new_id, alter_age, gender, alter_gender)]
+  d_MM <- d[gender == "Male" & alter_gender == "Male"]
+  d_FF <- d[gender == "Female" & alter_gender == "Female"]
+  d_MF <- d[gender == "Male" & alter_gender == "Female"]
+  d_FM <- d[gender == "Female" & alter_gender == "Male"]
+  
+  B_MM <- d_MM$alter_age
+  B_FF <- d_FF$alter_age
+  B_MF <- d_MF$alter_age
+  B_FM <- d_FM$alter_age
+```
+
+
 
 ## Export data
 ```{r}

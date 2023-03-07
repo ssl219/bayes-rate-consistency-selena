@@ -177,22 +177,22 @@ add_N <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE, 
 }
 
 create_cumulative_list <- function(d_ordered_everything, no_participants, gender_comb="MM"){
-  if (gender_comb = "MM"){
+  if (gender_comb == "MM"){
     d_ordered_everything <- d_ordered_everything[gender=="Male" & alter_gender=="Male"]
     d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
   }
 
-  if (gender_comb = "FF"){
+  if (gender_comb == "FF"){
     d_ordered_everything <- d_ordered_everything[gender=="Female" & alter_gender=="Female"]
     d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
   }
   
-  if (gender_comb = "MF"){
+  if (gender_comb == "MF"){
     d_ordered_everything <- d_ordered_everything[gender=="Male" & alter_gender=="Female"]
     d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
   }
   
-  if (gender_comb = "FM"){
+  if (gender_comb == "FM"){
     d_ordered_everything <- d_ordered_everything[gender=="Female" & alter_gender=="Male"]
     d_ordered_everything <- d_ordered_everything[order(age, new_id, alter_age)]
   }
@@ -227,10 +227,10 @@ add_ages_contacts <- function(stan_data, everything){
   stan_data$B_MF <- d[gender == "Male" & alter_gender == "Female"]$alter_age
   stan_data$B_FM <- d[gender == "Female" & alter_gender == "Male"]$alter_age
   
-  stan_data$cum_MM <- create_cumulative_list(d_ordered_everything, stan_data$P_MM, gender_comb="MM")
-  stan_data$cum_FF <- create_cumulative_list(d_ordered_everything, stan_data$P_FF, gender_comb="FF")
-  stan_data$cum_MF <- create_cumulative_list(d_ordered_everything, stan_data$P_MF, gender_comb="MF")
-  stan_data$cum_FM <- create_cumulative_list(d_ordered_everything, stan_data$P_FM, gender_comb="FM")
+  stan_data$cum_MM <- create_cumulative_list(d, stan_data$P_MM, gender_comb="MM")
+  stan_data$cum_FF <- create_cumulative_list(d, stan_data$P_FF, gender_comb="FF")
+  stan_data$cum_MF <- create_cumulative_list(d, stan_data$P_MF, gender_comb="MF")
+  stan_data$cum_FM <- create_cumulative_list(d, stan_data$P_FM, gender_comb="FM")
 }
 
 add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
@@ -300,10 +300,10 @@ add_household_offsets <- function(stan_data, everything){
   d_everything_MF <- d_everything[gender=="Male" & alter_gender=="Female"]
   d_everything_FM <- d_everything[gender=="Female" & alter_gender=="Male"]
 
-  stan_data$log_H_MM <- log(d_order_test_everything_MM$Hic_b)
-  stan_data$log_H_FF <- log(d_order_test_everything_FF$Hic_b)
-  stan_data$log_H_MF <- log(d_order_test_everything_MF$Hic_b)
-  stan_data$log_H_FM <- log(d_order_test_everything_FM$Hic_b)
+  stan_data$log_H_MM <- log(d_everything_MM$Hic_b)
+  stan_data$log_H_FF <- log(d_everything_FF$Hic_b)
+  stan_data$log_H_MF <- log(d_everything_MF$Hic_b)
+  stan_data$log_H_FM <- log(d_everything_FM$Hic_b)
 }
 
 
