@@ -178,7 +178,7 @@ extract_posterior_rates <- function(po){
   return(dt.po)
 }
 
-posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation=FALSE, outdir=NA){
+posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation=FALSE, outdir=NA, new_hh=FALSE){
   ps <- c(0.5, 0.025, 0.975)
   p_labs <- c('M','CL','CU')
 
@@ -207,22 +207,33 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
                             comb_idx %in% c(2,4), "Female", default = NA)]
     dt.po[, alter_gender := fcase(comb_idx %in% c(1,4), "Male",
                                   comb_idx %in% c(2,3), "Female", default = NA)]
-
-    # Load datasets
-    dtp <- copy(dt.pop)
-    setnames(dtp, c("age", "gender"), c("alter_age", "alter_gender"))
-    dt.po <- merge(dt.po, dtp, by=c("alter_age", "alter_gender"), all.x = TRUE)
-
-    dt.po[, intensity_M := M * pop]
-    dt.po[, intensity_CL := CL * pop]
-    dt.po[, intensity_CU := CU * pop]
-
-    if(!is.na(outdir)){
-      saveRDS(dt.po, file.path(outdir, "intensity_matrix.rds"))
-    } else {
-      warning("\n outdir is not specified. Results were not saved.")
+    
+    if (new_hh){
+      if(!is.na(outdir)){
+        saveRDS(dt.po, file.path(outdir, "rate_matrix.rds"))
+      } else {
+        warning("\n outdir is not specified. Results were not saved.")
+      }
     }
-
+    
+    else{
+      # Load datasets
+      dtp <- copy(dt.pop)
+      setnames(dtp, c("age", "gender"), c("alter_age", "alter_gender"))
+      dt.po <- merge(dt.po, dtp, by=c("alter_age", "alter_gender"), all.x = TRUE)
+      
+      dt.po[, intensity_M := M * pop]
+      dt.po[, intensity_CL := CL * pop]
+      dt.po[, intensity_CU := CU * pop]
+      
+      if(!is.na(outdir)){
+        saveRDS(dt.po, file.path(outdir, "intensity_matrix.rds"))
+      } 
+      else {
+        warning("\n outdir is not specified. Results were not saved.")
+      }
+    }
+    
     return(dt.po)
   } else { # Marginal contact intensity by gender
 

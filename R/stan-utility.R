@@ -227,6 +227,11 @@ add_ages_contacts <- function(stan_data, everything){
   stan_data$B_MF <- d[gender == "Male" & alter_gender == "Female"]$alter_age
   stan_data$B_FM <- d[gender == "Female" & alter_gender == "Male"]$alter_age
   
+  stan_data$A_MM <-length(stan_data$B_MM)
+  stan_data$A_FF <-length(stan_data$B_FF)
+  stan_data$A_MF <-length(stan_data$B_MF)
+  stan_data$A_FM <-length(stan_data$B_FM)
+  
   stan_data$cum_MM <- create_cumulative_list(d, stan_data$P_MM, gender_comb="MM")
   stan_data$cum_FF <- create_cumulative_list(d, stan_data$P_FF, gender_comb="FF")
   stan_data$cum_MF <- create_cumulative_list(d, stan_data$P_MF, gender_comb="MF")

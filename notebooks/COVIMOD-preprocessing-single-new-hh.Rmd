@@ -315,7 +315,7 @@ print(cum_MM)
 ```{r}
 # sanity check
 N_MM = length(d_order_test_everything_MM$y)
-print(N_MM) # THIS IS NOTE N_MM, as we are not in strata space
+print(N_MM) # THIS IS NOT N_MM, as we are not in strata space
 ```
 
 ```{r}

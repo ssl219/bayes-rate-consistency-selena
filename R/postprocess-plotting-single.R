@@ -86,7 +86,31 @@ plot_predicted_contacts <- function(dt, outdir=NA){
 #' dt.po <- extract_posterior_predictions(fit, dt)
 #' plot_posterior_intensities(dt.po)
 #' }
-plot_posterior_intensities <- function(dt, outdir=NA){
+plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
+  if (new_hh){
+    p <- ggplot(dt) +
+      geom_tile(aes(x = age, y = alter_age, fill = intensity_M)) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate" ) +
+      coord_equal() +
+      facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_continuous(expand = c(0,0)) +
+      viridis::scale_fill_viridis(na.value="white", option="H") +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent")
+      )
+    
+    if(!is.na(outdir)){
+      ggsave(file.path(outdir, "figures", "rate_matrices.png"), plot = p)
+    } else {
+      return(p)
+    }
+  }
+  else{
+    
+  
   p <- ggplot(dt) +
     geom_tile(aes(x = age, y = alter_age, fill = intensity_M)) +
     labs(x = "Participants' age", y = "Contacts' age", fill = "Contact intensity" ) +
@@ -105,6 +129,7 @@ plot_posterior_intensities <- function(dt, outdir=NA){
     ggsave(file.path(outdir, "figures", "intensity_matrices.png"), plot = p)
   } else {
     return(p)
+  }
   }
 }
 

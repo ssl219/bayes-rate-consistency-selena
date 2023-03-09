@@ -96,7 +96,7 @@ dt.amb
 
 ### Group contacts
 ```{r}
-SDcols_Q75 <- c("Q75_u18_work", "Q75_u18_school", "Q75_u18_else", 
+SDcols_Q75 <- c("Q75_u18_work", "Q75_u18_school", "Q75_u18_else",
                 "Q75_1864_work", "Q75_1864_school", "Q75_1864_else",
                 "Q75_o64_work", "Q75_o64_school", "Q75_o64_else")
 
@@ -118,12 +118,6 @@ dt.hh
 ```{r}
 dt.hh[(is.na(alter_age_strata) | is.na(alter_gender))]
 ```
-
-```{r}
-dt.nhh
-```
-
-
 
 ## Combine household and non-household data
 ```{r}
@@ -157,51 +151,58 @@ dt.cmb
 # Participant size by wave and repetition
 dt.part.size <- dt.part[, .(N = .N), by=.(wave, imp_age, gender)]
 setnames(dt.part.size, "imp_age", "age")
+dt.part.size
 
-# dt.part
-# dt.part.size
-
+```
+```{r}
 # Aggregate by household type
 dt.cmb.h <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, type, imp_age, gender, alter_age_strata, alter_gender)]
 setnames(dt.cmb.h, "imp_age", "age")
 
-# dt.cmb.household
+dt.cmb.h
+```
 
-# Aggregate ambiguous contacts
-dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
-setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
+```{r}
+dt.cmb.hh <- dt.cmb.h[dt.cmb.h$type=="hh"]
+dt.cmb.hh <- dt.cmb.hh[, .(wave, age, gender, alter_age_strata, alter_gender, y)]
+dt.cmb.hh
+```
+
+
+```{r}
+# # Aggregate ambiguous contacts
+# dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
+# setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
 
 ```
 
 ```{r}
-# Aggregate age-gender-specific contacts
-dt.cmb.agg <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, imp_age, gender, alter_age_strata, alter_gender)]
-setnames(dt.cmb.agg, "imp_age", "age")
+# # Aggregate age-gender-specific contacts
+# dt.cmb.hh.agg <- dt.cmb.hh[, .(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender, alter_age_strata, alter_gender)]
+# not needed, already unique age-gender combinations
 
-# dt.cmb.agg
-# dt.cmb.agg[(is.na(alter_age_strata) | is.na(alter_gender))]
+# # Aggregate ambiguous contacts
+# dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
+# setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
 
-# Aggregate ambiguous contacts
-dt.amb.agg <- dt.amb[, .(y_amb = sum(y_amb, na.rm=TRUE)), by=.(wave, imp_age, gender)]
-setnames(dt.amb.agg, c("imp_age", "y_amb"), c("age", "y"))
+# # Total number of contacts (specific + ambiguous + group)
+# dt.cmb.agg.margin <- dt.cmb.agg[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
+# dt.tot <- rbind(dt.cmb.agg.margin, dt.amb.agg, dt.grp)
+# dt.tot <- dt.tot[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
+# setnames(dt.tot, "y", "y_tot")
 
-# Total number of contacts (specific + ambiguous + group)
-dt.cmb.agg.margin <- dt.cmb.agg[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
-dt.tot <- rbind(dt.cmb.agg.margin, dt.amb.agg, dt.grp)
-dt.tot <- dt.tot[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
-setnames(dt.tot, "y", "y_tot")
+dt.cmb.hh.margin <- dt.cmb.hh[,.(y = sum(y, na.rm=TRUE)), by=.(wave, age, gender)]
 
 # Calculate zeta term, proportion of detailed age information S_{ta}^g
-dt.amb.agg.margin <- merge(dt.cmb.agg.margin, dt.tot, by=c("wave", "age","gender"), all.x=TRUE)
-dt.amb.agg.margin[, zeta := y/y_tot]
-dt.amb.agg.margin[, zeta := ifelse(is.nan(zeta), 1, zeta)]
+# we are assuming for households this is equal to 1 for every observations
+# delete the observations with missing age and gender contact information
+dt.cmb.hh.margin[, zeta := 1]
 
 # Offset terms
-dt.offsets <- merge(dt.part.size, dt.amb.agg.margin[,.(wave, age, gender, zeta)], 
-                    by=c("wave","age","gender"), all.x = T)
+dt.offsets <- merge(dt.part.size, dt.cmb.hh.margin[,.(wave, age, gender, zeta)], 
+                    by=c("wave","age","gender"), all.y = TRUE)
 dt.offsets[is.na(zeta), zeta := 1]
-
-dt.tot[, .(y = sum(y_tot)), by=.(wave)]
+dt.offsets <- dt.offsets[!is.na(age) & !is.na(gender)]
 ```
 
 ```{r}
@@ -211,15 +212,15 @@ dt.offsets
 
 ```{r}
 # Remove participants and contacts 85+
-dt.cmb.agg <- dt.cmb.agg[!(age > 84 | alter_age_strata == "85+")]
+dt.cmb.hh <- dt.cmb.hh[!(age > 84 | alter_age_strata == "85+")]
 dt.offsets <- dt.offsets[!(age > 84)]
 
 # Remove remaining NAs
-dt.cmb.agg <- dt.cmb.agg[!is.na(alter_gender)]
+dt.cmb.hh <- dt.cmb.hh[!is.na(alter_gender)]
 
 g <- make_grid(85, 5, gender = TRUE)
 setnames(g, "u", "wave")
-d <- merge(g, dt.cmb.agg, by=c("wave", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
+d <- merge(g, dt.cmb.hh, by=c("wave", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
 d <- merge(d, dt.offsets, by = c("wave", "age", "gender"), all.x = TRUE)
 
 # Impute true zeroes
@@ -229,20 +230,19 @@ d <- d[is.na(y), y := 0]
 ```
 
 
-
-
 ```{r}
+# d[zeta!=1]
 d
 ```
 
 ```{r}
-View(d[gender == "Male" & alter_gender == "Male"])
+# View(d[gender == "Male" & alter_gender == "Male"])
 ```
 
 ```{r}
-d1 <- complete(dt.offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
-View(dt.offsets[gender == "Male"])
-View(d1)
+# d1 <- complete(dt.offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
+# View(dt.offsets[gender == "Male"])
+# View(d1)
 ```
 
 

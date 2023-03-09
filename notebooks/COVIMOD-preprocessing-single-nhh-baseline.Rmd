@@ -160,6 +160,7 @@ dt.tot[, .(y = sum(y_tot)), by=.(wave)]
 
 ```{r}
 dt.offsets.nhh
+# note these are not all the possible age-gender combinations
 ```
 
 

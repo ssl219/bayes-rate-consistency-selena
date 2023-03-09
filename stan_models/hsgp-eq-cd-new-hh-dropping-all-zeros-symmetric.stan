@@ -83,19 +83,19 @@ parameters
   vector[G] beta_0;
   real<lower=0> nu;
 
-  vector<lower=0>[G] gp_rho_1;
-  vector<lower=0>[G] gp_rho_2;
-  vector<lower=0, upper=pi()/2>[G] gp_alpha_unif;
+  vector<lower=0>[G-1] gp_rho_1;
+  vector<lower=0>[G-1] gp_rho_2;
+  vector<lower=0, upper=pi()/2>[G-1] gp_alpha_unif;
 
-  matrix[(G)*M1, M2] z; // HSGP basis function coefficients
+  matrix[(G-1)*M1, M2] z; // HSGP basis function coefficients
 }
 
 transformed parameters
 {
-  vector<lower=0>[G] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
-  // vector<lower=0>[G] gp_alpha = gp_alpha_unif;
+  vector<lower=0>[G-1] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
-  matrix[A,A] f_MM, f_FF, f_MF, f_FM;
+
+  matrix[A,A] f_MM, f_FF, f_MF;
   matrix<lower=0>[P_MM,A] alpha_MM;
   matrix<lower=0>[P_FF,A] alpha_FF;
   matrix<lower=0>[P_FM,A] alpha_FM;
@@ -112,8 +112,6 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(M1+1):2*M1,]);
   f_MF = hsgp(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
-  f_FM = hsgp(A, gp_alpha[FM], gp_rho_1[FM], gp_rho_2[FM],
-              L1, L2, M1, M2, PHI1, PHI2, z[(3*M1+1):4*M1,]);
 
   alpha_MM = rep_matrix(0, P_MM, A); // initialize alpha_strata to zeros
   alpha_FF = rep_matrix(0, P_FF, A);
@@ -123,7 +121,7 @@ transformed parameters
 // have to add +1 to B_MM[j], cannot take index 0 for contact age 0, same thing for map_indiv_to_age_MM[i]
   for (i in 1:P_MM){
     for (j in cum_MM[i]+1:cum_MM[i+1]){
-    alpha_MM[i, B_MM[j]+1]= exp(beta_0[MM] + f_MM[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
+    alpha_MM[i, B_MM[j]+1]= exp(beta_0[MM] + symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
     }
   }
 
@@ -135,13 +133,13 @@ transformed parameters
 
   for (i in 1:P_FM){
     for (j in cum_FM[i]+1:cum_FM[i+1]){
-    alpha_FM[i, B_FM[j]+1]=exp(beta_0[FM] + f_FM[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
+    alpha_FM[i, B_FM[j]+1]=exp(beta_0[FM] + f_MF'[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
     }
   }
 
   for (i in 1:P_FF){
     for (j in cum_FF[i]+1:cum_FF[i+1]){
-    alpha_FF[i, B_FF[j]+1]=exp(beta_0[FF] + f_FF[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
+    alpha_FF[i, B_FF[j]+1]=exp(beta_0[FF] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
     }
   }
   
@@ -191,10 +189,11 @@ generated quantities
   array[P_FM,C] int yhat_strata_FM;
   array[G] matrix[A,A] log_cnt_rate;
   
-  log_cnt_rate[MM] = beta_0[MM] + f_MM;
-  log_cnt_rate[FF] = beta_0[FF] + f_FF;
+  log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
+  log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
-  log_cnt_rate[FM] = beta_0[FM] + f_FM; 
+  log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
+
 
   {
     // row_vector[N] alpha_strata_flat_indiv_row = to_row_vector(alpha_strata_flat_indiv_row);
