@@ -24,7 +24,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-1",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-1",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -121,15 +121,15 @@ if(args$plot){
   po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   dt.po <- extract_posterior_rates(po)
   dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
-  dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
+  # dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
 
   rm(dt.po); suppressMessages(gc()); # Ease memory
 
   cat(" Making figures\n")
 
-  p <- plot_posterior_intensities(dt.matrix, outdir=export.path)
-  p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
-  p <- plot_marginal_intensities(dt.margin, outdir=export.path)
+  p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
+  # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
+  # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
 
   cat("\n DONE.\n")
 }

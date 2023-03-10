@@ -89,7 +89,7 @@ plot_predicted_contacts <- function(dt, outdir=NA){
 plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
   if (new_hh){
     p <- ggplot(dt) +
-      geom_tile(aes(x = age, y = alter_age, fill = intensity_M)) +
+      geom_tile(aes(x = age, y = alter_age, fill = M)) +
       labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate" ) +
       coord_equal() +
       facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) +
@@ -109,9 +109,7 @@ plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
     }
   }
   else{
-    
-  
-  p <- ggplot(dt) +
+    p <- ggplot(dt) +
     geom_tile(aes(x = age, y = alter_age, fill = intensity_M)) +
     labs(x = "Participants' age", y = "Contacts' age", fill = "Contact intensity" ) +
     coord_equal() +
