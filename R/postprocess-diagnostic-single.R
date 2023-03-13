@@ -16,20 +16,20 @@ make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
   # Diagnostics
   sampler_diagnostics <- fit$diagnostic_summary()
 
-  # Compute WAIC and LOO
-  tryCatch({
-    log_lik <- fit$draws("log_lik", format = "matrix")
-
-    n_inf_log_lik <- sum(is.infinite(log_lik))
-    if(n_inf_log_lik > 0){
-      .message <- paste("Detected", n_inf_log_lik, "Inf values in log_lik. Removing those iterations.")
-      warning(.message)
-      log_lik[is.infinite(log_lik)] <- NA
-    }
-    log_lik <- na.omit(log_lik)
-    WAIC <- loo::waic(log_lik)
-    LOO <- loo::loo(log_lik)
-  }, error = function(e) e)
+  # # Compute WAIC and LOO
+  # tryCatch({
+  #   log_lik <- fit$draws("log_lik", format = "matrix")
+  # 
+  #   n_inf_log_lik <- sum(is.infinite(log_lik))
+  #   if(n_inf_log_lik > 0){
+  #     .message <- paste("Detected", n_inf_log_lik, "Inf values in log_lik. Removing those iterations.")
+  #     warning(.message)
+  #     log_lik[is.infinite(log_lik)] <- NA
+  #   }
+  #   log_lik <- na.omit(log_lik)
+  #   WAIC <- loo::waic(log_lik)
+  #   LOO <- loo::loo(log_lik)
+  # }, error = function(e) e)
 
   # Time of execution
   time <- fit$time()
@@ -37,8 +37,8 @@ make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
   # save
   if(!is.na(outdir)){
     saveRDS(fit_summary, file = file.path(outdir, "fit_summary.rds"))
-    saveRDS(WAIC, file = file.path(outdir, "WAIC.rds"))
-    saveRDS(LOO, file = file.path(outdir, "LOO.rds"))
+    # saveRDS(WAIC, file = file.path(outdir, "WAIC.rds"))
+    # saveRDS(LOO, file = file.path(outdir, "LOO.rds"))
     saveRDS(sampler_diagnostics, file = file.path(outdir, "sampler_diagnostics.rds"))
     saveRDS(time, file = file.path(outdir, "time_elapsed.rds"))
   } else {

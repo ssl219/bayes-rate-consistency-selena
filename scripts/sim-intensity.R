@@ -61,7 +61,7 @@ source( file.path(args$repo.path, "R", "sim-intensity-utility.R") )
 #' @param dsim
 #' @param dpop Population data
 #'
-#' @return Simulated contact intesity/rate data.table
+#' @return Simulated contact intensity/rate data.table
 cntcts_sim_rates_by_age <- function(dsim, dpop)
 {
   dsim[, DUMMY := 1L]

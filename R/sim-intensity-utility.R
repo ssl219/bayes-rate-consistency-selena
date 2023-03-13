@@ -160,6 +160,20 @@ cntcts_sim_intensities_precovid_diagonal <- function()
   set(di, NULL, 'diff_age', NULL)
   return(di)
 }
+
+
+cntcts_sim_intensities_newhh_diagonal <- function()
+{
+  di <- as.data.table(expand.grid(age = 6:84, alter_age = 6:84 ))
+  di[, diff_age := age - alter_age]
+  di[, cntct_intensity := fcase(
+    age %in% 6:84  & diff_age == 20, 1,
+    age %in% 6:84  & diff_age %in% -8:8, pmax(0, 2.5 - 0.2 * abs(diff_age)),
+    default = 0)]
+  set(di, NULL, 'diff_age', NULL)
+  return(di)
+}
+
 # in-covid
 cntcts_sim_intensities_incovid_by_income_diagonal <- function()
 {
