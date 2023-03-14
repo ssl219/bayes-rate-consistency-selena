@@ -16,7 +16,7 @@ option_list <- list(
   optparse::make_option("--iter_warmup", type = "integer", default = 50,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 100,
+  optparse::make_option("--iter_sampling", type = "integer", default = 2,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
   optparse::make_option("--chains", type = "integer", default = 1,
@@ -48,7 +48,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-random.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-debugging.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -124,7 +124,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-random.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

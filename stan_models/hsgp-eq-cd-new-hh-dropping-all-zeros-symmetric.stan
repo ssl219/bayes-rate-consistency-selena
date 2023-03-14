@@ -14,6 +14,7 @@ data
   int<lower=1> C;       // Number of age strata
   int<lower=1> U;       // Number of unique age and gender combinations in all observations
 
+
   array[N_MM] int Y_MM; // Contacts for all participants (ordered) to strata c
   array[N_FF] int Y_FF;
   array[N_MF] int Y_MF;
@@ -41,6 +42,7 @@ data
   
   matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
 
+
   array[A_MM] real log_H_MM; // Log of household offsets (ordered in ascending order of participant age then contact age)
   array[A_FF] real log_H_FF;
   array[A_MF] real log_H_MF;
@@ -54,6 +56,10 @@ data
   int<lower=1> M1;  // Number of basis functions (cohort age dimension)
   real<lower=0> C2; // Factor to determine the boundary value L for age of contacted individuals (age difference dimension)
   int<lower=1> M2;  // Number of basis functions (age difference dimension)
+  
+
+
+
 }
 
 transformed data
@@ -113,10 +119,20 @@ transformed parameters
   f_MF = hsgp(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
 
+  // print("f_MM =", f_MM);
+  // print("f_FF =", f_FF);
+  // print("f_MF =", f_MF);
+
   alpha_MM = rep_matrix(0, P_MM, A); // initialize alpha_strata to zeros
   alpha_FF = rep_matrix(0, P_FF, A);
   alpha_MF = rep_matrix(0, P_MF, A);
   alpha_FM = rep_matrix(0, P_FM, A);
+
+  // print("alpha_MM initialisation =", alpha_MM);
+  // print("alpha_FF initialisation =", alpha_FF);
+  // print("alpha_MF initialisation =", alpha_MF);
+  // print("alpha_FM initialisation =", alpha_FM);
+
 
 // have to add +1 to B_MM[j], cannot take index 0 for contact age 0, same thing for map_indiv_to_age_MM[i]
   for (i in 1:P_MM){
@@ -142,16 +158,81 @@ transformed parameters
     alpha_FF[i, B_FF[j]+1]=exp(beta_0[FF] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
     }
   }
+
+  // print("alpha_MM after =", alpha_MM);
+  // print("alpha_FF after =", alpha_FF);
+  // print("alpha_MF after =", alpha_MF);
+  // print("alpha_FM after =", alpha_FM);
   
   alpha_strata_MM = alpha_MM * map_age_to_strata / nu + epsilon;
   alpha_strata_MF = alpha_MF * map_age_to_strata / nu + epsilon;
   alpha_strata_FM = alpha_FM * map_age_to_strata / nu + epsilon;
   alpha_strata_FF = alpha_FF * map_age_to_strata / nu + epsilon;
 
+  // print("alpha_strata_MM =", alpha_strata_MM);
+  // print("alpha_strata_FF =", alpha_strata_FF);
+  // print("alpha_strata_MF =", alpha_strata_MF);
+  // print("alpha_strata_FM =", alpha_strata_FM);
+
 }
 
 model
 {
+
+  print("N_MM =", N_MM);
+  print("N_FF =", N_FF);
+  print("N_FM =", N_FM);
+  print("N_MF =", N_MF);
+
+  print("A_MM =", A_MM);
+  print("A_FF =", A_FF);
+  print("A_FM =", A_FM);
+  print("A_MF =", A_MF);
+
+  print("Y_MM =", Y_MM);
+  print("Y_FF =", Y_FF);
+  print("Y_FM =", Y_FM);
+  print("Y_MF =", Y_MF);
+
+  print("P_MM =", P_MM);
+  print("P_FF =", P_FF);
+  print("P_FM =", P_FM);
+  print("P_MF =", P_MF);
+
+  print("A =", A);
+  print("C =", C);
+  print("U =", U);
+
+  print("B_MM =", B_MM);
+  print("B_FF =", B_FF);
+  print("B_FM =", B_FM);
+  print("B_MF =", B_MF);
+
+  print("cum_MM =", cum_MM);
+  print("cum_FF =", cum_FF);
+  print("cum_FM =", cum_FM);
+  print("cum_MF =", cum_MF);
+
+  print("ROW_MAJOR_IDX_MM =", ROW_MAJOR_IDX_MM);
+  print("ROW_MAJOR_IDX_FF =", ROW_MAJOR_IDX_FF);
+  print("ROW_MAJOR_IDX_FM =", ROW_MAJOR_IDX_FM);
+  print("ROW_MAJOR_IDX_MF =", ROW_MAJOR_IDX_MF);
+
+  // print("map_indiv_to_age_MM =", map_indiv_to_age_MM);
+  // print("map_indiv_to_age_FF =", map_indiv_to_age_FF);
+  // print("map_indiv_to_age_FM =", map_indiv_to_age_FM);
+  // print("map_indiv_to_age_MF =", map_indiv_to_age_MF);
+
+  // print("map_indiv_to_age =", map_indiv_to_age);
+
+  // print("log_H_MM =", log_H_MM);
+  // print("log_H_FF =", log_H_FF);
+  // print("log_H_FM =", log_H_FM);
+  // print("log_H_MF =", log_H_MF);
+
+  // print("age_idx_std =", age_idx_std);
+  // print("map_age_to_strata =", map_age_to_strata);
+
   // GP priors
   target += inv_gamma_lpdf(gp_rho_1 | 5, 5);
   target += inv_gamma_lpdf(gp_rho_2 | 5, 5);
@@ -239,6 +320,8 @@ generated quantities
   
     }
   }
+
+// I have a model that I am trying to fit to some data. The model is a hierarchical model with a GP prior on the random effects. I am trying to fit the model using the NUTS sampler. The model is a bit complicated, but I have tried to simplify it as much as possible. The model is a hierarchical model with a GP prior on the random effects. I am trying to fit the model using the NUTS sampler. The model is a bit complicated, but I have tried to simplify it as much as possible.
   
 
 

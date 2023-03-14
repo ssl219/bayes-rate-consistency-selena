@@ -168,7 +168,7 @@ cntcts_sim_intensities_newhh_diagonal <- function()
   di[, diff_age := age - alter_age]
   di[, cntct_intensity := fcase(
     age %in% 6:84  & diff_age == 20, 1,
-    age %in% 6:84  & diff_age %in% -8:8, pmax(0, 2.5 - 0.2 * abs(diff_age)),
+    # age %in% 6:84  & diff_age %in% -8:8, pmax(0, 2.5 - 0.2 * abs(diff_age)),
     default = 0)]
   set(di, NULL, 'diff_age', NULL)
   return(di)

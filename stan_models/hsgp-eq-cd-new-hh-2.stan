@@ -100,10 +100,10 @@ transformed parameters
   f_FM = hsgp(A, gp_alpha[FM], gp_rho_1[FM], gp_rho_2[FM],
               L1, L2, M1, M2, PHI1, PHI2, z[(3*M1+1):4*M1,]);
               
-  part_f_MM[:, :] = f_MM[map_indiv_to_age_M, :]
-  part_f_FF[:, :] = f_FF[map_indiv_to_age_F, :]
-  part_f_FM[:, :] = f_FM[map_indiv_to_age_F, :]
-  part_f_MF[:, :] = f_MF[map_indiv_to_age_M, :]
+  part_f_MM[:, :] = f_MM[map_indiv_to_age_MM, :]
+  part_f_FF[:, :] = f_FF[map_indiv_to_age_FF, :]
+  part_f_FM[:, :] = f_FM[map_indiv_to_age_FM, :]
+  part_f_MF[:, :] = f_MF[map_indiv_to_age_MF, :]
   
   print("part_f_MM =", part_f_MM)
   print("part_f_FF =", part_f_FF)
