@@ -497,6 +497,85 @@ d[, age_strata_idx := as.numeric(alter_age_strata)]
 d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
 d  
 ```
+```{r}
+# row_major_idx_MM
+# subset dataset to MM contacts and to a single wave (here it is already the case)
+contacts <- d_comb_no_dupl
+contacts_w1 <- contacts[wave==1]
+d_MM <-  contacts_w1[gender == "Male" & alter_gender == "Male"]
+d_FF <-  contacts_w1[gender == "Female" & alter_gender == "Female"]
+d_MF <-  contacts_w1[gender == "Male" & alter_gender == "Female"]
+d_FM <-  contacts_w1[gender == "Female" & alter_gender == "Male"]
+```
+
+```{r}
+# gender combinations indices
+MM = 1
+FF = 2
+```
+
+
+```{r}
+# order d_MM in same order than P_MM, by order(age, new_id, alter_age_strata, gender, alter_gender)
+d_MM <- d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_MM
+```
+
+```{r}
+# don't need the unique() function
+id_list_test = c("1257ajr", "1257ajr", "ahb456", "ahb456", "29foha", "29foha", "29foha", "29844ha", "28gashf")
+id_factor_test = as.numeric(as.factor(id_list_test))
+id_factor_test
+# we can see that as.factor orders the id's straight away by alphabetical order, problematic if we want the id's ordered by age
+# need to specify order of levels first
+id_factor_test_right_order = as.numeric(factor(id_list_test, levels=unique(id_list_test)))
+id_factor_test_right_order
+```
+
+```{r}
+# also have the issue that alter_age_strata is not ordered and not complete
+ covimod_strata_levels_test = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+```
+
+```{r}
+d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels_test))]
+d_MM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+d_MM
+```
+```{r}
+d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+```
+
+
+
+
+```{r}
+d_FF <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_FF
+d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")))]
+d_FF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+d_FF
+```
+
+```{r}
+d_MF <- d_MF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_MF
+d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+d_MF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")))]
+d_MF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+d_MF
+```
+
+```{r}
+d_FM <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_FM
+d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")))]
+d_FM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+d_FM
+```
 
 
 
