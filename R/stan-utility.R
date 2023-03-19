@@ -285,7 +285,7 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     }
     else{
     # this is assuming we have a single wave
-    d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
+    d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
     
     d_MM <-  d[gender == "Male" & alter_gender == "Male"]
     d_FF <-  d[gender == "Female" & alter_gender == "Female"]
@@ -323,18 +323,62 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
   return(stan_data)
 }
 
-add_household_offsets <- function(stan_data, everything){
-  d_everything <- everything[order(age, new_id, alter_age, gender, alter_gender)]
-  d_everything_MM <- d_everything[gender=="Male" & alter_gender=="Male"]
-  d_everything_FF <- d_everything[gender=="Female" & alter_gender=="Female"]
-  d_everything_MF <- d_everything[gender=="Male" & alter_gender=="Female"]
-  d_everything_FM <- d_everything[gender=="Female" & alter_gender=="Male"]
+create_household_matrix <- function(d, P, A){
+  H = matrix(0, nrow=P, ncol=A)
+  for(i in 1:length(d$y)){
+    H[d$new_id_idx[i], d$alter_age[i]] = d$Hic_b[i]
+  }
+  return(H)
+}
 
-  stan_data$log_H_MM <- log(d_everything_MM$Hic_b)
-  stan_data$log_H_FF <- log(d_everything_FF$Hic_b)
-  stan_data$log_H_MF <- log(d_everything_MF$Hic_b)
-  stan_data$log_H_FM <- log(d_everything_FM$Hic_b)
-  return(stan_data)
+add_household_offsets <- function(stan_data, everything, no_log=FALSE){
+  
+  if(no_log){
+    
+    d <- everything[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    
+    d_MM <-  d[gender == "Male" & alter_gender == "Male"]
+    d_FF <-  d[gender == "Female" & alter_gender == "Female"]
+    d_MF <-  d[gender == "Male" & alter_gender == "Female"]
+    d_FM <-  d[gender == "Female" & alter_gender == "Male"]
+    
+    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    
+    d_MM <- d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    
+    d_FF <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    
+    d_MF <- d_MF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+
+    d_FM <- d_FM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    
+    stan_data$H_MM <- create_household_matrix(d_MM, stan_data$P_MM, stan_data$A)
+    stan_data$H_FF <- create_household_matrix(d_FF, stan_data$P_FF, stan_data$A)
+    stan_data$H_MF <- create_household_matrix(d_MF, stan_data$P_MF, stan_data$A)
+    stan_data$H_FM <- create_household_matrix(d_FM, stan_data$P_FM, stan_data$A)
+    
+    return(stan_data)
+    
+  }
+  
+  else{
+    d_everything <- everything[order(age, new_id, alter_age, gender, alter_gender)]
+    d_everything_MM <- d_everything[gender=="Male" & alter_gender=="Male"]
+    d_everything_FF <- d_everything[gender=="Female" & alter_gender=="Female"]
+    d_everything_MF <- d_everything[gender=="Male" & alter_gender=="Female"]
+    d_everything_FM <- d_everything[gender=="Female" & alter_gender=="Male"]
+    
+    stan_data$log_H_MM <- log(d_everything_MM$Hic_b)
+    stan_data$log_H_FF <- log(d_everything_FF$Hic_b)
+    stan_data$log_H_MF <- log(d_everything_MF$Hic_b)
+    stan_data$log_H_FM <- log(d_everything_FM$Hic_b)
+    return(stan_data)
+  }
+  
 }
 
 

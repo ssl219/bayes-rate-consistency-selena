@@ -577,6 +577,26 @@ d_FM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
 d_FM
 ```
 
+```{r}
+length(d_MM$y)
+H_MM = matrix(0, nrow=P_MM, ncol=A)
+# note length(d_MM) gives number of variables
+H_MM[d_MM$new_id_idx[1]]
+H_MM
+
+```
+
+
+```{r}
+# creating households offsets for new-hh-2 model, no log
+P_MM = length(unique(d_MM$new_id))
+A = 85
+H_MM = matrix(0, nrow=P_MM, ncol=A)
+for(i in 1:length(d_MM$y)){
+  H_MM[d_MM$new_id_idx[i], d_MM$alter_age[i]] = d_MM$Hic_b[i]
+}
+H_MM
+```
 
 
 ## Export data

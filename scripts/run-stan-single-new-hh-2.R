@@ -7,23 +7,22 @@ library(data.table)
 library(stringr)
 library(cmdstanr)
 library(tidyr)
-library(dplyr)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 1,
+  optparse::make_option("--iter_warmup", type = "integer", default = 50,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 1,
+  optparse::make_option("--iter_sampling", type = "integer", default = 100,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -87,7 +86,7 @@ stan_data <- add_ages_contacts(stan_data, dt.offsets)
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
 # Add household offsets
-stan_data <- add_household_offsets(stan_data, dt.offsets)
+stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=TRUE)
 
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data)
@@ -125,7 +124,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-2-chains.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")
