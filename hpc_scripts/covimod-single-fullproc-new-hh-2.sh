@@ -5,7 +5,7 @@
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
-MODEL="hsgp-eq-cd"
+MODEL="hsgp-eq-cd-new-hh-2"
 HSGP_C=1.5
 HSGP_M=20
 
@@ -22,5 +22,5 @@ source activate Renv
 
 Rscript $REPO_PATH/scripts/run-stan-single-hh.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
-MODEL=${MODEL}-${WAVE}-"hh"
+MODEL=${MODEL}-${WAVE}-"new-hh-2"
 Rscript $REPO_PATH/scripts/postprocess-single-hh.R --model $MODEL --mixing $MIXING
