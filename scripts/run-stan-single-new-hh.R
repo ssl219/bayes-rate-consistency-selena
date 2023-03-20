@@ -7,6 +7,7 @@ library(data.table)
 library(stringr)
 library(cmdstanr)
 library(tidyr)
+library(dyplr)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
