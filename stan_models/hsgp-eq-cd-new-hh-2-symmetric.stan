@@ -418,7 +418,7 @@ parameters
 
 transformed parameters
 {
-  vector<lower=0>[G] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
+  vector<lower=0>[G-1] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
   matrix[A,A] f_MM, f_FF, f_MF, f_FM;
   matrix[P_MM,A] log_m_MM;
