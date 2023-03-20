@@ -14,13 +14,13 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 500,
+  optparse::make_option("--iter_warmup", type = "integer", default = 50,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 1000,
+  optparse::make_option("--iter_sampling", type = "integer", default = 100,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
-  optparse::make_option("--chains", type = "integer", default = 8,
+  optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
   optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric",
@@ -49,6 +49,7 @@ option_list <- list(
 # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
 #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
 #                       dest = 'data.path'),
+
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 

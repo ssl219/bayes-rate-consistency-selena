@@ -23,7 +23,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 8,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2-symmetric",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -132,7 +132,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-random.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")
