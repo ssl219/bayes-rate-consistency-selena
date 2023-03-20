@@ -23,7 +23,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2-symmetric",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -87,7 +87,7 @@ stan_data <- add_ages_contacts(stan_data, dt.offsets)
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
 # Add household offsets
-stan_data <- add_household_offsets(stan_data, dt.offsets)
+stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=TRUE)
 
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data)
@@ -125,7 +125,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-newrowmajoridx.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-neworder.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

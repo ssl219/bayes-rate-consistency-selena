@@ -112,15 +112,15 @@ transformed parameters
   part_f_MF = rep_matrix(0, P_MF, A);
               
   for (i in 1:P_MM){
-    part_f_MM[i, :] = f_MM[map_indiv_to_age_MM[i]+1, :];
+    part_f_MM[i, :] = symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, :];
   }
   
   for (i in 1:P_FF){
-    part_f_FF[i, :] = f_FF[map_indiv_to_age_FF[i]+1, :];
+    part_f_FF[i, :] = symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, :];
   }
   
   for (i in 1:P_FM){
-    part_f_FM[i, :] = f_FM[map_indiv_to_age_FM[i]+1, :];
+    part_f_FM[i, :] = f_MF'[map_indiv_to_age_FM[i]+1, :];
   }
   
   for (i in 1:P_MF){
@@ -221,10 +221,11 @@ generated quantities
   array[G,A,C] int yhat_strata;
   array[G] matrix[A,A] log_cnt_rate;
   
-  log_cnt_rate[MM] = beta_0[MM] + f_MM;
-  log_cnt_rate[FF] = beta_0[FF] + f_FF;
+  log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
+  log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
-  log_cnt_rate[FM] = beta_0[FM] + f_FM; 
+  log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
+
 
   // {
   //   vector[N] alpha_strata_flat_indiv =
