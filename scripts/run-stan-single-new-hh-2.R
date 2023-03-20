@@ -7,6 +7,7 @@ library(data.table)
 library(stringr)
 library(cmdstanr)
 library(tidyr)
+library(dplyr)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
@@ -124,7 +125,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-random.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

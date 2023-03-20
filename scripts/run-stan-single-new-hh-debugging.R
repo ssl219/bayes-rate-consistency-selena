@@ -14,10 +14,10 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 1,
+  optparse::make_option("--iter_warmup", type = "integer", default = 50,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 1,
+  optparse::make_option("--iter_sampling", type = "integer", default = 100,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
   optparse::make_option("--chains", type = "integer", default = 1,
@@ -125,7 +125,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-2-chains.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-newrowmajoridx.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

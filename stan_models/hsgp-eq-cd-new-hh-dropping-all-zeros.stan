@@ -154,56 +154,56 @@ transformed parameters
 
 model
 {
-  print("N_MM =", N_MM);
-  print("N_FF =", N_FF);
-  print("N_FM =", N_FM);
-  print("N_MF =", N_MF);
-
-  print("A_MM =", A_MM);
-  print("A_FF =", A_FF);
-  print("A_FM =", A_FM);
-  print("A_MF =", A_MF);
-
-  print("Y_MM =", Y_MM);
-  print("Y_FF =", Y_FF);
-  print("Y_FM =", Y_FM);
-  print("Y_MF =", Y_MF);
-
-  print("P_MM =", P_MM);
-  print("P_FF =", P_FF);
-  print("P_FM =", P_FM);
-  print("P_MF =", P_MF);
-
-  print("A =", A);
-  print("C =", C);
-  print("U =", U);
-
-  print("B_MM =", B_MM);
-  print("B_FF =", B_FF);
-  print("B_FM =", B_FM);
-  print("B_MF =", B_MF);
-
-  print("cum_MM =", cum_MM);
-  print("cum_FF =", cum_FF);
-  print("cum_FM =", cum_FM);
-  print("cum_MF =", cum_MF);
-
-  print("ROW_MAJOR_IDX_MM =", ROW_MAJOR_IDX_MM);
-  print("ROW_MAJOR_IDX_FF =", ROW_MAJOR_IDX_FF);
-  print("ROW_MAJOR_IDX_FM =", ROW_MAJOR_IDX_FM);
-  print("ROW_MAJOR_IDX_MF =", ROW_MAJOR_IDX_MF);
-
-  print("map_indiv_to_age_MM =", map_indiv_to_age_MM);
-  print("map_indiv_to_age_FF =", map_indiv_to_age_FF);
-  print("map_indiv_to_age_FM =", map_indiv_to_age_FM);
-  print("map_indiv_to_age_MF =", map_indiv_to_age_MF);
-
-  // print("map_indiv_to_age =", map_indiv_to_age);
-
-  print("log_H_MM =", log_H_MM);
-  print("log_H_FF =", log_H_FF);
-  print("log_H_FM =", log_H_FM);
-  print("log_H_MF =", log_H_MF);
+  // print("N_MM =", N_MM);
+  // print("N_FF =", N_FF);
+  // print("N_FM =", N_FM);
+  // print("N_MF =", N_MF);
+  // 
+  // print("A_MM =", A_MM);
+  // print("A_FF =", A_FF);
+  // print("A_FM =", A_FM);
+  // print("A_MF =", A_MF);
+  // 
+  // print("Y_MM =", Y_MM);
+  // print("Y_FF =", Y_FF);
+  // print("Y_FM =", Y_FM);
+  // print("Y_MF =", Y_MF);
+  // 
+  // print("P_MM =", P_MM);
+  // print("P_FF =", P_FF);
+  // print("P_FM =", P_FM);
+  // print("P_MF =", P_MF);
+  // 
+  // print("A =", A);
+  // print("C =", C);
+  // print("U =", U);
+  // 
+  // print("B_MM =", B_MM);
+  // print("B_FF =", B_FF);
+  // print("B_FM =", B_FM);
+  // print("B_MF =", B_MF);
+  // 
+  // print("cum_MM =", cum_MM);
+  // print("cum_FF =", cum_FF);
+  // print("cum_FM =", cum_FM);
+  // print("cum_MF =", cum_MF);
+  // 
+  // print("ROW_MAJOR_IDX_MM =", ROW_MAJOR_IDX_MM);
+  // print("ROW_MAJOR_IDX_FF =", ROW_MAJOR_IDX_FF);
+  // print("ROW_MAJOR_IDX_FM =", ROW_MAJOR_IDX_FM);
+  // print("ROW_MAJOR_IDX_MF =", ROW_MAJOR_IDX_MF);
+  // 
+  // print("map_indiv_to_age_MM =", map_indiv_to_age_MM);
+  // print("map_indiv_to_age_FF =", map_indiv_to_age_FF);
+  // print("map_indiv_to_age_FM =", map_indiv_to_age_FM);
+  // print("map_indiv_to_age_MF =", map_indiv_to_age_MF);
+  // 
+  // // print("map_indiv_to_age =", map_indiv_to_age);
+  // 
+  // print("log_H_MM =", log_H_MM);
+  // print("log_H_FF =", log_H_FF);
+  // print("log_H_FM =", log_H_FM);
+  // print("log_H_MF =", log_H_MF);
   
   // GP priors
   target += inv_gamma_lpdf(gp_rho_1 | 5, 5);

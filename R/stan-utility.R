@@ -75,7 +75,14 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       
       # new household model that accounts for individual level households
       if(new_hh){
-        d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+        d <- contacts
+        covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+        # making sure order of factors in alter_age_strata is ascending instead of decreasing
+        # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+        d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+        d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+        
+        # d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
         
         stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
         stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
@@ -86,7 +93,13 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
       
       # household_cnt was the index for the old model, the model that doesn't account for individual level households
       if(household_cnt){
-        d <- contacts[order(u, age, alter_age_strata, gender, alter_gender, o)]
+        d <- contacts
+        covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+        # making sure order of factors in alter_age_strata is ascending instead of decreasing
+        # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+        d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+        d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+        # d <- d[order(u, age, alter_age_strata_idx, gender, alter_gender, o)]
         
         stan_data$Y_MM_1 <- d[gender == "Male" & alter_gender == "Male" & o == 1]$y
         stan_data$Y_FF_1 <- d[gender == "Female" & alter_gender == "Female" & o == 1]$y
@@ -152,7 +165,14 @@ add_N <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE, 
       stan_data$N_MF <- length(stan_data$Y_MF)
       stan_data$N_FM <- length(stan_data$Y_FM)
       
-      d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+      d <- contacts
+      covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+      # making sure order of factors in alter_age_strata is ascending instead of decreasing
+      # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+      d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+      d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      
+      # d <- d[order(age, new_id, alter_age_strata, gender, alter_gender)]
       stan_data$P_MM <- length(unique(d[gender == "Male" & alter_gender == "Male"]$new_id))
       stan_data$P_FF <- length(unique(d[gender == "Female" & alter_gender == "Female"]$new_id))
       stan_data$P_MF <- length(unique(d[gender == "Male" & alter_gender == "Female"]$new_id))
@@ -285,31 +305,36 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     }
     else{
     # this is assuming we have a single wave
-    d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    d <- contacts
+    # making sure order of factors in alter_age_strata is ascending instead of decreasing
+    # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+    d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+    d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    # d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
     
     d_MM <-  d[gender == "Male" & alter_gender == "Male"]
     d_FF <-  d[gender == "Female" & alter_gender == "Female"]
     d_MF <-  d[gender == "Male" & alter_gender == "Female"]
     d_FM <-  d[gender == "Female" & alter_gender == "Male"]
     
-    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     
-    d_MM <- d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
     d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
     d_MM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
     
-    d_FF <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
     d_FF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
     
-    d_MF <- d_MF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_MF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
     d_MF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
     
-    d_FM <- d_FM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
     d_FM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
@@ -334,8 +359,14 @@ create_household_matrix <- function(d, P, A){
 add_household_offsets <- function(stan_data, everything, no_log=FALSE){
   
   if(no_log){
+    d <- everything
+    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    # making sure order of factors in alter_age_strata is ascending instead of decreasing
+    # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+    d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+    d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     
-    d <- everything[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    # d <- everything[order(age, new_id, alter_age_strata, gender, alter_gender)]
     
     d_MM <-  d[gender == "Male" & alter_gender == "Male"]
     d_FF <-  d[gender == "Female" & alter_gender == "Female"]
@@ -344,16 +375,16 @@ add_household_offsets <- function(stan_data, everything, no_log=FALSE){
     
     covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
     
-    d_MM <- d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     
-    d_FF <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     
-    d_MF <- d_MF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
 
-    d_FM <- d_FM[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     
     stan_data$H_MM <- create_household_matrix(d_MM, stan_data$P_MM, stan_data$A)
@@ -640,7 +671,12 @@ add_map_indiv_to_age <- function(stan_data, contact, everything){
   
   # finding general map individual to age 
   tmp <- contact
-  tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
+  covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+  # making sure order of factors in alter_age_strata is ascending instead of decreasing
+  # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+  tmp[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+  tmp<- tmp[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  # tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
   tmp[, age_idx := age + 1]
   tmp[, age_strata_idx := as.numeric(alter_age_strata)]
   tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]

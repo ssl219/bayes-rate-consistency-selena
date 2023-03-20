@@ -1,0 +1,434 @@
+---
+title: "Preprocessing (single waves)"
+author: "Shozen Dan"
+date: "2022-07-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE}
+library(data.table)
+library(stringr)
+library(ggplot2)
+library(pammtools)
+library(dplyr)
+
+source("../R/covimod-utility.R")
+source("../R/stan-utility.R")
+```
+
+## Setup
+```{r}
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
+dt.part <- covimod$part
+dt.nhh <- covimod$nhh
+dt.hh <- covimod$hh
+
+# Limit to first 5 waves
+n_waves = 5
+dt.part <- dt.part[wave <= n_waves]
+dt.nhh <- dt.nhh[wave <= n_waves]
+dt.hh <- dt.hh[wave <= n_waves]
+```
+
+```{r}
+covimod
+```
+
+# ```{r}
+# dt.part
+# ```
+# 
+# 
+# ```{r}
+# dt.nhh
+# ```
+# 
+# ```{r}
+# dt.hh
+# ```
+
+
+
+## Participant data
+```{r}
+# Remove participants with missing age-strata or gender information
+dt.part <- dt.part[!is.na(gender) & !is.na(age_strata)]
+
+# Impute children age by sampling from uniform distribution
+dt.part <- impute_child_age(dt.part, seed=1527)
+
+# Sanity check
+dt.part[, .(N = .N), by=.(wave)]
+dt.part
+```
+
+```{r}
+# check
+# dt.part[is.na(gender)]
+# dt.part[is.na(age_strata)]
+```
+
+
+## Household contacts
+```{r}
+# Remove household contacts with missing age and gender (only 149 hh contacts with missing age and gender info)
+dt.hh <- dt.hh[!is.na(alter_age_strata) & !is.na(alter_gender)]
+
+# Remove participants with missing hh contact count information
+dt.hh <- dt.hh[!is.na(hh_met_this_day)]
+
+# Merge participant data and household contacts
+dt.hh <- merge(dt.hh, dt.part, by=c("new_id", "wave"), all.x=TRUE)
+dt.hh
+```
+```{r}
+# # Check
+# View(dt.hh[order(wave, new_id), ])
+# dt.hh[is.na(alter_age_strata) | is.na(alter_gender)]
+# dt.hh[is.na(age) | is.na(gender)]
+```
+
+```{r}
+# Select relevant columns
+d <- dt.hh[, .(new_id, wave, alter_age_strata, alter_gender, job.x, hh_met_this_day, imp_age, gender, hh_p_incl_0, kreis_0, job.y, date)]
+d
+setnames(d, c("job.x", "hh_met_this_day", "imp_age", "hh_p_incl_0", "kreis_0", "job.y"), c("job_hh_contact", "y", "age", "household_size", "kreis_0", "job_participant"))
+d
+```
+```{r}
+# d_reduced <- d[, list(new_id, wave, alter_age_strata, alter_gender, age, gender, household_size, y)]
+# # check duplicates for wave 1
+# d_reduced_1 <- d_reduced[wave == 1]
+# d1 <- d[wave==1]
+# d_duplicates_1 <- d1[duplicated(d_reduced_1)]
+# View(d_duplicates_1[order(new_id, wave), ])
+
+d_several_hh <- d %>% group_by(new_id, wave, alter_age_strata, alter_gender, age, gender) %>% summarise(n=sum(n())) %>% filter(n>1)
+d_several_hh[order(d_several_hh$wave), ]
+```
+
+```{r}
+d_comb <- merge(d, d_several_hh, by=c("new_id", "wave", "alter_age_strata", "alter_gender", "age", "gender"), all=TRUE)
+d_comb 
+```
+```{r}
+d_comb[is.na(n), n := 1]
+d_comb
+```
+```{r}
+d_comb[d_comb$alter_age_strata=="85+",]
+```
+
+
+```{r}
+# age_col <- seq(from=1, to=84, by=1)
+# gender_col <- c("Male", "Female")
+alter_age_col <- seq(from=1, to=85, by=1)
+alter_gender_col <- c("Male", "Female")
+wave_col <- seq(from=1, to=n_waves, by=1)
+id_col <- unique(d_comb$new_id)
+
+dt.hh.structure <- expand.grid(id_col, alter_age_col, alter_gender_col, wave_col)
+setnames(dt.hh.structure, c("Var1", "Var2", "Var3", "Var4"), c("new_id", "alter_age", "alter_gender", "wave"))
+dt.hh.structure.table <- as.data.table(dt.hh.structure)
+
+dt.hh.structure.table[, alter_age_strata := fcase(
+    alter_age <= 4,  "0-4",
+    alter_age <= 9,  "5-9",
+    alter_age <= 14, "10-14",
+    alter_age <= 19, "15-19",
+    alter_age <= 24, "20-24",
+    alter_age <= 34, "25-34",
+    alter_age <= 44, "35-44",
+    alter_age <= 54, "45-54",
+    alter_age <= 64, "55-64",
+    alter_age <= 69, "65-69",
+    alter_age <= 74, "70-74",
+    alter_age <= 79, "75-79",
+    alter_age <= 84, "80-84",
+    alter_age > 84, "85+",
+    default = NA
+  )]
+
+dt.hh.structure <- as.data.frame(dt.hh.structure.table)
+dt.hh.structure$alter_age_strata <- factor(
+    dt.hh.structure$alter_age_strata,
+    levels = c("0-4","5-9","10-14","15-19","20-24","25-34","35-44",
+               "45-54","55-64","65-69","70-74","75-79","80-84","85+")
+  )
+dt.hh.structure
+```
+
+```{r}
+d_comb_no_dupl <- d_comb %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+
+# check
+# d_comb_no_dupl %>% group_by(new_id, wave, alter_age_strata, alter_gender, age, gender) %>% summarise(n=sum(n())) %>% filter(n>1)
+
+d_comb_no_dupl  %>% filter(n>1)
+```
+
+
+```{r}
+# merge datasets
+d.everything <- merge(dt.hh.structure, d_comb_no_dupl, by=c("new_id", "alter_gender", "alter_age_strata", "wave"), all.y=TRUE)
+# View(d.everything)
+```
+```{r}
+d.everything[is.na(d.everything$alter_age),]
+```
+```{r}
+# check
+d.everything[d.everything$new_id=="86be2e09",]
+```
+
+```{r}
+# View(d.everything[d.everything$alter_age_strata=="85+",])
+```
+
+
+```{r}
+d.everything.table <- as.data.table(d.everything)
+
+d.everything.table[, Hic_b := fcase(
+    alter_age_strata == "0-4", as.numeric(n/5),
+    alter_age_strata == "5-9", as.numeric(n/5),
+    alter_age_strata == "10-14", as.numeric(n/5),
+    alter_age_strata == "15-19", as.numeric(n/5),
+    alter_age_strata == "20-24", as.numeric(n/5),
+    alter_age_strata == "25-34", as.numeric(n/10),
+    alter_age_strata == "35-44", as.numeric(n/10),
+    alter_age_strata == "45-54", as.numeric(n/10),
+    alter_age_strata == "55-64", as.numeric(n/10),
+    alter_age_strata == "65-69", as.numeric(n/5),
+    alter_age_strata == "70-74", as.numeric(n/5),
+    alter_age_strata == "75-79", as.numeric(n/5),
+    alter_age_strata == "80-84", as.numeric(n/5),
+    alter_age_strata =="85+", as.numeric(n),
+    default = NA
+  )]
+
+d.everything <- as.data.frame(d.everything.table)
+```
+```{r}
+#View(d.everything[d.everything$alter_age_strata=="25-34",])
+```
+
+```{r}
+# Remove participants and contacts 85+
+d.everything <- d.everything[!( d.everything$age > 84 |  d.everything$alter_age_strata == "85+"),]
+d_comb_no_dupl <- d_comb_no_dupl[!(d_comb_no_dupl$age > 84 | d_comb_no_dupl$alter_age_strata == "85+"),] 
+
+# Remove remaining NAs
+d.everything <- d.everything[!is.na(d.everything$new_id), ]
+
+# Convert data frames to data tables to make it compatible to the rest of the pipeline
+d.everything <- as.data.table(d.everything)
+d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
+
+```
+
+
+```{r}
+d_comb_no_dupl
+```
+
+```{r}
+d.everything
+```
+
+
+
+```{r}
+data <- readRDS("~/Documents/M4R/code/bayes_consistency_rate/data/simulations/intensity/inCOVID-new-hh/data.rds")
+```
+
+```{r}
+library('data.table')
+data[order(age, gender)]
+data[, new_id := .GRP, by = .(age, gender)]
+```
+```{r}
+set(data, NULL, c('cntct_intensity','weight.x', 'part.x', 'pop', 'weight.y', 'part.y'), NULL)
+```
+```{r}
+data$cntct_rate[data$cntct_rate>0] = 1
+```
+
+```{r}
+data[alter_age-age==20]
+```
+```{r}
+setnames(data, "cntct_rate", "y")
+```
+```{r}
+data[, Hic_b := 0L]
+data[abs(alter_age-age)==20]$Hic_b = 1
+data
+```
+```{r}
+data[abs(alter_age-age)==20]
+```
+```{r}
+data[, alter_age_strata := fcase(
+    alter_age <= 4,  "0-4",
+    alter_age <= 9,  "5-9",
+    alter_age <= 14, "10-14",
+    alter_age <= 19, "15-19",
+    alter_age <= 24, "20-24",
+    alter_age <= 34, "25-34",
+    alter_age <= 44, "35-44",
+    alter_age <= 54, "45-54",
+    alter_age <= 64, "55-64",
+    alter_age <= 69, "65-69",
+    alter_age <= 74, "70-74",
+    alter_age <= 79, "75-79",
+    alter_age <= 84, "80-84",
+    alter_age > 84, "85+",
+    default = NA
+  )]
+```
+
+```{r}
+data
+data[, wave := 1L]
+```
+```{r}
+data[,alter_age_strata:=as.factor(alter_age_strata)]
+data
+```
+
+
+```{r}
+d_comb_no_dupl.sim <- data[Hic_b!=0]
+d.everything.sim <- data[Hic_b!=0]
+```
+
+```{r}
+d_comb_no_dupl.sim 
+# d.everything.sim is the same as d_comb_no_dupl.sim
+```
+
+```{r}
+# checking N_MM's
+cat("N_MM =", length(d_comb_no_dupl.sim[gender == "Male" & alter_gender == "Male"]$y), "\n")
+cat("N_FF =", length(d_comb_no_dupl.sim[gender == "Female" & alter_gender == "Female"]$y), "\n")
+cat("N_MF =", length(d_comb_no_dupl.sim[gender == "Male" & alter_gender == "Female"]$y), "\n")
+cat("N_FM =", length(d_comb_no_dupl.sim[gender == "Female" & alter_gender == "Male"]$y), "\n")
+```
+```{r}
+# checking Y_MM's
+d <- d_comb_no_dupl.sim
+covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+# making sure order of factors in alter_age_strata is ascending instead of decreasing
+# note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+cat("Y_MM not ordered =", d_comb_no_dupl.sim[gender == "Male" & alter_gender == "Male"]$y, "\n")
+cat("Y_FF not ordered =", d_comb_no_dupl.sim[gender == "Female" & alter_gender == "Female"]$y, "\n")
+cat("Y_MF not ordered =", d_comb_no_dupl.sim[gender == "Male" & alter_gender == "Female"]$y, "\n")
+cat("Y_FM not ordered =", d_comb_no_dupl.sim[gender == "Female" & alter_gender == "Male"]$y, "\n")
+
+cat("\nY_MM =", d[gender == "Male" & alter_gender == "Male"]$y, "\n")
+cat("Y_FF =", d[gender == "Female" & alter_gender == "Female"]$y, "\n")
+cat("Y_MF =", d[gender == "Male" & alter_gender == "Female"]$y, "\n")
+cat("Y_FM =", d[gender == "Female" & alter_gender == "Male"]$y, "\n")
+
+# conclusion: replaced everything with the alter_age_strata_idx ordering instead of alter_age_strata
+```
+
+```{r}
+# checking P_MM's
+d <- d_comb_no_dupl.sim
+covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+# making sure order of factors in alter_age_strata is ascending instead of decreasing
+# note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      
+cat("P_MM =", length(unique(d[gender == "Male" & alter_gender == "Male"]$new_id)), "\n")
+cat("P_FF =", length(unique(d[gender == "Female" & alter_gender == "Female"]$new_id)), "\n")
+cat("P_MF =", length(unique(d[gender == "Male" & alter_gender == "Female"]$new_id)), "\n")
+cat("P_FM =", length(unique(d[gender == "Female" & alter_gender == "Male"]$new_id)), "\n")
+```
+```{r}
+# checking P_MM in original dataset
+d[gender == "Male" & alter_gender == "Male"]
+```
+```{r}
+# checking row_major_index
+# this is assuming we have a single wave
+covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+d <- d_comb_no_dupl.sim
+# making sure order of factors in alter_age_strata is ascending instead of decreasing
+# note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+# d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+
+d_MM <-  d[gender == "Male" & alter_gender == "Male"]
+d_FF <-  d[gender == "Female" & alter_gender == "Female"]
+d_MF <-  d[gender == "Male" & alter_gender == "Female"]
+d_FM <-  d[gender == "Female" & alter_gender == "Male"]
+
+d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+d_MM
+
+d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+d_MM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+d_MM
+```
+```{r}
+# checking the maps map_indiv_to_age_MM's
+everything <- d.everything.sim
+d <- everything[order(age, new_id, alter_age, gender, alter_gender)]
+d_MM <- d[gender=="Male" & alter_gender=="Male"]
+d_FF <- d[gender=="Female" & alter_gender=="Female"]
+d_MF <- d[gender=="Male" & alter_gender=="Female"]
+d_FM <- d[gender=="Female" & alter_gender=="Male"]
+
+d_MM_unique_ages <- d_MM %>% distinct(new_id, .keep_all=TRUE)
+d_FF_unique_ages <- d_FF %>% distinct(new_id, .keep_all=TRUE)
+d_MF_unique_ages <- d_MF %>% distinct(new_id, .keep_all=TRUE)
+d_FM_unique_ages <- d_FM %>% distinct(new_id, .keep_all=TRUE)
+
+d_MM_unique_ages
+```
+
+
+```{r}
+cat("map_indiv_to_age_MM", d_MM_unique_ages$age, "\n")
+cat("map_indiv_to_age_FF", d_FF_unique_ages$age, "\n")
+cat("map_indiv_to_age_MF", d_MF_unique_ages$age, "\n")
+cat("map_indiv_to_age_FM", d_FM_unique_ages$age, "\n")
+```
+
+```{r}
+# checking household offsets
+create_household_matrix <- function(d, P, A){
+  H = matrix(0, nrow=P, ncol=A)
+  for(i in 1:length(d$y)){
+    H[d$new_id_idx[i], d$alter_age[i]] = d$Hic_b[i]
+  }
+  return(H)
+}
+
+```
+
+## Export data
+```{r}
+# covimod.single.new.hh <- list(
+#   contacts = d_comb_no_dupl.sim,
+#   offsets = d.everything.sim,
+#   pop = covimod$pop
+# )
+# 
+# data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# saveRDS(covimod.single.new.hh, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-debugging.rds"))
+```
+

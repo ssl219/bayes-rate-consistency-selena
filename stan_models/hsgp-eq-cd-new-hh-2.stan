@@ -112,19 +112,19 @@ transformed parameters
   part_f_MF = rep_matrix(0, P_MF, A);
               
   for (i in 1:P_MM){
-    part_f_MM[i, :] = f_MM[map_indiv_to_age_MM[i], :];
+    part_f_MM[i, :] = f_MM[map_indiv_to_age_MM[i]+1, :];
   }
   
   for (i in 1:P_FF){
-    part_f_FF[i, :] = f_MM[map_indiv_to_age_FF[i], :];
+    part_f_FF[i, :] = f_MM[map_indiv_to_age_FF[i]+1, :];
   }
   
   for (i in 1:P_FM){
-    part_f_FM[i, :] = f_MM[map_indiv_to_age_FM[i], :];
+    part_f_FM[i, :] = f_MM[map_indiv_to_age_FM[i]+1, :];
   }
   
   for (i in 1:P_MF){
-    part_f_MF[i, :] = f_MM[map_indiv_to_age_MF[i], :];
+    part_f_MF[i, :] = f_MM[map_indiv_to_age_MF[i]+1, :];
   }
   
   // print("part_f_MM =", part_f_MM)
@@ -142,10 +142,51 @@ transformed parameters
   alpha_strata_MF = (exp(log_m_MF).* H_MF) * map_age_to_strata / nu + epsilon;
   alpha_strata_FM = (exp(log_m_FM).* H_FM) * map_age_to_strata / nu + epsilon;
   alpha_strata_FF = (exp(log_m_FF).* H_FF) * map_age_to_strata / nu + epsilon;
+  
+  // print("alpha_strata_MM =", alpha_strata_MM)
+  // print("alpha_strata_FF =", alpha_strata_FF)
+  // print("alpha_strata_FM =", alpha_strata_FM)
+  // print("alpha_strata_MF =", alpha_strata_MF)
 }
 
 model
 {
+  // print("N_MM =", N_MM);
+  // print("N_FF =", N_FF);
+  // print("N_FM =", N_FM);
+  // print("N_MF =", N_MF);
+  // 
+  // print("Y_MM =", Y_MM);
+  // print("Y_FF =", Y_FF);
+  // print("Y_FM =", Y_FM);
+  // print("Y_MF =", Y_MF);
+  // 
+  // print("P_MM =", P_MM);
+  // print("P_FF =", P_FF);
+  // print("P_FM =", P_FM);
+  // print("P_MF =", P_MF);
+  // 
+  // print("A =", A);
+  // print("C =", C);
+  // print("U =", U);
+  // 
+  // print("ROW_MAJOR_IDX_MM =", ROW_MAJOR_IDX_MM);
+  // print("ROW_MAJOR_IDX_FF =", ROW_MAJOR_IDX_FF);
+  // print("ROW_MAJOR_IDX_FM =", ROW_MAJOR_IDX_FM);
+  // print("ROW_MAJOR_IDX_MF =", ROW_MAJOR_IDX_MF);
+  // 
+  // print("map_indiv_to_age_MM =", map_indiv_to_age_MM);
+  // print("map_indiv_to_age_FF =", map_indiv_to_age_FF);
+  // print("map_indiv_to_age_FM =", map_indiv_to_age_FM);
+  // print("map_indiv_to_age_MF =", map_indiv_to_age_MF);
+  // 
+  // // print("map_indiv_to_age =", map_indiv_to_age);
+  // 
+  // print("H_MM =", H_MM);
+  // print("H_FF =", H_FF);
+  // print("H_FM =", H_FM);
+  // print("H_MF =", H_MF);
+  // 
   // GP priors
   target += inv_gamma_lpdf(gp_rho_1 | 5, 5);
   target += inv_gamma_lpdf(gp_rho_2 | 5, 5);

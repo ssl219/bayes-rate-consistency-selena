@@ -241,8 +241,11 @@ d_comb_no_dupl
 
 ```{r}
 # how to order contact vector?
+covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
 d_order_test <- d_comb_no_dupl[wave==1]
-d_order_test <- d_order_test[order(new_id, alter_age_strata, gender, alter_gender)]
+# making sure order of factors in alter_age_strata to be ascending instead of decreasing
+d_order_test <- d_order_test[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+d_order_test <- d_order_test[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
 d_order_test_MM <- d_order_test[gender=="Male" & alter_gender=="Male"]
 d_order_test_MM
 ```

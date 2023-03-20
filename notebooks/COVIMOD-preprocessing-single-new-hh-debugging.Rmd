@@ -489,6 +489,12 @@ d.everything <- data[Hic_b!=0]
 d_comb_no_dupl 
 ```
 ```{r}
+# checking y's of MM combination
+d_comb_no_dupl[gender=="Male" & alter_gender=="Fema"]
+```
+
+
+```{r}
 contacts <- d_comb_no_dupl
 d <- contacts[order(age, alter_age_strata, gender, alter_gender)]
     
@@ -551,7 +557,7 @@ d_MM[order(age, new_id, alter_age_strata, gender, alter_gender)]
 
 
 ```{r}
-d_FF <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_FF <- d_FF[order(age, new_id, alter_age, gender, alter_gender)]
 d_FF
 d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
 d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")))]
@@ -569,7 +575,7 @@ d_MF
 ```
 
 ```{r}
-d_FM <- d_FF[order(age, new_id, alter_age_strata, gender, alter_gender)]
+d_FM <- d_FM[order(age, new_id, alter_age_strata, gender, alter_gender)]
 d_FM
 d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
 d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")))]
