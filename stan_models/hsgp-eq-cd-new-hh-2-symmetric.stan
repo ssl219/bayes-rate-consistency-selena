@@ -442,10 +442,10 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
   
   // initialise          
-  part_f_MM = rep_matrix(0, P_MM, A);
-  part_f_FF = rep_matrix(0, P_FF, A);
-  part_f_FM = rep_matrix(0, P_FM, A);
-  part_f_MF = rep_matrix(0, P_MF, A);
+  part_f_MM = rep_matrix(epsilon, P_MM, A);
+  part_f_FF = rep_matrix(epsilon, P_FF, A);
+  part_f_FM = rep_matrix(epsilon, P_FM, A);
+  part_f_MF = rep_matrix(epsilon, P_MF, A);
               
   for (i in 1:P_MM){
     part_f_MM[i, :] = symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, :];
