@@ -43,6 +43,7 @@ option_list <- list(
                         dest = "wave")
 )
 
+
 # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
 #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
 #                       dest = 'repo.path'),
