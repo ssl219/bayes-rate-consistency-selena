@@ -343,6 +343,7 @@ matrix hsgp_matern52_restruct(int A, real alpha, real rho1, real rho2, real L1, 
 data
 {
   int<lower=1> N_MM, N_FF, N_MF, N_FM; // Number of observations for each gender combination between the participant and the contact
+  int<lower=1> A_MM, A_FF, A_MF, A_FM; // Number of observations for each gender combination between the participant and the contact in age space
   
   int<lower=1> P_MM, P_FF, P_FM, P_MF; // Unique number of participants with a given gender and with contacts of another gender
   int<lower=1> A;       // Number of age inputs
@@ -370,6 +371,11 @@ data
   array[N_FF] int ROW_MAJOR_IDX_FF;
   array[N_MF] int ROW_MAJOR_IDX_MF;
   array[N_FM] int ROW_MAJOR_IDX_FM;
+
+  array[A_MM] int B_MM; // flattened list of ages of contacts (ordered, ascending) in all gender combinations
+  array[A_FF] int B_FF;
+  array[A_MF] int B_MF;
+  array[A_FM] int B_FM;
 
   vector[A] age_idx_std;         // Standardized age index
   matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata
@@ -406,7 +412,7 @@ transformed data
 parameters
 {
   vector[G] beta_0;
-  real<lower=0> nu;
+  // real<lower=0> nu;
 
   vector<lower=0>[G-1] gp_rho_1;
   vector<lower=0>[G-1] gp_rho_2;
@@ -421,10 +427,6 @@ transformed parameters
   vector<lower=0>[G-1] gp_alpha = tan(gp_alpha_unif); // Reparametrize Half-Cauchy for optimization in HMC
 
   matrix[A,A] f_MM, f_FF, f_MF, f_FM;
-  matrix[P_MM,A] log_m_MM;
-  matrix[P_FF,A] log_m_FF;
-  matrix[P_FM,A] log_m_FM;
-  matrix[P_MF,A] log_m_MF;
   matrix<lower=0>[P_MM,C] alpha_strata_MM;
   matrix<lower=0>[P_FF,C] alpha_strata_FF;
   matrix<lower=0>[P_FM,C] alpha_strata_FM;
@@ -433,6 +435,10 @@ transformed parameters
   matrix[P_MF, A] part_f_MF;
   matrix[P_FF, A] part_f_FF;
   matrix[P_FM, A] part_f_FM;
+  matrix[P_MM, A] alpha_age_MM;
+  matrix[P_FF, A] alpha_age_FF;
+  matrix[P_FM, A] alpha_age_FM;
+  matrix[P_MF, A] alpha_age_MF;
 
   f_MM = hsgp(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
               L1, L2, M1, M2, PHI1, PHI2, z[1:M1,]);
@@ -442,10 +448,10 @@ transformed parameters
               L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
   
   // initialise          
-  part_f_MM = rep_matrix(1, P_MM, A);
-  part_f_FF = rep_matrix(1, P_FF, A);
-  part_f_FM = rep_matrix(1, P_FM, A);
-  part_f_MF = rep_matrix(1, P_MF, A);
+  part_f_MM = rep_matrix(epsilon, P_MM, A);
+  part_f_FF = rep_matrix(epsilon, P_FF, A);
+  part_f_FM = rep_matrix(epsilon, P_FM, A);
+  part_f_MF = rep_matrix(epsilon, P_MF, A);
               
   for (i in 1:P_MM){
     part_f_MM[i, :] = symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, :];
@@ -463,26 +469,26 @@ transformed parameters
     part_f_MF[i, :] = f_MF[map_indiv_to_age_MF[i]+1, :];
   }
   
-  // print("part_f_MM =", part_f_MM);
-  // print("part_f_FF =", part_f_FF);
-  // print("part_f_FM =", part_f_FM);
-  // print("part_f_MF =", part_f_MF);
+  // print("part_f_MM =", part_f_MM)
+  // print("part_f_FF =", part_f_FF)
+  // print("part_f_FM =", part_f_FM)
+  // print("part_f_MF =", part_f_MF)
 
-  log_m_MM =  beta_0[MM] + part_f_MM;
-  log_m_MF =  beta_0[MF] + part_f_MF;
-  log_m_FM =  beta_0[FM] + part_f_FM;
-  log_m_FF =  beta_0[FF] + part_f_FF;
+  alpha_age_MM = (exp(beta_0[MM] + part_f_MM).* H_MM);
+  alpha_age_MF = (exp(beta_0[MF] + part_f_MF).* H_MF);
+  alpha_age_FM = (exp(beta_0[FM] + part_f_FM).* H_FM);
+  alpha_age_FF = (exp(beta_0[FF] + part_f_FF).* H_FF);
   
   // will have to change this to a double for loop checking when Hib_c = 0, otherwise values of exp(log_m_MM) are too small!!
-  alpha_strata_MM = (exp(log_m_MM).* H_MM) * map_age_to_strata / nu + epsilon;
-  alpha_strata_MF = (exp(log_m_MF).* H_MF) * map_age_to_strata / nu + epsilon;
-  alpha_strata_FM = (exp(log_m_FM).* H_FM) * map_age_to_strata / nu + epsilon;
-  alpha_strata_FF = (exp(log_m_FF).* H_FF) * map_age_to_strata / nu + epsilon;
-
-  // print("alpha_strata_MM before =", alpha_strata_MM);
-  // print("alpha_strata_FF before =", alpha_strata_FF);
-  // print("alpha_strata_FM before  =", alpha_strata_FM);
-  // print("alpha_strata_MF before =", alpha_strata_MF);
+  alpha_strata_MM = alpha_age_MM * map_age_to_strata + epsilon;
+  alpha_strata_MF = alpha_age_MF * map_age_to_strata + epsilon;
+  alpha_strata_FM = alpha_age_FM * map_age_to_strata + epsilon;
+  alpha_strata_FF = alpha_age_FF * map_age_to_strata + epsilon;
+  
+  // print("alpha_strata_MM =", alpha_strata_MM)
+  // print("alpha_strata_FF =", alpha_strata_FF)
+  // print("alpha_strata_FM =", alpha_strata_FM)
+  // print("alpha_strata_MF =", alpha_strata_MF)
 }
 
 model
@@ -530,9 +536,7 @@ model
   target += std_normal_lpdf( to_vector(z) );
 
   // Overdispersion
-  target += exponential_lpdf(nu | 1);
-  
-  // print(nu);
+  // target += exponential_lpdf(nu | 1);
 
   // baseline
   target += normal_lpdf(beta_0 | 0, 10);
@@ -549,25 +553,47 @@ model
         ),
       to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]
     );
-    target += neg_binomial_lpmf( Y | alpha_strata_flat_indiv, inv(nu));
+    target += poisson_lpmf( Y | alpha_strata_flat_indiv);
   }
-  print("alpha_strata_MM after =", alpha_strata_MM);
-  print("alpha_strata_FF after =", alpha_strata_FF);
-  print("alpha_strata_FM after  =", alpha_strata_FM);
-  print("alpha_strata_MF after =", alpha_strata_MF);
 }
 
 generated quantities
 {
-  array[N] real log_lik;
-  array[G,A,C] int yhat_strata;
+  // array[N] real log_lik;
+  // array[G,A,C] int yhat_strata;
   array[G] matrix[A,A] log_cnt_rate;
+  matrix[P_MM, A] alpha_age_MM;
+  matrix[P_FF, A] alpha_age_FF;
+  matrix[P_FM, A] alpha_age_FM;
+  matrix[P_MF, A] alpha_age_MF;
+  array[P_MM] int part_age_MM; 
+  array[P_FF] int part_age_FF; 
+  array[P_FM] int part_age_FM; 
+  array[P_MF] int part_age_MF; 
+  array[A_MM] int contact_age_MM; 
+  array[A_FF] int contact_age_FF;
+  array[A_MF] int contact_age_MF;
+  array[A_FM] int contact_age_FM;
+
+  contact_age_MM = B_MM;
+  contact_age_FF = B_FF;
+  contact_age_MF = B_MF;
+  contact_age_FM = B_FM; 
   
   log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
   log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
   log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
 
+  alpha_age_MM = (exp(beta_0[MM] + part_f_MM).* H_MM);
+  alpha_age_MF = (exp(beta_0[MF] + part_f_MF).* H_MF);
+  alpha_age_FM = (exp(beta_0[FM] + part_f_FM).* H_FM);
+  alpha_age_FF = (exp(beta_0[FF] + part_f_FF).* H_FF);
+
+  part_age_MM = map_indiv_to_age_MM;
+  part_age_FF = map_indiv_to_age_FF;
+  part_age_FM = map_indiv_to_age_FM;
+  part_age_MF = map_indiv_to_age_MF;
 
   // {
   //   vector[N] alpha_strata_flat_indiv =
