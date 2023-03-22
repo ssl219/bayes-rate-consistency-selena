@@ -594,7 +594,7 @@ model
         ),
       to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]
     );
-    target += neg_binomial_lpmf( Y | alpha_strata_flat_indiv);
+    target += poisson_lpmf( Y | alpha_strata_flat_indiv);
   }
 }
 
