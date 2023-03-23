@@ -178,6 +178,95 @@ extract_posterior_rates <- function(po){
   return(dt.po)
 }
 
+extract_posterior_alpha <- function(po, gender_comb="MM"){
+  # po <- subset(po, "alpha_age")
+  dt.po <- as.data.table(reshape2::melt(po))
+  
+  # Extract indices
+  if (gender_comb=="MM"){
+    .pattern <- "alpha_age_MM\\[([0-9]+),([0-9]+)\\]"
+  }
+  
+  if (gender_comb=="FF"){
+    .pattern <- "alpha_age_FF\\[([0-9]+),([0-9]+)\\]"
+  }
+  
+  if (gender_comb=="MF"){
+    .pattern <- "alpha_age_MF\\[([0-9]+),([0-9]+)\\]"
+  }
+  
+  if (gender_comb=="FM"){
+    .pattern <- "alpha_age_FM\\[([0-9]+),([0-9]+)\\]"
+  }
+  
+  
+  dt.po[, part_idx := as.numeric(gsub(.pattern, "\\1", variable))]
+  dt.po[, alter_age_idx := as.numeric(gsub(.pattern, "\\2", variable))]
+  
+  return(dt.po)
+}
+
+posterior_alpha <- function(fit, dt.po, type="matrix", outdir=NA, gender_comb="MM"){
+  ps <- c(0.5, 0.025, 0.975)
+  p_labs <- c('M','CL','CU')
+  
+  if(type=="matrix"){ # Full contact intensity matrix
+    # Calculate quantiles
+    dt.po <- dt.po[, list(q=quantile(value, prob=ps, na.rm=T), q_label = p_labs),
+                   by=list(part_idx, alter_age_idx)]
+    dt.po <- data.table::dcast(dt.po, part_idx + alter_age_idx ~ q_label, value.var = "q")
+    
+    # If COVIMOD data
+    dt.po[, alter_age := alter_age_idx - 1]
+    
+    # add participant ages
+    
+    # unique number of participants
+    N_part <- max(dt.po$part_idx)
+    # extract participant ages
+    if (gender_comb=="MM"){
+      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_MM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+    }
+    
+    if (gender_comb=="FF"){
+      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FF"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+    }
+    
+    if (gender_comb=="MF"){
+      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_MF"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+    }
+    
+    if (gender_comb=="FM"){
+      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+    }
+    # create smaller dataset with id and age
+    id_age_alpha <- data.table(new_id=1:N_part, age=part_age_list)
+    
+    if(!is.na(outdir)){
+      if (gender_comb=="MM"){
+        saveRDS(dt.po, file.path(outdir, "alphaMM_matrix.rds"))
+      }
+      else if (gender_comb=="FF"){
+        saveRDS(dt.po, file.path(outdir, "alphaFF_matrix.rds"))
+      }
+      else if (gender_comb=="MF"){
+        saveRDS(dt.po, file.path(outdir, "alphaMF_matrix.rds"))
+      }
+      else if (gender_comb=="FM"){
+        saveRDS(dt.po, file.path(outdir, "alphaFM_matrix.rds"))
+      }
+    }
+    
+    else{
+      warning("\n outdir is not specified. Results were not saved.")
+    }
+    
+    return(dt.po)
+  }
+  
+}  
+
+
 posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation=FALSE, outdir=NA, new_hh=FALSE){
   ps <- c(0.5, 0.025, 0.975)
   p_labs <- c('M','CL','CU')

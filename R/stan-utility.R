@@ -652,7 +652,8 @@ add_map_tr_to_u <- function(stan_data){
 
 # Map array of ages of each participant of gender M with contacts of gender M
 
-add_map_indiv_to_age <- function(stan_data, contact, everything){
+add_map_indiv_to_age <- function(stan_data, contact, everything, sim=FALSE){
+  
   d <- everything[order(age, new_id, alter_age, gender, alter_gender)]
   d_MM <- d[gender=="Male" & alter_gender=="Male"]
   d_FF <- d[gender=="Female" & alter_gender=="Female"]
@@ -668,7 +669,6 @@ add_map_indiv_to_age <- function(stan_data, contact, everything){
   stan_data$map_indiv_to_age_FF <- d_FF_unique_ages$age
   stan_data$map_indiv_to_age_FM <- d_FM_unique_ages$age
   stan_data$map_indiv_to_age_MF <- d_MF_unique_ages$age
-  
   # finding general map individual to age 
   tmp <- contact
   covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
@@ -678,7 +678,7 @@ add_map_indiv_to_age <- function(stan_data, contact, everything){
   tmp<- tmp[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
   # tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
   tmp[, age_idx := age + 1]
-  tmp[, age_strata_idx := as.numeric(alter_age_strata)]
+  tmp[, age_strata_idx := as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
   tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
   tmp[, gender_comb_idx := fcase(
     gender == "Male" & alter_gender == "Male", 1,

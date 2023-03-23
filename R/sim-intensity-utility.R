@@ -10,7 +10,7 @@ cntct_sim_rates_flat <- function(){
 # boarding school 
 
 cntct_sim_rates_boarding_school <- function(){
-  di <- as.data.table(expand.grid(age = 0:50, alter_age = 0:50 ))
+  di <- as.data.table(expand.grid(age = 0:84, alter_age = 0:84 ))
   di[, cntct_rate := fcase(age %in% 0:10 & alter_age %in% 30:40, 1,
                                 age %in% 10:20  & alter_age %in% 30:50, exp(-5),
                                 age %in% 30:50 & alter_age %in% 30:50, 1,

@@ -15,16 +15,16 @@ library(pammtools)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
-  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                        dest = "repo.path"),
-  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                       dest = "repo.path"),
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                       dest = 'data.path'),
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-boarding",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -38,10 +38,24 @@ option_list <- list(
                         dest = "plot")
 )
 
+
+# optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+#                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+#                        dest = "repo.path"),
+# optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+#                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+#                        dest = 'data.path'),
+
+cat("\n before args")
+
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+# args$model.name = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1"
+
+cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-boarding_school/data.rds")
+
 
 # Error handling
 if(!file.exists(model.path)) {
@@ -133,12 +147,3 @@ if(args$plot){
 
   cat("\n DONE.\n")
 }
-
-po.alphaMM <- fit$draws(c("alpha_age_MM"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaFF <- fit$draws(c("alpha_age_FF"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaMF <- fit$draws(c("alpha_age_MF"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaFM <- fit$draws(c("alpha_age_FM"), inc_warmup = FALSE, format="draws_matrix")
-
-
-dt.po.alphaMM <- extract_posterior_alpha(po.alphaMM, gender_comb = "MM")
-dt.matrix.alphaMM <- posterior_alpha(fit, dt.po.alphaMM, type="matrix", outdir=export.path, gender_comb="MM")
