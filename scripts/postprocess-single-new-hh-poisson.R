@@ -46,9 +46,12 @@ option_list <- list(
 #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
 #                        dest = 'data.path'),
 
-cat(paste("\n Model arg:", args$model.name))
+cat("\n before args")
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+args$model.name = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1"
+
+cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
 data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
