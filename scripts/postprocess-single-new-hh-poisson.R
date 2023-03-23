@@ -24,7 +24,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = NA_character_,
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -46,6 +46,7 @@ option_list <- list(
 #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
 #                        dest = 'data.path'),
 
+cat(paste("\n Model arg:", args$model.name))
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
