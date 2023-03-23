@@ -240,7 +240,7 @@ posterior_alpha <- function(fit, dt.po, type="matrix", outdir=NA, gender_comb="M
       dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
     }
     # create smaller dataset with id and age
-    id_age_alpha <- data.table(new_id=1:N_part, age=part_age_list)
+    id_age_alpha <- data.table(new_id=1:N_part, age=dt.part_age)
     
     if(!is.na(outdir)){
       if (gender_comb=="MM"){
