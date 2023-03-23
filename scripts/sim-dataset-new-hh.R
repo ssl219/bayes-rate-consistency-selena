@@ -11,8 +11,8 @@ library(ggpubr)
 
 option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721, dest = "seed"),
-  optparse::make_option("--size", type = "integer", default = 2000,
-                        help = "Number of participants in the survey [default \"%default\"]",
+  optparse::make_option("--size", type = "integer", default = 85,
+                        help = "Number of participants with random age in the survey [default \"%default\"]",
                         dest = 'size'),
   optparse::make_option("--nsim", type = "integer", default = 10,
                         help = "Number of simulated datasets [default \"%default\"]",
@@ -20,14 +20,20 @@ option_list <- list(
   optparse::make_option("--strata", type = "character", default = "COVIMOD",
                         help = "Age stratification scheme [default %default]",
                         dest = "strata"),
-  optparse::make_option("--covid", type = "logical", default = TRUE,
-                        help = "Simulate contact patterns in a hypothetical scenario with restricted contact patterns",
-                        dest = "covid"),
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-                        help = "Absolute file path to repository directory [default]",
-                        dest = 'repo.path')
+  optparse::make_option("--hhsize", type = "character", default = 4,
+                        help = "Household size [default %default]",
+                        dest = "hhsize"),
+  optparse::make_option("--scenario", type = "character", default = "flat",
+                        help = "Scenario [default %default]",
+                        dest = "scenario"),
+  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+                        help = "Absolute file path to repository directory",
+                        dest = 'repo.path'),
+  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                        dest = 'data.path')
 )
-
+# "/rds/general/user/ssl219/home/bayes-rate-consistency-selena"
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 # args$repo.path <- "~/Imperial/covimod-gp"
@@ -38,27 +44,26 @@ if(is.na(args$repo.path)){
   stop("Please specify --repo_path")
 }
 
+if(is.na(args$scenario)){
+  stop("Please specify --scenario")
+}
+
 ###### ---------- Load data ---------- #####
 source(file.path(args$repo.path, "R", "sim-dataset-utility.R"))
 
-# Import simulated intensity
-if (args$covid) {
-  args$data.path <- file.path("data/simulations/intensity", "inCOVID")
-} else {
-  args$data.path <- file.path("data/simulations/intensity", "preCOVID")
+
+if (args$scenario == "flat"){
+  dt <- as.data.table(readRDS( file.path(args$data.path, "flat-data.rds") ))
 }
 
-dt <- as.data.table(readRDS( file.path(args$repo.path, args$data.path, "data.rds") ))
+if (args$scenario == "boarding_school"){
+  dt <- as.data.table(readRDS( file.path(args$data.path, "boarding-data.rds") ))
+}
 
-# Population count data
-dpop <- as.data.table(read.csv(file.path(args$repo.path, "data/germany-population-2011.csv")))
-dpop <- dpop[age >= 6 & age <= 49]
 
 ##### ---------- Data export ---------- #####
-# Directory under data/simulations/datasets to export the data
-dir.name <- paste(ifelse(args$covid, "inCOVID", "preCOVID"), args$size, args$strata, sep="_")
-
-export.path <- file.path(args$repo.path, "data/simulations/datasets", dir.name)
+dir.name <- paste("new-hh", args$scenario, sep="-")
+export.path <- file.path(args$data.path, "data/simulations/datasets", dir.name)
 if(!dir.exists(export.path)){
   cat(paste("\n Making export directory:", export.path))
   dir.create(export.path)
@@ -70,13 +75,24 @@ dt <- stratify_alter_age(dt, args$strata)
 
 ##### ---------- Simulating contact survey data ---------- ##########
 cat("\n Generating contact dataset ...")
-N <- args$size # Survey sample size
+args$size = 85
+args$strata = "COVIMOD-new-hh"
+N_random <- args$size 
+N = 85 + N_random
+# Generate new_id for all participants (all distinct)
+d.everything <- as.data.table(expand.grid(new_id = 1:N, alter_age = 0:84))
+d.everything <- stratify_alter_age(d.everything, args$strata)
+d.everything[, wave:=1L]
+# hhsize = args$hhsize
+d.everything[, household_size:=4L]
 
-# Proportion of each age in population
-dpop[, weight := pop/sum(pop)]
-
-# Participant size for each age
-dpop[, part := round(weight*N)]
+# Generate age of participants
+set.seed(2002)
+random_ages <- sample(0:84, N_random, replace=TRUE)
+part_ages <- sort(c(random_ages, 0:84))
+# create smaller dataset with new_id and part_ages
+id_ages <- data.table(new_id=1:N, age=part_ages)
+d.everything <- merge(d.everything, id_ages, by=c("new_id"), all=TRUE)
 
 # Calculate average contact counts
 dt <- merge(dt, dpop[, list(age, gender, part)], by=c("age", "gender"))

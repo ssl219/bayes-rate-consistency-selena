@@ -40,7 +40,34 @@ stratify_alter_age <- function(dt, strata.scheme = "5yr"){
       dt$alter_age_strata,
       levels=c("6-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-49")
     )
-  } else if (strata.scheme == "3yr") {
+  } 
+  
+  else if (strata.scheme == "COVIMOD-new-hh"){
+    # COVIMOD-like age stratification
+    dt[, alter_age_strata := fcase(
+      alter_age %in% 0:4, "0-4",
+      alter_age %in% 5:9,  "5-9",
+      alter_age %in% 10:14, "10-14",
+      alter_age %in% 15:19, "15-19",
+      alter_age %in% 20:24, "20-24",
+      alter_age %in% 25:34, "25-34",
+      alter_age %in% 35:44, "35-44",
+      alter_age %in% 45:54, "45-54",
+      alter_age %in% 55:64, "55-64",
+      alter_age %in% 65:69, "65-69",
+      alter_age %in% 70:74, "70-74",
+      alter_age %in% 75:79, "75-79",
+      alter_age %in% 80:84, "80-84",
+      default = NA
+    )]
+    
+    # dt$alter_age_strata <- factor(
+    #   dt$alter_age_strata,
+    #   levels=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    # )
+  }
+  
+  else if (strata.scheme == "3yr") {
     # 3-year age-stratification
     dt[, alter_age_strata := fcase(
       alter_age %in% 6:8,   "6-8",

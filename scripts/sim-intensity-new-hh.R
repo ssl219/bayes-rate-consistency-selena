@@ -1,5 +1,3 @@
-# The simulation part Pre or During COVID19 ----
-
 # Preamble ----
 # the simulation script aims to simulate the data set containing the total number of reports, nb of reports with detailed information by age-gender clusters.
 
@@ -15,9 +13,6 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 721L,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--covid", type = "logical", default =TRUE,
-                        help = "Simulate contact patterns in a hypothetical scenario with restricted contact patterns [default \"%default\"]",
-                        dest = 'covid'),
   optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory",
                         dest = 'repo.path'),
@@ -30,9 +25,6 @@ option_list <- list(
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 ##### ---------- Error handling ---------- #####
-if (!(args$covid %in% c(TRUE,FALSE))) {
-  stop("--covid argument is invalid. Must be [TRUE, FALSE]")
-}
 
 if (is.na(args$repo.path)) {
   stop("Please specify --repo_path !")
@@ -41,7 +33,7 @@ if (is.na(args$repo.path)) {
 ##### ---------- Setup ---------- #####
 # Setting up the export directory
 export.path.part1 <- "data/simulations/intensity"
-export.path.part2 <- ifelse(args$covid, "inCOVID-new-hh", "preCOVID-new-hh")
+export.path.part2 <- "new-hh"
 args$export.path <- file.path(args$data.path, export.path.part1, export.path.part2)
 
 if(!file.exists(args$export.path)){
@@ -66,19 +58,14 @@ source( file.path(args$repo.path, "R", "sim-intensity-utility.R") )
 #' @param dpop Population data
 #'
 #' @return Simulated contact intensity/rate data.table
-cntcts_sim_rates_by_age <- function(dsim, dpop)
+cntct_sim_rates_by_age <- function(dsim)
 {
   dsim[, DUMMY := 1L]
   tmp <- data.table( DUMMY = 1L, gender = c('Male','Female'))
+  tmpp <- data.table(DUMMY = 1L, alter_gender = c('Male','Female'))
   dsim <- merge(dsim, tmp, by = 'DUMMY', allow.cartesian = TRUE)
-  tmpp <- dpop[, list(pop_t = sum(pop)), by = c('age')]
-  tmpp <- merge(dpop, tmpp, by = 'age')
-  tmpp[, pop_p := pop/pop_t] # pop_p is the proportion of the population with a certain age
-  setnames(tmpp, c('age','gender'), c('alter_age','alter_gender') )
-  dsim <- merge(dsim, tmpp, by = c('alter_age'), allow.cartesian = TRUE)
-  set(dsim, NULL, 'cntct_intensity', dsim[, cntct_intensity*pop_p])
-  dsim[, cntct_rate := cntct_intensity/pop]
-  set(dsim, NULL, c('pop_t','pop', 'pop_p', 'DUMMY'), NULL) # removes those columns
+  dsim <- merge(dsim, tmpp, by = 'DUMMY', allow.cartesian = TRUE)
+  set(dsim, NULL, c('DUMMY'), NULL) # removes those columns
 
   # Generate gender-gender contact rate patterns
   #
@@ -102,12 +89,10 @@ cntcts_sim_rates_by_age <- function(dsim, dpop)
   dFF <- rbind(tmp[age != alter_age], dFF)
 
   dsim <- rbind(dFM, dMF, dMM, dFF)
-  set(tmpp, NULL, c('pop_t', 'pop_p'), NULL)
-  dsim <- merge(dsim, tmpp, by = c('alter_age', 'alter_gender'))
-  set(dsim, NULL, 'cntct_intensity', dsim[, cntct_rate * pop])
 
   return(dsim)
 }
+
 
 # ##### ---------- Define population sizes to determine contacts intensities and rates ---------- #####
 # # Set seed----
@@ -121,32 +106,27 @@ cntcts_sim_rates_by_age <- function(dsim, dpop)
 ##### ---------- Generate contact intensities by age and gender ---------- #####
 set.seed(args$seed)
 
-if (!args$covid) {
-  cat("\n Generate gender- and age-specific contact intensities before COVID19 ...")
-  di <- cntcts_sim_intensities_newhh_diagonal()
-}
-
-if (args$covid) {
-  cat("\n Generate gender- and age-specific contact intensities during COVID19 ...")
-  di <- cntcts_sim_intensities_newhh_diagonal()
-  di <- di[, .(cntct_intensity = mean(cntct_intensity)), by = c('age', 'alter_age')]
-}
+di_flat <- cntct_sim_rates_flat()
+di_boarding <- cntct_sim_rates_boarding_school()
 
 ##### ---------- Generate contact rates ---------- #####
 # Generate contact rates
 cat("\n Generate gender- and age-specific contact rates ...")
-di <- cntcts_sim_rates_by_age(di, dpop)
+di_flat <- cntct_sim_rates_by_age(di_flat)
+di_boarding <- cntct_sim_rates_by_age(di_boarding)
 
 # Save the dataset
-saveRDS(di, file = file.path(args$export.path, "data.rds"))
+saveRDS(di_flat, file = file.path(args$export.path, "flat-data.rds"))
+saveRDS(di_boarding, file = file.path(args$export.path, "boarding-data.rds"))
 
 ##### ---------- Visualization ---------- #####
-setkey(di, alter_age, age, alter_gender, gender)
+setkey(di_flat, alter_age, age, alter_gender, gender)
+setkey(di_boarding, alter_age, age, alter_gender, gender)
 
-# Contact intensities
-p <- ggplot(di) +
-  geom_tile(aes(x = age, y = alter_age, fill = cntct_intensity)) +
-  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact intensity" ) +
+# Contact rates
+p_flat <- ggplot(di_flat) +
+  geom_tile(aes(x = age, y = alter_age, fill = cntct_rate)) +
+  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate, flat" ) +
   coord_equal() +
   facet_grid(alter_gender ~ gender) +
   scale_x_continuous(expand = c(0,0)) +
@@ -159,21 +139,39 @@ p <- ggplot(di) +
     strip.background = element_rect(color = NA, fill = "transparent")
   )
 
-ggsave(file.path(fig.path, "intensities.pdf"), plot = p, width = 10, height = 6)
+ggsave(file.path(fig.path, "flat-rates.pdf"), plot = p_flat, width = 10, height = 6)
 
-# Contact intensity aggregated by age
-tmp <- di[, list(cntct_intensity = sum(cntct_intensity)), by = c('gender','age')]
-p <- ggplot(tmp, aes(x = age, y = cntct_intensity) ) +
-  geom_step(aes(colour = gender)) +
+# Contact rates
+p_boarding <- ggplot(di_boarding) +
+  geom_tile(aes(x = age, y = alter_age, fill = cntct_rate)) +
+  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate, boarding" ) +
+  coord_equal() +
+  facet_grid(alter_gender ~ gender) +
   scale_x_continuous(expand = c(0,0)) +
-  scale_color_brewer(palette = "Set1") +
-  labs(x = "Participants' age", y = 'Contact intensity', color = 'Gender') +
+  scale_y_continuous(expand = c(0,0)) +
+  viridis::scale_fill_viridis(na.value = "white", option="H", limits=c(NA,1.3)) +
+  guides(fill = guide_colorbar(title.position = "top", barwidth = 10)) +
   theme_bw() +
   theme(
     legend.position = "bottom",
     strip.background = element_rect(color = NA, fill = "transparent")
   )
 
-ggsave(file.path(fig.path, "marginal-intensities.pdf"), plot = p, width = 6, height = 5)
+ggsave(file.path(fig.path, "boarding-rates.pdf"), plot = p_boarding, width = 10, height = 6)
+
+# # Contact intensity aggregated by age
+# tmp <- di[, list(cntct_intensity = sum(cntct_intensity)), by = c('gender','age')]
+# p <- ggplot(tmp, aes(x = age, y = cntct_intensity) ) +
+#   geom_step(aes(colour = gender)) +
+#   scale_x_continuous(expand = c(0,0)) +
+#   scale_color_brewer(palette = "Set1") +
+#   labs(x = "Participants' age", y = 'Contact rate', color = 'Gender') +
+#   theme_bw() +
+#   theme(
+#     legend.position = "bottom",
+#     strip.background = element_rect(color = NA, fill = "transparent")
+#   )
+# 
+# ggsave(file.path(fig.path, "marginal-rates.pdf"), plot = p, width = 6, height = 5)
 
 cat("\n DONE. \n")
