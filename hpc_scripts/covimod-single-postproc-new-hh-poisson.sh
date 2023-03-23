@@ -16,4 +16,4 @@ module load anaconda3/personal
 source activate Renv
 
 MODEL=${MODEL}-${WAVE}
-Rscript $REPO_PATH/scripts/postprocess-single-new-hh.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
+Rscript $REPO_PATH/scripts/postprocess-single-new-hh-poisson.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
