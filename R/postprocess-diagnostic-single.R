@@ -240,8 +240,14 @@ posterior_alpha <- function(fit, dt.po, type="matrix", outdir=NA, gender_comb="M
       dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
     }
     # create smaller dataset with id and age
-    id_age_alpha <- data.table(new_id=1:N_part, age=dt.part_age)
+    id_age_alpha <- data.table(part_idx=1:N_part, age=dt.part_age$value)
     
+    # add to dataset
+    dt.po <- merge(dt.po, id_age_alpha, by=c("part_idx"))
+    
+    # aggregate by age and alter_age
+    group_var <- c("age", "alter_age")
+    dt.po[, alpha_agg := sum(M), by=group_var]
     if(!is.na(outdir)){
       if (gender_comb=="MM"){
         saveRDS(dt.po, file.path(outdir, "alphaMM_matrix.rds"))
