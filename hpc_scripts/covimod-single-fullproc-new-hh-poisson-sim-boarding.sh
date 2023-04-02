@@ -10,8 +10,8 @@ HSGP_C=1.5
 HSGP_M=20
 
 # HMC Sampler params
-CHAINS= 2
-WARMUP= 250
+CHAINS=2
+WARMUP=250
 SAMPLING=500
 
 # Post-processing
