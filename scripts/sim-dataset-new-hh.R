@@ -38,7 +38,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 # args$repo.path <- "~/Imperial/covimod-gp"
 # args$strata <- "5yr"
-args$scenario = "boarding_school"
+args$scenario = "flat"
 
 ##### ---------- Error handling ---------- #####
 if(is.na(args$repo.path)){

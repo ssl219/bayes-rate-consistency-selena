@@ -10,7 +10,7 @@ HSGP_C=1.5
 HSGP_M=20
 
 # HMC Sampler params
-CHAINS=2
+CHAINS=1
 WARMUP=250
 SAMPLING=500
 
@@ -20,7 +20,7 @@ MIXING=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh-flat.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
+Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh-boarding.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
 MODEL=${MODEL}-${WAVE}
-Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh-flat.R --model $MODEL --mixing $MIXING
+Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh-boarding.R --model $MODEL --mixing $MIXING
