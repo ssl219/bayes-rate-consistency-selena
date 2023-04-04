@@ -360,7 +360,7 @@ data
   array[P_FM] int map_indiv_to_age_FM; 
   array[P_MF] int map_indiv_to_age_MF; 
   
-  matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
+  // matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
 
   matrix[P_MM, A] H_MM; // Household size offsets
   matrix[P_FF, A] H_FF;
