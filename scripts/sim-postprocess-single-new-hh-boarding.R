@@ -52,7 +52,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-boarding_school/data.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0.rds")
 
 
 # Error handling

@@ -174,6 +174,9 @@ extract_posterior_rates <- function(po){
   dt.po[, comb_idx := as.numeric(gsub(.pattern, "\\1", variable))]
   dt.po[, age_idx := as.numeric(gsub(.pattern, "\\2", variable))]
   dt.po[, alter_age_idx := as.numeric(gsub(.pattern, "\\3", variable))]
+  
+  # Calculate posterior contact rate
+  # dt.po[, value := exp(value)]
 
   return(dt.po)
 }
@@ -283,10 +286,10 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
                    by=list(comb_idx, age_idx, alter_age_idx)]
     dt.po <- data.table::dcast(dt.po, comb_idx + age_idx + alter_age_idx ~ q_label, value.var = "q")
 
-    # Convert back to rates
-    dt.po[, M := exp(M)]
-    dt.po[, CL := exp(CL)]
-    dt.po[, CU := exp(CU)]
+    # # Convert back to rates
+    # dt.po[, M := exp(M)]
+    # dt.po[, CL := exp(CL)]
+    # dt.po[, CU := exp(CU)]
 
     # Recover age
     if(simulation){ # If simulation data

@@ -15,18 +15,18 @@ library(pammtools)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                       dest = "repo.path"),
-  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
-                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                       dest = 'data.path'),
-  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-  #                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-  #                        dest = "repo.path"),
-  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-  #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-  #                        dest = 'data.path'),
+  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+  #                      help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+  #                      dest = "repo.path"),
+  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+  #                      help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+  #                      dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                         dest = "repo.path"),
+  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                         dest = 'data.path'),
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
@@ -92,29 +92,29 @@ source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 
 ##### ---------- Assess convergence and mixing ---------- #####
-if(args$mixing){
-  cat(" Assess convergence and mixing\n")
-
-  # Make convergence diagnostic tables
-  fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
-
-  # Make trace plots
-  cat("\n Making trace plots")
-  bayesplot::color_scheme_set(scheme = "mix-blue-pink")
-
-  pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2')
-
-  pars_po <- fit$draws(pars)
-  p <- bayesplot::mcmc_trace(pars_po)
-  ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  # Make pairs plots
-  cat(" Making pairs plots\n")
-  p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
-  ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  cat("\n DONE!\n")
-}
+# if(args$mixing){
+#   cat(" Assess convergence and mixing\n")
+# 
+#   # Make convergence diagnostic tables
+#   fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
+# 
+#   # Make trace plots
+#   cat("\n Making trace plots")
+#   bayesplot::color_scheme_set(scheme = "mix-blue-pink")
+# 
+#   pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2')
+# 
+#   pars_po <- fit$draws(pars)
+#   p <- bayesplot::mcmc_trace(pars_po)
+#   ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
+# 
+#   # Make pairs plots
+#   cat(" Making pairs plots\n")
+#   p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
+#   ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
+# 
+#   cat("\n DONE!\n")
+# }
 
 # ##### ---------- Posterior predictive checks ---------- #####
 # if(args$ppc){

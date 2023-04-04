@@ -90,7 +90,7 @@ plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
   if (new_hh){
     p <- ggplot(dt) +
       geom_tile(aes(x = age, y = alter_age, fill = M)) +
-      labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate" ) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "Log contact rate" ) +
       coord_equal() +
       facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) +
       scale_x_continuous(expand = c(0,0)) +
@@ -99,8 +99,9 @@ plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
       theme_bw() +
       theme(
         legend.position = "bottom",
-        strip.background = element_rect(color=NA, fill = "transparent")
-      )
+        strip.background = element_rect(color=NA, fill = "transparent"),
+        text = element_text(size = 3.5)) 
+      # scale_fill_continuous(labels = scales::label_number(scale = 10000, suffix = "k")) 
     
     if(!is.na(outdir)){
       ggsave(file.path(outdir, "figures", "rate_matrices.png"), plot = p)
@@ -255,7 +256,8 @@ plot_empirical_intensities <- function(dt, outdir=NA){
     theme_bw() +
     theme(
       aspect.ratio = 1,
-      legend.position = "bottom",
+      legend.position = "bottom", 
+      text = element_text(size = 5),
       strip.background = element_rect(color=NA, fill = "transparent")
     )
 
