@@ -351,7 +351,7 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
 create_household_matrix <- function(d, P, A){
   H = matrix(0, nrow=P, ncol=A)
   for(i in 1:length(d$y)){
-    H[d$new_id_idx[i], d$alter_age[i]] = d$Hic_b[i]
+    H[d$new_id_idx[i], d$alter_age[i] + 1] = d$Hic_b[i]
   }
   return(H)
 }
@@ -705,7 +705,7 @@ add_map_indiv_to_age <- function(stan_data, contact, everything, sim=FALSE){
   }
   
   stan_data$U <- nb_f
-  stan_data$map_indiv_to_age <- map_indiv_to_age
+  # stan_data$map_indiv_to_age <- map_indiv_to_age
   
   return(stan_data)
 

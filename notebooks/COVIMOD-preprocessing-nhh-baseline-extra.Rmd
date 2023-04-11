@@ -30,11 +30,33 @@ dt.hh <- covimod$hh
 dt.part <- dt.part[wave <= 5]
 dt.nhh <- dt.nhh[wave <= 5]
 dt.hh <- dt.hh[wave <= 5]
+
+# type of nhh contact
+type_nhh <- "other"
 ```
 
 ```{r}
 dt.nhh
 ```
+
+```{r}
+if (type_nhh == "work"){
+  dt.nhh <- dt.nhh[relation=="Work"]
+}
+
+if (type_nhh == "friends and nhh family"){
+  dt.nhh <- dt.nhh[relation=="Friend" | relation=="Family (not in household)"]
+}
+
+if (type_nhh == "school"){
+  dt.nhh <- dt.nhh[relation=="School"]
+}
+
+if (type_nhh == "other"){
+  dt.nhh <- dt.nhh[relation=="Other"]
+}
+```
+
 
 
 ## Participant data
@@ -78,7 +100,7 @@ dt.amb <- merge(dt.amb[,.(new_id, wave)], dt.part, by=c("new_id", "wave"), all.x
 # Treat all as missing (some have either gender or age-strata info)
 dt.amb <- dt.amb[, list(y_amb = .N), by=c("new_id", "u")]
 
-hist(dt.amb$y_amb) # Quick visualization
+# hist(dt.amb$y_amb) # Quick visualization
 
 # Truncate at 30 (to remove extreme cases where people reported 30+ contacts)
 dt.amb <- merge(dt.amb, dt.part, by=c("new_id", "u"), all.x = TRUE)
@@ -89,9 +111,22 @@ dt.nhh <- dt.nhh[!(is.na(alter_age_strata) | is.na(alter_gender))]
 
 ### Group contacts
 ```{r}
-SDcols_Q75 <- c("Q75_u18_work", "Q75_u18_school", "Q75_u18_else", 
-                "Q75_1864_work", "Q75_1864_school", "Q75_1864_else",
-                "Q75_o64_work", "Q75_o64_school", "Q75_o64_else")
+if (type_nhh == "work"){
+SDcols_Q75 <- c("Q75_u18_work",
+                "Q75_1864_work",
+                "Q75_o64_work")
+}
+
+if (type_nhh == "school"){
+SDcols_Q75 <- c("Q75_u18_school",
+                "Q75_1864_school",
+                "Q75_o64_school")
+}
+
+if (type_nhh =="friends and nhh family" | type_nhh == "other") {
+SDcols_Q75 <- c("Q75_u18_else",
+                "Q75_1864_else", "Q75_o64_else")
+}
 
 dt.part[, y_grp := rowSums(.SD, na.rm = T), .SDcols = SDcols_Q75]
 dt.part[y_grp > 60, y_grp := 60]
@@ -102,17 +137,18 @@ setnames(dt.grp, "imp_age", "age")
 
 ## Combine household and non-household data
 ```{r}
-setnames(dt.hh, "hh_met_this_day", "y")
-dt.hh$type <- "hh"
+# setnames(dt.hh, "hh_met_this_day", "y")
+# dt.hh$type <- "hh"
 
 dt.nhh$y <- 1
-dt.nhh$type <- "nhh"
+# dt.nhh$type <- "nhh"
 
 # Combine household and non-household contacts
-dt.cmb <- rbind(dt.nhh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)], 
-                dt.hh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)])
+# dt.cmb <- rbind(dt.nhh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)], 
+#                 dt.hh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)])
+dt.cmb <-dt.nhh[,.(new_id, wave, alter_age_strata, alter_gender, y)]
 
-dt.cmb$type <- factor(dt.cmb$type, levels=c("hh", "nhh"))
+# dt.cmb$type <- factor(dt.cmb$type, levels=c("hh", "nhh"))
 dt.cmb <- dt.cmb[order(wave, new_id),]
 
 # Merge with participant data
@@ -205,7 +241,25 @@ covimod.processed <- list(
   pop = covimod$pop
 )
 
-saveRDS(covimod.processed, file="../data/COVIMOD/COVIMOD-multi.rds")
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+
+
+if (type_nhh == "work"){
+  saveRDS(covimod.processed, file=file.path(data.path, "data/COVIMOD/COVIMOD-multi-nhh-work.rds"))
+}
+
+if (type_nhh == "friends and nhh family"){
+    saveRDS(covimod.processed, file=file.path(data.path, "data/COVIMOD/COVIMOD-multi-nhh-friends-family.rds"))
+}
+
+if (type_nhh == "school"){
+    saveRDS(covimod.processed, file=file.path(data.path, "data/COVIMOD/COVIMOD-multi-nhh-school.rds"))
+}
+
+if (type_nhh == "other"){
+    saveRDS(covimod.processed, file=file.path(data.path, "data/COVIMOD/COVIMOD-multi-nhh-other.rds"))
+}
+
 ```
 
 

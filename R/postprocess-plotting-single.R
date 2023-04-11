@@ -90,7 +90,7 @@ plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
   if (new_hh){
     p <- ggplot(dt) +
       geom_tile(aes(x = age, y = alter_age, fill = M)) +
-      labs(x = "Participants' age", y = "Contacts' age", fill = "Log contact rate" ) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate" ) +
       coord_equal() +
       facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) +
       scale_x_continuous(expand = c(0,0)) +

@@ -10,6 +10,7 @@ library(ggplot2)
 library(ggpubr)
 library(viridis)
 library(pammtools)
+library(dplyr)
 
 option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721, dest = "seed"),
@@ -88,7 +89,7 @@ cat("\n Generating contact dataset ...")
 args$size = 0
 args$strata = "COVIMOD-new-hh"
 N_random <- args$size
-N = 2*(85 + N_random)
+N = (85 + N_random)
 # Generate new_id for all participants (all distinct)
 d.everything.M <- as.data.table(expand.grid(new_id = 1:N, alter_age = 0:84))
 d.everything.M[, DUMMY:=1L]
@@ -97,14 +98,15 @@ d.everything.M <- merge(d.everything.M, tmp, by = 'DUMMY', allow.cartesian = TRU
 d.everything.M <- stratify_alter_age(d.everything.M, args$strata)
 d.everything.M[, wave:=1L]
 # hhsize = args$hhsize
-d.everything.M[, household_size:=4L]
+# d.everything.M[, household_size:=4L]
 # only male participants for now
 d.everything.M[, gender:="Male"]
 
 # Generate age of participants
 # set.seed(12002)
-random_ages <- sample(0:84, N_random, replace=TRUE)
-part_ages <- sort(c(random_ages, 0:84))
+# random_ages <- sample(0:84, N_random, replace=TRUE)
+# part_ages <- sort(c(random_ages, 0:84))
+part_ages <- sort(c(0:84))
 # create smaller dataset with new_id and part_ages
 id_ages <- data.table(new_id=1:N, age=part_ages)
 d.everything.M <- merge(d.everything.M, id_ages, by=c("new_id"), all=TRUE)
@@ -244,15 +246,15 @@ setnames(d.everything.MF, c('n_F'), c('n') )
 
 d.everything.M.final <- rbind(d.everything.MM, d.everything.MF)
 d.everything.M.final <- d.everything.M.final[Hic_b!=0]
-
-
+# if N_random = 0, should get a dataset of dimension 85*85*2 = 14450
+#################################################################################################################################
 
 
 # do the same for female participants
-args$size = 85
+args$size = 0
 args$strata = "COVIMOD-new-hh"
 N_random <- args$size
-N = 2*(85 + N_random)
+N = (85 + N_random)
 # Generate new_id for all participants (all distinct)
 d.everything.F <- as.data.table(expand.grid(new_id = (N+1):(2*N), alter_age = 0:84))
 d.everything.F[, DUMMY:=1L]
@@ -261,14 +263,15 @@ d.everything.F <- merge(d.everything.F, tmp, by = 'DUMMY', allow.cartesian = TRU
 d.everything.F <- stratify_alter_age(d.everything.F, args$strata)
 d.everything.F[, wave:=1L]
 # hhsize = args$hhsize
-d.everything.F[, household_size:=4L]
+# d.everything.F[, household_size:=4L]
 # female participants now
 d.everything.F[, gender:="Female"]
 
 # Generate age of participants
 set.seed(2002)
-random_ages <- sample(0:84, N_random, replace=TRUE)
-part_ages <- sort(c(random_ages, 0:84))
+# random_ages <- sample(0:84, N_random, replace=TRUE)
+# part_ages <- sort(c(random_ages, 0:84))
+part_ages <- sort(c(0:84))
 # create smaller dataset with new_id and part_ages
 id_ages <- data.table(new_id=(N+1):(2*N), age=part_ages)
 d.everything.F <- merge(d.everything.F, id_ages, by=c("new_id"), all=TRUE)
@@ -435,16 +438,36 @@ d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.fi
 # }
 
 # Stratify contact intensities and contact rates
-group_var <- c("age", "gender", "alter_age_strata", "alter_gender")
+group_var_plot <- c("age", "gender", "alter_age_strata", "alter_gender")
+d_comb_no_dupl_plot <- d.everything.final
+d_comb_no_dupl_plot[, y_strata := sum(y), by=group_var]
+d_comb_no_dupl_plot[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+setnames(d_comb_no_dupl_plot, c("y", "y_strata"), c("y_age", "y"))
+
+
+group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
 d_comb_no_dupl <- d.everything.final
-d_comb_no_dupl[, y_strata := mean(y), by=group_var]
-d_comb_no_dupl[, cntct_rate_strata := mean(cntct_rate), by=group_var]
-setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+# d_comb_no_dupl[, y_strata := sum(y), by=group_var]
+# d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+# if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+# 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+# setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+
 # order alter_age strate for plots
 covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
-d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
-d_comb_no_dupl <- d_comb_no_dupl[order(age, new_id, alter_age_strata_idx_simplot, gender, alter_gender)]
+# d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+# d_comb_no_dupl <- d_comb_no_dupl[order(age, new_id, alter_age_strata_idx_simplot, gender, alter_gender)]
 
+simulated_fine_counts_MM <- ggplot(d.everything.final[gender=="Male" & alter_gender=="Male"], aes(age, factor(alter_age))) + 
+  geom_tile(aes(fill = y_age)) + 
+  scale_fill_viridis(option = "F") + 
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_discrete(expand = c(0,0)) + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
+  theme(aspect.ratio = 1)
+
+# may have to change d_comb_no_dupl to d_comb_no_dupl_plot when we participants of same age and gender, eg when N_random > 0
 simulated_counts <- ggplot(d_comb_no_dupl, aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
        geom_tile(aes(fill = y)) + 
        scale_fill_viridis(option = "F") + 
@@ -487,11 +510,11 @@ simulated_counts_FM <- ggplot(d_comb_no_dupl[gender=="Female" & alter_gender=="M
   theme(aspect.ratio = 1)
 
 if (!args$divide.Hicb){
-  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-nodivide-simulated-counts.pdf")), plot = simulated_counts, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MM.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FF.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MF.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FM.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-nodivide-simulated-counts-amended.pdf")), plot = simulated_counts, width = 10, height = 6)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MM-amended.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FF-amended.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MF-amended.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FM-amended.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
   }else{
   ggsave(file.path(export.path, paste0("hh", args$hhsize, "-simulated-counts.pdf")), plot = simulated_counts, width = 10, height = 6)
   ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-MM.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
@@ -508,20 +531,20 @@ covimod.single.new.hh.sim <- list(
 
 if (args$hhsize == 0){
   if (!args$divide.Hicb){
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0.rds")))
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended.rds")))
   }
   else{
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0.rds")))
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
   }
   
 }
 
 if (args$hhsize == 4){
   if (!args$divide.Hicb){
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4.rds")))
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended.rds")))
   }
   else{
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4.rds")))
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended.rds")))
   }
 }
 

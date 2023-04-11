@@ -5,7 +5,7 @@
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
-MODEL="hsgp-eq-cd"
+MODEL="hsgp-eq-rd"
 HSGP_C=1.5
 HSGP_M=20
 

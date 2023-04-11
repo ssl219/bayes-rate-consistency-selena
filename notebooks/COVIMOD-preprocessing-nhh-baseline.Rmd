@@ -102,24 +102,26 @@ setnames(dt.grp, "imp_age", "age")
 
 ## Combine household and non-household data
 ```{r}
-setnames(dt.hh, "hh_met_this_day", "y")
-dt.hh$type <- "hh"
+# setnames(dt.hh, "hh_met_this_day", "y")
+# dt.hh$type <- "hh"
 
 dt.nhh$y <- 1
-dt.nhh$type <- "nhh"
+# dt.nhh$type <- "nhh"
 
 # Combine household and non-household contacts
-dt.cmb <- rbind(dt.nhh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)], 
-                dt.hh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)])
+# dt.cmb <- rbind(dt.nhh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)],
+#                dt.hh[,.(new_id, wave, type, alter_age_strata, alter_gender, y)])
 
-dt.cmb$type <- factor(dt.cmb$type, levels=c("hh", "nhh"))
+dt.cmb <- dt.nhh[,.(new_id, wave, alter_age_strata, alter_gender, y)]
+
+# dt.cmb$type <- factor(dt.cmb$type, levels=c("hh", "nhh"))
 dt.cmb <- dt.cmb[order(wave, new_id),]
 
 # Merge with participant data
 dt.cmb <- merge(dt.cmb, dt.part, by=c("new_id", "wave"), all.x = TRUE)
 
 # Sanity check
-sum(dt.cmb$y, na.rm = T) + sum(dt.amb$y_amb) + sum(dt.grp$y)
+sum(dt.cmb$y, na.rm = TRUE) + sum(dt.amb$y_amb) + sum(dt.grp$y)
 ```
 
 ## Aggregate contacts
@@ -205,7 +207,8 @@ covimod.processed <- list(
   pop = covimod$pop
 )
 
-saveRDS(covimod.processed, file="../data/COVIMOD/COVIMOD-multi.rds")
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.processed, file=file.path(data.path, "data/COVIMOD/COVIMOD-multi-nhh.rds"))
 ```
 
 

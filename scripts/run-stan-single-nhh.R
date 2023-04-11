@@ -22,7 +22,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 8,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,

@@ -30,7 +30,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2-poisson-1-sim-flat-everyone-amended",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -52,7 +52,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds")
 
 
 # Error handling
@@ -65,7 +65,7 @@ if(!file.exists(data.path)) {
 }
 
 # Output directories
-export.path <- file.path(args$repo.path, "results", args$model.name)
+export.path <- file.path(args$repo.path, "results-debug", args$model.name)
 export.fig.path <- file.path(export.path, "figures")
 if(!dir.exists(export.path)){
   dir.create(export.path, recursive = TRUE)
@@ -90,8 +90,8 @@ source(file.path(args$repo.path, "R/covimod-utility.R"))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
-
-##### ---------- Assess convergence and mixing ---------- #####
+# 
+# #### ---------- Assess convergence and mixing ---------- #####
 # if(args$mixing){
 #   cat(" Assess convergence and mixing\n")
 # 
@@ -129,7 +129,7 @@ source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
-  cat(" Extracting posterior contact intensities\n")
+  cat(" Extracting posterior contact rates\n")
   po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   dt.po <- extract_posterior_rates(po)
   dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)

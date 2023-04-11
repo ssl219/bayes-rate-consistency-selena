@@ -14,34 +14,34 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 50,
+  optparse::make_option("--iter_warmup", type = "integer", default = 500,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 10,
+  optparse::make_option("--iter_sampling", type = "integer", default = 1000,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2-poisson",
                         help = "Name of Stan model",
                         dest = 'model.name'),
-  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-  #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-  #                       dest = 'repo.path'),
-  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-  #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-  #                       dest = 'data.path'),
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                        dest = "repo.path"),
-  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                        dest = 'repo.path'),
+  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
                         dest = 'data.path'),
+  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+  #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+  #                       dest = "repo.path"),
+  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+  #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+  #                       dest = 'data.path'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
                         help = "The boundary inflation of the HSGP prior in any dimension [default \"%default\"]",
                         dest = "hsgp_c"),
-  optparse::make_option("--hsgp_m", type = "integer", default = 20,
+  optparse::make_option("--hsgp_m", type = "integer", default = 30,
                         help = "The number of the HSGP basis functions in any dimension [default \"%default\"]",
                         dest = "hsgp_m"),
   optparse::make_option("--wave", type = "integer", default = 1,
@@ -55,7 +55,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -93,7 +93,7 @@ stan_data <- add_ages_contacts(stan_data, dt.offsets)
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
 
 # Add household offsets
-stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=FALSE)
+stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=TRUE)
 
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data)
@@ -131,7 +131,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-everyone.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-everyone-amended.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")
