@@ -82,7 +82,7 @@ stan_data <- add_N(stan_data, survey = "POLYMOD")
 dt.cnt[, u := fcase(wave == 1, 1)]
 
 # Add row major index
-stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
+stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="COVIMOD")
 
 # Add participant offsets
 stan_data <- add_part_offsets(stan_data, dt.cnt, offsets=dt.offsets, survey = 'POLYMOD')

@@ -262,13 +262,25 @@ add_ages_contacts <- function(stan_data, everything){
 add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
   if (survey == "COVIMOD"){
     d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
-
+    
     d[, age_idx := age + 1]
     d[, age_strata_idx := as.numeric(alter_age_strata)]
     d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
-
+    
     stan_data$ROW_MAJOR_IDX_M <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_F <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_MM <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FF <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
+    
+    m = stan_data$ROW_MAJOR_IDX_M - 1
+    f = stan_data$ROW_MAJOR_IDX_F - 1
+    stan_data$ROW_MAJOR_IDX_M_AGE <- 1 + (m - m%%13)/13
+    stan_data$ROW_MAJOR_IDX_F_AGE <- 1 + (f - f%%13)/13
+    stan_data$ROW_MAJOR_IDX_M_STRATA <- 1 + m %% 13
+    stan_data$ROW_MAJOR_IDX_F_STRATA <- 1 + f %% 13    
+    return(stan_data)
   }
 
   if (survey == "POLYMOD"){
