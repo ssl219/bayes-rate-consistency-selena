@@ -30,7 +30,7 @@ option_list <- list(
   optparse::make_option("--mixing", type = "logical", default = TRUE,
                         help = "Whether to assess mixing",
                         dest = "mixing"),
-  o3ptparse::make_option("--ppc", type = "logical", default = TRUE,
+  optparse::make_option("--ppc", type = "logical", default = TRUE,
                         help = "Whether to run posterior predictive checks",
                         dest = "ppc"),
   optparse::make_option("--plot", type = "logical", default = TRUE,

@@ -22,5 +22,5 @@ source activate Renv
 
 Rscript $REPO_PATH/scripts/run-stan-single-nhh-other.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
-MODEL=${MODEL}-${WAVE}-"nhh"
+MODEL=${MODEL}-${WAVE}-"nhh-other"
 Rscript $REPO_PATH/scripts/postprocess-single-nhh-other.R --model $MODEL --mixing $MIXING

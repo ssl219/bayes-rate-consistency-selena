@@ -8,6 +8,7 @@ library(optparse)
 library(data.table)
 library(stringr)
 library(cmdstanr)
+library(tidyr)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
@@ -23,7 +24,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 4,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-m52-lrd",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-lrd-gp",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
