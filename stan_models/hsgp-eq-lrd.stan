@@ -534,6 +534,8 @@ model {
 
 generated quantities {
   // Predicted coarse-strata contacts
+  
+  array[N] real log_lik;
   array[N] int yhat_strata;
 
   {
@@ -549,5 +551,9 @@ generated quantities {
     );
 
     yhat_strata = neg_binomial_rng( mu_flat / nu + 1e-13, inv(nu) );
+
+    for(i in 1:N) {
+      log_lik[i] = neg_binomial_lpmf( Y[i] | mu_flat[i]/ nu + 1e-13, inv(nu));
+    }
   }
 }
