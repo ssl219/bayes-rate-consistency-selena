@@ -777,18 +777,22 @@ add_nn_idx <- function(stan_data){
 # Add standardized age index
 add_std_age_idx <- function(stan_data){
   A <- stan_data$A
-
+  C <- stan_data$C
+  
   age_idx <- seq.int(0,A-1,1)
   diff_idx <- seq.int(-A+1, A-1, 1)
-
+  strata_idx <- seq.int(0, C-1, 1)
+  
   age_idx_std <- (age_idx - mean(age_idx))/sd(age_idx)
   diff_idx_std <- (diff_idx - mean(diff_idx))/sd(diff_idx)
-
+  strata_idx_std <- (strata_idx - mean(strata_idx))/sd(strata_idx)
+  
   stan_data$age_idx_std <- age_idx_std
   stan_data$diff_idx_std <- diff_idx_std
-
+  stan_data$strata_idx_std <- strata_idx_std
   return(stan_data)
 }
+
 
 # Add HSGP parameters
 add_hsgp_parms <- function(stan_data, C, M1, M2){

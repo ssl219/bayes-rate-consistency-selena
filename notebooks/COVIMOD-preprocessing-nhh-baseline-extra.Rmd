@@ -32,7 +32,7 @@ dt.nhh <- dt.nhh[wave <= 5]
 dt.hh <- dt.hh[wave <= 5]
 
 # type of nhh contact
-type_nhh <- "other"
+type_nhh <- "friends and nhh family"
 ```
 
 ```{r}
@@ -45,7 +45,7 @@ if (type_nhh == "work"){
 }
 
 if (type_nhh == "friends and nhh family"){
-  dt.nhh <- dt.nhh[relation=="Friend" | relation=="Family (not in household)"]
+  dt.nhh <- dt.nhh[relation=="Family (not in household)"]
 }
 
 if (type_nhh == "school"){
@@ -55,6 +55,7 @@ if (type_nhh == "school"){
 if (type_nhh == "other"){
   dt.nhh <- dt.nhh[relation=="Other"]
 }
+# |  relation=="Friend" 
 ```
 
 
@@ -123,14 +124,19 @@ SDcols_Q75 <- c("Q75_u18_school",
                 "Q75_o64_school")
 }
 
-if (type_nhh =="friends and nhh family" | type_nhh == "other") {
+if (type_nhh == "other") {
 SDcols_Q75 <- c("Q75_u18_else",
                 "Q75_1864_else", "Q75_o64_else")
 }
 
-dt.part[, y_grp := rowSums(.SD, na.rm = T), .SDcols = SDcols_Q75]
-dt.part[y_grp > 60, y_grp := 60]
+if (type_nhh =="friends and nhh family"){
+  dt.part[, y_grp := 0]
+}
 
+if (type_nhh != "friends and nhh family"){
+  dt.part[, y_grp := rowSums(.SD, na.rm = T), .SDcols = SDcols_Q75]
+  dt.part[y_grp > 60, y_grp := 60]
+}
 dt.grp <- dt.part[, .(y = sum(y_grp)), by=.(wave, imp_age, gender)]
 setnames(dt.grp, "imp_age", "age")
 ```
