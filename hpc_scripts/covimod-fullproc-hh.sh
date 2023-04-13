@@ -7,7 +7,7 @@ REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVES=5
 MODEL="hsgp-eq-lrd"
 HSGP_C=1.5
-HSGP_M1=40
+HSGP_M1=30
 HSGP_M2=30
 
 # HMC Sampler params
