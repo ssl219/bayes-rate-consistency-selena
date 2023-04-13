@@ -61,7 +61,7 @@ add_contact_vector <- function(stan_data, contacts, single=FALSE, survey="COVIMO
   if(survey == "COVIMOD"){
     
     if(!single){
-      d <- contacts[order(u, age, new_id, alter_age_strata, gender, alter_gender)]
+      d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
 
       stan_data$Y_MM <- d[gender == "Male" & alter_gender == "Male"]$y
       stan_data$Y_FF <- d[gender == "Female" & alter_gender == "Female"]$y
