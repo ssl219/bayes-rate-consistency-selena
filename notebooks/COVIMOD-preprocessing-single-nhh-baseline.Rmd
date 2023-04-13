@@ -14,6 +14,8 @@ library(data.table)
 library(stringr)
 library(ggplot2)
 library(pammtools)
+library(ggpubr)
+library(viridis)
 
 source("../R/covimod-utility.R")
 source("../R/stan-utility.R")
@@ -175,7 +177,7 @@ dt.cmb.agg.nhh <- dt.cmb.agg.nhh[!is.na(alter_gender)]
 g <- make_grid(85, 5, gender = TRUE)
 setnames(g, "u", "wave")
 d <- merge(g, dt.cmb.agg.nhh, by=c("wave", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
-d <- merge(d, dt.offsets.nhh, by = c("wave", "age", "gender"), all.x = TRUE, allow.cartesian = TRUE)
+d <- merge(d, dt.offsets.nhh, by = c("wave", "age", "gender"), all.x = TRUE)
 
 # Impute true zeroes
 d <- d[!is.na(N)]
@@ -198,6 +200,33 @@ hist(d$zeta[which(d$zeta != 1)])
 ```
 
 
+```{r}
+fig.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena/notebooks/COVIMOD-preprocessing_files/figure-html"
+
+tmp <- d[, m := y/N]
+p1 <- ggplot(tmp, aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = m)) + 
+  facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) + 
+  viridis::scale_fill_viridis(option='H') +
+  theme_bw() + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Empirical contact intensity") +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=20))
+
+p1
+ggsave(file.path(fig.path, paste0("empirical-contact-intensity-nhh.png")), plot = p1, height = 20, width = 20, limitsize = FALSE)
+```
+```{r}
+p2 <- ggplot(tmp, aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = log(y))) + 
+  facet_grid(paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)")) + 
+  viridis::scale_fill_viridis(option='H') +
+  theme_bw() + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of contact counts") +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=20))
+
+p2
+ggsave(file.path(fig.path, paste0("log-contact-counts-nhh.png")), plot = p2, height = 20, width = 20, limitsize = FALSE)
+```
 
 ## Export data
 ```{r}
