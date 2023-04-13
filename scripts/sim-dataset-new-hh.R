@@ -440,21 +440,20 @@ d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.fi
 # Stratify contact intensities and contact rates
 group_var_plot <- c("age", "gender", "alter_age_strata", "alter_gender")
 d_comb_no_dupl_plot <- d.everything.final
-d_comb_no_dupl_plot[, y_strata := sum(y), by=group_var]
+d_comb_no_dupl_plot[, y_plot:= sum(y), by=group_var]
 d_comb_no_dupl_plot[, cntct_rate_strata := sum(cntct_rate), by=group_var]
-setnames(d_comb_no_dupl_plot, c("y", "y_strata"), c("y_age", "y"))
 
 
 group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
 d_comb_no_dupl <- d.everything.final
-# d_comb_no_dupl[, y_strata := sum(y), by=group_var]
-# d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+d_comb_no_dupl[, y_strata := sum(y), by=group_var]
+d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
 d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
 # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
 # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
-# setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
 
-# order alter_age strate for plots
+# order alter_age strata for plots
 covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
 # d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
 # d_comb_no_dupl <- d_comb_no_dupl[order(age, new_id, alter_age_strata_idx_simplot, gender, alter_gender)]
