@@ -377,7 +377,7 @@ data
   array[P_MF] int map_indiv_to_age_MF; 
   array[P_FM] int map_indiv_to_age_FM; 
   
-  matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
+  // matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
 
 
   array[A_MM] real log_H_MM; // Log of household offsets (ordered in ascending order of participant age then contact age)
@@ -613,6 +613,10 @@ generated quantities
   array[A_FF] int contact_age_FF;
   array[A_MF] int contact_age_MF;
   array[A_FM] int contact_age_FM;
+  array[P_MM, C] int yhat_strata_MM;
+  array[P_FF, C] int yhat_strata_FF;
+  array[P_FM, C] int yhat_strata_FM;
+  array[P_MF, C] int yhat_strata_MF;
 
   contact_age_MM = B_MM;
   contact_age_FF = B_FF;
@@ -664,20 +668,22 @@ generated quantities
   // alpha_strata_flat_full = alpha_strata_flat_full * map_indiv_to_age_full;
   
   // yhat_strata's in individual space
-  // for(i in 1:P_MM){
-  //     yhat_strata_MM[i,:] = neg_binomial_rng( alpha_strata_MM[i,:], inv(nu) );
-  //     }
-  // for(i in 1:P_FF){
-  //     yhat_strata_FF[i,:] = neg_binomial_rng( alpha_strata_FF[i,:], inv(nu) );
-  //     }
-  // for(i in 1:P_MF){
-  //     yhat_strata_MF[i,:] = neg_binomial_rng( alpha_strata_MF[i,:], inv(nu) );
-  //     }
-  // for(i in 1:P_FM){
-  //     yhat_strata_FM[i,:] = neg_binomial_rng( alpha_strata_FM[i,:], inv(nu) );
-  //     }
-  // 
-  //   }
+  
+  {
+  for(i in 1:P_MM){
+      yhat_strata_MM[i,:] = poisson_rng( alpha_strata_MM[i,:]);
+      }
+  for(i in 1:P_FF){
+      yhat_strata_FF[i,:] = poisson_rng( alpha_strata_FF[i,:]);
+      }
+  for(i in 1:P_MF){
+      yhat_strata_MF[i,:] = poisson_rng( alpha_strata_MF[i,:]);
+      }
+  for(i in 1:P_FM){
+      yhat_strata_FM[i,:] = poisson_rng( alpha_strata_FM[i,:]);
+      }
+
+    }
   }
 
 // In the words of Copilot: I have a model that I am trying to fit to some data. The model is a hierarchical model with a GP prior on the random effects. I am trying to fit the model using the NUTS sampler. The model is a bit complicated, but I have tried to simplify it as much as possible. 

@@ -112,15 +112,16 @@ if(args$mixing){
 }
 
 # ##### ---------- Posterior predictive checks ---------- #####
-# if(args$ppc){
-#   cat(" Extracting posterior\n")
-#   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-# 
-#   cat(" Making posterior predictive checks\n")
-#   make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-# 
-#   cat("\n DONE.\n")
-# }
+if(args$ppc){
+  cat(" Extracting posterior\n")
+  po <- fit$draws(c("yhat_strata_MM", "yhat_strata_FF", "yhat_strata_MF", "yhat_strata_FM"), inc_warmup = FALSE, format="draws_matrix")
+  
+  
+  cat(" Making posterior predictive checks\n")
+  make_ppd_check_covimod(po, dt.cnt, outdir=export.path, new_hh=TRUE)
+  
+  cat("\n DONE.\n")
+}
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
@@ -138,6 +139,33 @@ if(args$plot){
   # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
   # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
 
+  po.alphaMM <- fit$draws(c("alpha_age_MM"), inc_warmup = FALSE, format="draws_matrix")
+  po.alphaFF <- fit$draws(c("alpha_age_FF"), inc_warmup = FALSE, format="draws_matrix")
+  po.alphaMF <- fit$draws(c("alpha_age_MF"), inc_warmup = FALSE, format="draws_matrix")
+  po.alphaFM <- fit$draws(c("alpha_age_FM"), inc_warmup = FALSE, format="draws_matrix")
+  
+  
+  dt.po.alphaMM <- extract_posterior_alpha(po.alphaMM, gender_comb = "MM")
+  dt.matrix.alphaMM <- posterior_alpha(fit, dt.po.alphaMM, type="matrix", outdir=export.path, gender_comb="MM")
+ 
+  
+  dt.po.alphaFF <- extract_posterior_alpha(po.alphaFF, gender_comb = "FF")
+  dt.matrix.alphaFF <- posterior_alpha(fit, dt.po.alphaFF, type="matrix", outdir=export.path, gender_comb="FF")
+  
+  
+  dt.po.alphaMF <- extract_posterior_alpha(po.alphaMF, gender_comb = "MF")
+  dt.matrix.alphaMF <- posterior_alpha(fit, dt.po.alphaMF, type="matrix", outdir=export.path, gender_comb="MF")
+  
+  
+  dt.po.alphaFM <- extract_posterior_alpha(po.alphaFM, gender_comb = "FM")
+  dt.matrix.alphaFM <- posterior_alpha(fit, dt.po.alphaFM, type="matrix", outdir=export.path, gender_comb="FM")
+  
+  
+  # combine datasets with all gender combinations
+  dt.matrix.alpha <- rbind(dt.matrix.alphaMM, dt.matrix.alphaFF, dt.matrix.alphaMF, dt.matrix.alphaFM)
+  
+  p <- plot_alpha(dt.matrix.alpha, outdir=export.fig.path)
+  
   cat("\n DONE.\n")
 }
 

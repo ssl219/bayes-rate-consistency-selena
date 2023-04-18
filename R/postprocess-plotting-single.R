@@ -170,6 +170,28 @@ plot_predicted_rates <- function(dt, outdir=NA){
   }
 }
 
+plot_alpha <- function(dt, outdir=NA){
+  p <- ggplot(dt.matrix.alpha) +
+    geom_tile(aes(x = age, y = alter_age, fill = alpha_agg)) +
+    labs(x = "Participants' age", y = "Contacts' age", fill = "Alpha" ) +
+    facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+    coord_equal() +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    viridis::scale_fill_viridis(na.value="white", option="H") +
+    theme_bw() +
+    theme(
+      legend.position = "bottom",
+      strip.background = element_rect(color=NA, fill = "transparent")
+    )
+  
+  if(!is.na(outdir)){
+    ggsave(file.path(outdir, "alpha_contact_intensities.png"), plot = p)
+  }
+  return(p)
+
+}
+
 #' Plot the predicted contact rates sliced at different contacting ages
 #'
 #' @param dt data.table with extracted posterior predictions

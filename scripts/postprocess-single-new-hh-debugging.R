@@ -24,7 +24,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-2-poisson-1",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -80,65 +80,84 @@ source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 
 ##### ---------- Assess convergence and mixing ---------- #####
-if(args$mixing){
-  cat(" Assess convergence and mixing\n")
-
-  # Make convergence diagnostic tables
-  fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
-
-  # Make trace plots
-  cat("\n Making trace plots")
-  bayesplot::color_scheme_set(scheme = "mix-blue-pink")
-
-  pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2')
-
-  pars_po <- fit$draws(pars)
-  p <- bayesplot::mcmc_trace(pars_po)
-  ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  # Make pairs plots
-  cat(" Making pairs plots\n")
-  p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
-  ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  cat("\n DONE!\n")
-}
-
-# ##### ---------- Posterior predictive checks ---------- #####
-# if(args$ppc){
-#   cat(" Extracting posterior\n")
-#   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
+# if(args$mixing){
+#   cat(" Assess convergence and mixing\n")
 # 
-#   cat(" Making posterior predictive checks\n")
-#   make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+#   # Make convergence diagnostic tables
+#   fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
 # 
-#   cat("\n DONE.\n")
+#   # Make trace plots
+#   cat("\n Making trace plots")
+#   bayesplot::color_scheme_set(scheme = "mix-blue-pink")
+# 
+#   pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2')
+# 
+#   pars_po <- fit$draws(pars)
+#   p <- bayesplot::mcmc_trace(pars_po)
+#   ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
+# 
+#   # Make pairs plots
+#   cat(" Making pairs plots\n")
+#   p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
+#   ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
+# 
+#   cat("\n DONE!\n")
 # }
 
-##### ---------- Plotting ---------- #####
-if(args$plot){
-  cat(" Extracting posterior contact intensities\n")
-  po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-  dt.po <- extract_posterior_rates(po)
-  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
-  # dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
-
-  rm(dt.po); suppressMessages(gc()); # Ease memory
-
-  cat(" Making figures\n")
-
-  p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
-  # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
-  # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
+# ##### ---------- Posterior predictive checks ---------- #####
+if(args$ppc){
+  cat(" Extracting posterior\n")
+  po <- fit$draws(c("yhat_strata_MM", "yhat_strata_FF", "yhat_strata_MF", "yhat_strata_FM"), inc_warmup = FALSE, format="draws_matrix")
+  
+  cat(" Making posterior predictive checks\n")
+  make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
 
   cat("\n DONE.\n")
 }
 
+##### ---------- Plotting ---------- #####
+# if(args$plot){
+#   cat(" Extracting posterior contact intensities\n")
+#   po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
+#   dt.po <- extract_posterior_rates(po)
+#   dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
+#   # dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
+# 
+#   rm(dt.po); suppressMessages(gc()); # Ease memory
+# 
+#   cat(" Making figures\n")
+# 
+#   p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
+#   # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
+#   # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
+# 
+#   cat("\n DONE.\n")
+# }
+
 po.alphaMM <- fit$draws(c("alpha_age_MM"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaFF <- fit$draws(c("alpha_age_FF"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaMF <- fit$draws(c("alpha_age_MF"), inc_warmup = FALSE, format="draws_matrix")
-# po.alphaFM <- fit$draws(c("alpha_age_FM"), inc_warmup = FALSE, format="draws_matrix")
+po.alphaFF <- fit$draws(c("alpha_age_FF"), inc_warmup = FALSE, format="draws_matrix")
+po.alphaMF <- fit$draws(c("alpha_age_MF"), inc_warmup = FALSE, format="draws_matrix")
+po.alphaFM <- fit$draws(c("alpha_age_FM"), inc_warmup = FALSE, format="draws_matrix")
 
 
 dt.po.alphaMM <- extract_posterior_alpha(po.alphaMM, gender_comb = "MM")
 dt.matrix.alphaMM <- posterior_alpha(fit, dt.po.alphaMM, type="matrix", outdir=export.path, gender_comb="MM")
+
+
+dt.po.alphaFF <- extract_posterior_alpha(po.alphaFF, gender_comb = "FF")
+dt.matrix.alphaFF <- posterior_alpha(fit, dt.po.alphaFF, type="matrix", outdir=export.path, gender_comb="FF")
+
+
+dt.po.alphaMF <- extract_posterior_alpha(po.alphaMF, gender_comb = "MF")
+dt.matrix.alphaMF <- posterior_alpha(fit, dt.po.alphaMF, type="matrix", outdir=export.path, gender_comb="MF")
+
+
+dt.po.alphaFM <- extract_posterior_alpha(po.alphaFM, gender_comb = "FM")
+dt.matrix.alphaFM <- posterior_alpha(fit, dt.po.alphaFM, type="matrix", outdir=export.path, gender_comb="FM")
+
+
+# combine datasets with all gender combinations
+dt.matrix.alpha <- rbind(dt.matrix.alphaMM, dt.matrix.alphaFF, dt.matrix.alphaMF, dt.matrix.alphaFM)
+
+p <- plot_alpha(dt.matrix.alpha, outdir=export.fig.path)
+p

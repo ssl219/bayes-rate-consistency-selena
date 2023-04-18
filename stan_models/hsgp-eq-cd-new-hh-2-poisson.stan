@@ -572,6 +572,10 @@ generated quantities
   array[A_FF] int contact_age_FF;
   array[A_MF] int contact_age_MF;
   array[A_FM] int contact_age_FM;
+  array[P_MM, C] int yhat_strata_MM;
+  array[P_FF, C] int yhat_strata_FF;
+  array[P_FM, C] int yhat_strata_FM;
+  array[P_MF, C] int yhat_strata_MF;
   
   log_cnt_rate[MM] = beta_0[MM] + f_MM;
   log_cnt_rate[FF] = beta_0[FF] + f_FF;
@@ -587,6 +591,22 @@ generated quantities
   part_age_FF = map_indiv_to_age_FF;
   part_age_FM = map_indiv_to_age_FM;
   part_age_MF = map_indiv_to_age_MF;
+  
+   {
+  for(i in 1:P_MM){
+      yhat_strata_MM[i,:] = poisson_rng( alpha_strata_MM[i,:]);
+      }
+  for(i in 1:P_FF){
+      yhat_strata_FF[i,:] = poisson_rng( alpha_strata_FF[i,:]);
+      }
+  for(i in 1:P_MF){
+      yhat_strata_MF[i,:] = poisson_rng( alpha_strata_MF[i,:]);
+      }
+  for(i in 1:P_FM){
+      yhat_strata_FM[i,:] = poisson_rng( alpha_strata_FM[i,:]);
+      }
+
+    }
 
   // {
   //   vector[N] alpha_strata_flat_indiv =

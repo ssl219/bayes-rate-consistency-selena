@@ -261,10 +261,15 @@ add_ages_contacts <- function(stan_data, everything){
 
 add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household_cnt=FALSE){
   if (survey == "COVIMOD"){
-    d <- contacts[order(u, age, alter_age_strata, gender, alter_gender)]
+    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+    d <- contacts
+    # making sure order of factors in alter_age_strata is ascending instead of decreasing
+    # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+    d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+    d <- d[order(u, age, alter_age_strata_idx, gender, alter_gender)]
     
     d[, age_idx := age + 1]
-    d[, age_strata_idx := as.numeric(alter_age_strata)]
+    d[, age_strata_idx := as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
     d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
     
     stan_data$ROW_MAJOR_IDX_M <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx

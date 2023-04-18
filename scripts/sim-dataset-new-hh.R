@@ -29,6 +29,9 @@ option_list <- list(
   optparse::make_option("--divide.Hicb", type = "logical", default = TRUE,
                         help = "Divide Hic_b [default %default]",
                         dest = "divide.Hicb"),
+  optparse::make_option("--baseline", type = "logical", default = FALSE,
+                        help = "Applied on baseline model [default %default]",
+                        dest = "baseline"),
   optparse::make_option("--scenario", type = "character", default = "flat",
                         help = "Scenario [default %default]",
                         dest = "scenario"),
@@ -47,6 +50,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 args$scenario = "flat"
 args$hhsize = 0
 args$divide.Hicb = FALSE
+args$baseline = TRUE
 
 ##### ---------- Error handling ---------- #####
 if(is.na(args$repo.path)){
@@ -59,6 +63,8 @@ if(is.na(args$scenario)){
 
 ###### ---------- Load data ---------- #####
 source(file.path(args$repo.path, "R", "sim-dataset-utility.R"))
+source(file.path(args$repo.path, "R/covimod-utility.R"))
+source(file.path(args$repo.path, "R/stan-utility.R"))
 
 
 if (args$scenario == "flat"){
@@ -441,17 +447,47 @@ d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.fi
 group_var_plot <- c("age", "gender", "alter_age_strata", "alter_gender")
 d_comb_no_dupl_plot <- d.everything.final
 d_comb_no_dupl_plot[, y_plot:= sum(y), by=group_var]
-d_comb_no_dupl_plot[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+d_comb_no_dupl_plot[, cntct_rate_strata := sum(cntct_rate), by=group_var_plot]
 
 
-group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
-d_comb_no_dupl <- d.everything.final
-d_comb_no_dupl[, y_strata := sum(y), by=group_var]
-d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
-d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
-# if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
-# 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
-setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+if (!args$baseline){
+  group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+  d_comb_no_dupl <- d.everything.final
+  d_comb_no_dupl[, y_strata := sum(y), by=group_var]
+  d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+  d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+  # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+  # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+  setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+}
+
+if (args$baseline){
+  group_var <- c("age", "gender", "alter_age_strata", "alter_gender")
+  d_comb_no_dupl <- d.everything.final
+  d_comb_no_dupl[, y_strata := sum(y), by=group_var]
+  d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+  # add u for row major indexing
+  d_comb_no_dupl[, u:=1L]
+  
+  d_comb_no_dupl <- d_comb_no_dupl %>% distinct(wave, age, alter_age_strata, gender, alter_gender, .keep_all=TRUE)
+  # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+  # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+  setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+  
+  # aggregate offsets by age and gender
+  group_var_offset <- c("wave", "age", "gender")
+  d.everything.final[, n := sum(n), by=group_var_offset]
+  d.everything.final[, zeta := 1L]
+  d.everything.final <- d.everything.final %>% distinct(wave, age, gender, .keep_all=TRUE)
+  # N and zeta to the offsets dataset
+  setnames(d.everything.final, c("n"), c("N"))
+}
+
+# get population dt
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
+dt.pop <- covimod$pop
+
+
 
 # order alter_age strata for plots
 covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
@@ -525,26 +561,50 @@ if (!args$divide.Hicb){
 covimod.single.new.hh.sim <- list(
   contacts = d_comb_no_dupl,
   offsets = d.everything.final,
-  pop = d.everything.final
+  pop = dt.pop
 )
 
-if (args$hhsize == 0){
-  if (!args$divide.Hicb){
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended.rds")))
-  }
-  else{
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
+if (!args$baseline){
+  if (args$hhsize == 0){
+    if (!args$divide.Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended.rds")))
+    }
+    else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
+    }
+    
   }
   
+  if (args$hhsize == 4){
+    if (!args$divide.Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended.rds")))
+    }
+    else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended.rds")))
+    }
+  }
 }
 
-if (args$hhsize == 4){
-  if (!args$divide.Hicb){
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended.rds")))
+if(args$baseline) {
+  if (args$hhsize == 0){
+    if (!args$divide.Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended-baseline.rds")))
+    }
+    else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended-baseline.rds")))
+    }
+    
   }
-  else{
-    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended.rds")))
+  
+  if (args$hhsize == 4){
+    if (!args$divide.Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended-baseline.rds")))
+    }
+    else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended-baseline.rds")))
+    }
   }
 }
+
 
 cat("\n DONE. \n")
