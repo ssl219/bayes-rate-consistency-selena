@@ -529,23 +529,23 @@ model
 generated quantities
 {
   array[G] matrix[A,A] log_cnt_rate;
-  matrix[P_MM, A] alpha_age_MM;
+ /* matrix[P_MM, A] alpha_age_MM;
   matrix[P_FF, A] alpha_age_FF;
   matrix[P_FM, A] alpha_age_FM;
   matrix[P_MF, A] alpha_age_MF;
   array[P_MM] int part_age_MM; 
   array[P_FF] int part_age_FF; 
   array[P_FM] int part_age_FM; 
-  array[P_MF] int part_age_MF; 
-  array[A_MM] int contact_age_MM; 
+  array[P_MF] int part_age_MF; */
+  /*array[A_MM] int contact_age_MM; 
   array[A_FF] int contact_age_FF;
   array[A_MF] int contact_age_MF;
   array[A_FM] int contact_age_FM;
-
-  array[P_MM + 1] int cumulative_MM; 
+*/
+  /*array[P_MM + 1] int cumulative_MM; 
   array[P_FF + 1] int cumulative_FF;
   array[P_FM + 1] int cumulative_FM;
-  array[P_MF + 1] int cumulative_MF;
+  array[P_MF + 1] int cumulative_MF;*/
   // array[N] real log_lik;
   
   /*array[N_MM] int yhat_strata_MM;
@@ -553,10 +553,10 @@ generated quantities
   array[N_MF] int yhat_strata_MF;
   array[N_FM] int yhat_strata_FM;*/
   
-  array[N_MM] int row_major_idx_MM;
+  /*array[N_MM] int row_major_idx_MM;
   array[N_FF] int row_major_idx_FF;
   array[N_MF] int row_major_idx_MF;
-  array[N_FM] int row_major_idx_FM;
+  array[N_FM] int row_major_idx_FM;*/
   
  
   {
@@ -565,20 +565,20 @@ generated quantities
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
   log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
   
-  alpha_age_MM = alpha_MM;
+ /* alpha_age_MM = alpha_MM;
   alpha_age_MF = alpha_MF;
   alpha_age_FM = alpha_FM;
-  alpha_age_FF = alpha_FF;
+  alpha_age_FF = alpha_FF;*/
 
-  part_age_MM = map_indiv_to_age_MM;
+  /*part_age_MM = map_indiv_to_age_MM;
   part_age_FF = map_indiv_to_age_FF;
   part_age_FM = map_indiv_to_age_FM;
   part_age_MF = map_indiv_to_age_MF;
-  
-  row_major_idx_MM = ROW_MAJOR_IDX_MM;
+  */
+  /*row_major_idx_MM = ROW_MAJOR_IDX_MM;
   row_major_idx_FF = ROW_MAJOR_IDX_FF;
   row_major_idx_MF = ROW_MAJOR_IDX_MF;
-  row_major_idx_FM = ROW_MAJOR_IDX_FM;
+  row_major_idx_FM = ROW_MAJOR_IDX_FM;*/
   
   /*// yhat_strata, not extracting values for all strata ages to improve computational efficiency
   vector[N_MM] alpha_strata_flat_MM = to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM];
