@@ -49,7 +49,7 @@ option_list <- list(
 cat("\n before args")
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$model.name = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1"
+args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1"
 
 cat("\n after args")
 
