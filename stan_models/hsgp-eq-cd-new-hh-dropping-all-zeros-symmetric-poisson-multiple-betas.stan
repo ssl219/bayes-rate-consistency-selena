@@ -419,8 +419,11 @@ transformed data
 }
 
 parameters
-{ 
-  vector [G] beta_0;
+{
+  vector[P_MM] beta_0_MM;
+  vector[P_FF] beta_0_FF;
+  vector[P_MF] beta_0_MF;
+  vector[P_FM] beta_0_FM;
   // real<lower=0> nu;
 
   vector<lower=0>[G-1] gp_rho_1;
@@ -462,25 +465,25 @@ transformed parameters
 // have to add +1 to B_MM[j], cannot take index 0 for contact age 0, same thing for map_indiv_to_age_MM[i]
   for (i in 1:P_MM){
     for (j in cum_MM[i]+1:cum_MM[i+1]){
-    alpha_MM[i, B_MM[j]+1]= exp(beta_0[MM] + symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
+    alpha_MM[i, B_MM[j]+1]= exp(beta_0_MM[i] + symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
     }
   }
 
   for (i in 1:P_MF){
     for (j in cum_MF[i]+1:cum_MF[i+1]){
-    alpha_MF[i, B_MF[j]+1]=exp(beta_0[MF] + f_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] + log_H_MF[j]) ;
+    alpha_MF[i, B_MF[j]+1]=exp(beta_0_MF[i] + f_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] + log_H_MF[j]) ;
     }
   }
 
   for (i in 1:P_FM){
     for (j in cum_FM[i]+1:cum_FM[i+1]){
-    alpha_FM[i, B_FM[j]+1]=exp(beta_0[FM] + f_MF'[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
+    alpha_FM[i, B_FM[j]+1]=exp(beta_0_FM[i] + f_MF'[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
     }
   }
 
   for (i in 1:P_FF){
     for (j in cum_FF[i]+1:cum_FF[i+1]){
-    alpha_FF[i, B_FF[j]+1]=exp(beta_0[FF] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
+    alpha_FF[i, B_FF[j]+1]=exp(beta_0_FF[i] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
     }
   }
   
@@ -503,7 +506,10 @@ model
   // target += exponential_lpdf(nu | 1);
 
   // baseline
-  target += normal_lpdf(beta_0 | 0, 10);
+  target += normal_lpdf(beta_0_MM | 0, 10);
+  target += normal_lpdf(beta_0_FF | 0, 10);
+  target += normal_lpdf(beta_0_MF | 0, 10);
+  target += normal_lpdf(beta_0_FM | 0, 10);
 
   {
     vector[N] alpha_strata_flat_indiv =
@@ -536,10 +542,10 @@ generated quantities
   array[A_FF] int contact_age_FF;
   array[A_MF] int contact_age_MF;
   array[A_FM] int contact_age_FM;
-  /*vector[N_MM] alpha_strata_flat_MM;
+  vector[N_MM] alpha_strata_flat_MM;
   vector[N_FF] alpha_strata_flat_FF;
   vector[N_MF] alpha_strata_flat_MF;
-  vector[N_FM] alpha_strata_flat_FM;*/
+  vector[N_FM] alpha_strata_flat_FM;
   array[P_MM + 1] int cumulative_MM; 
   array[P_FF + 1] int cumulative_FF;
   array[P_FM + 1] int cumulative_FM;
@@ -556,7 +562,7 @@ generated quantities
   array[N_MF] int row_major_idx_MF;
   array[N_FM] int row_major_idx_FM;
   
- /* cumulative_MM = cum_MM; 
+  cumulative_MM = cum_MM; 
   cumulative_FF = cum_FF;
   cumulative_FM = cum_FM;
   cumulative_MF = cum_MF;
@@ -565,12 +571,12 @@ generated quantities
   contact_age_FF = B_FF;
   contact_age_MF = B_MF;
   contact_age_FM = B_FM; 
-  */
-  {
-  log_cnt_rate[MM] = beta_0[MM] + symmetrize_from_lower_tri(f_MM);
-  log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
-  log_cnt_rate[MF] = beta_0[MF] + f_MF;
-  log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
+  
+  // will need to add baseline offset in R postprocessing
+  log_cnt_rate[MM] = symmetrize_from_lower_tri(f_MM);
+  log_cnt_rate[FF] = symmetrize_from_lower_tri(f_FF);
+  log_cnt_rate[MF] = f_MF;
+  log_cnt_rate[FM] = f_MF'; 
   
   alpha_age_MM = alpha_MM;
   alpha_age_MF = alpha_MF;
@@ -588,16 +594,15 @@ generated quantities
   row_major_idx_FM = ROW_MAJOR_IDX_FM;
   
   // yhat_strata, not extracting values for all strata ages to improve computational efficiency
-  vector[N_MM] alpha_strata_flat_MM = to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM];
-  vector[N_FF] alpha_strata_flat_FF = to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF];
-  vector[N_FM] alpha_strata_flat_FM = to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM];
-  vector[N_MF] alpha_strata_flat_MF = to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF];
+  alpha_strata_flat_MM = to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM];
+  alpha_strata_flat_FF = to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF];
+  alpha_strata_flat_FM = to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM];
+  alpha_strata_flat_MF = to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF];
   
   yhat_strata_MM = poisson_rng(alpha_strata_flat_MM);
   yhat_strata_FF = poisson_rng(alpha_strata_flat_FF);
   yhat_strata_MF = poisson_rng(alpha_strata_flat_MF);
   yhat_strata_FM = poisson_rng(alpha_strata_flat_FM);
-  }
   
   //try log-lik for individual-strata space, not age-age space as done below
   {

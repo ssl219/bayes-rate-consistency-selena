@@ -125,7 +125,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-neworder.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-debugging-ppd-checks.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")
