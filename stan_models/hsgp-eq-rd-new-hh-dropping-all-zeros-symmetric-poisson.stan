@@ -548,10 +548,10 @@ generated quantities
   array[P_MF + 1] int cumulative_MF;
   array[N] real log_lik;
   
-  array[N_MM] int yhat_strata_MM;
+  /*array[N_MM] int yhat_strata_MM;
   array[N_FF] int yhat_strata_FF;
   array[N_MF] int yhat_strata_MF;
-  array[N_FM] int yhat_strata_FM;
+  array[N_FM] int yhat_strata_FM;*/
   
   array[N_MM] int row_major_idx_MM;
   array[N_FF] int row_major_idx_FF;
@@ -580,7 +580,7 @@ generated quantities
   row_major_idx_MF = ROW_MAJOR_IDX_MF;
   row_major_idx_FM = ROW_MAJOR_IDX_FM;
   
-  // yhat_strata, not extracting values for all strata ages to improve computational efficiency
+  /*// yhat_strata, not extracting values for all strata ages to improve computational efficiency
   vector[N_MM] alpha_strata_flat_MM = to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM];
   vector[N_FF] alpha_strata_flat_FF = to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF];
   vector[N_FM] alpha_strata_flat_FM = to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM];
@@ -590,7 +590,7 @@ generated quantities
   yhat_strata_FF = poisson_rng(alpha_strata_flat_FF);
   yhat_strata_MF = poisson_rng(alpha_strata_flat_MF);
   yhat_strata_FM = poisson_rng(alpha_strata_flat_FM);
-  }
+  }*/
   
   //try log-lik for individual-strata space, not age-age space as done below
   {
