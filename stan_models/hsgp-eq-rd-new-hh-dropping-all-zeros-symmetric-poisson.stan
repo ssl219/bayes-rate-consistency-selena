@@ -590,27 +590,30 @@ generated quantities
   yhat_strata_FF = poisson_rng(alpha_strata_flat_FF);
   yhat_strata_MF = poisson_rng(alpha_strata_flat_MF);
   yhat_strata_FM = poisson_rng(alpha_strata_flat_FM);
-  }*/
+  */
   
-  //try log-lik for individual-strata space, not age-age space as done below
-  {
-   vector[N] alpha_strata_flat_indiv =
-    append_row(
-        append_row(
-          append_row(
-            to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM],
-            to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF]
-          ),
-          to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF]
-        ),
-      to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]
-    );
-    for(i in 1:N) {
-    log_lik[i] = poisson_lpmf( Y[i] | alpha_strata_flat_indiv[i]);
-    }
   }
   
+  //try log-lik for individual-strata space, not age-age space as done below
+  // {
+  //  vector[N] alpha_strata_flat_indiv =
+  //   append_row(
+  //       append_row(
+  //         append_row(
+  //           to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM],
+  //           to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF]
+  //         ),
+  //         to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF]
+  //       ),
+  //     to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]
+  //   );
+  //   for(i in 1:N) {
+  //   log_lik[i] = poisson_lpmf( Y[i] | alpha_strata_flat_indiv[i]);
+  //   }
+  // }
+  
 }
+
 
   
   
