@@ -24,7 +24,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -117,16 +117,19 @@ if(args$mixing){
   cat("\n DONE!\n")
 }
 
-# ##### ---------- Posterior predictive checks ---------- #####
-# if(args$ppc){
-#   cat(" Extracting posterior\n")
-#   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-# 
-#   cat(" Making posterior predictive checks\n")
-#   make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-# 
-#   cat("\n DONE.\n")
-# }
+##### ---------- Posterior predictive checks ---------- #####
+if(args$ppc){
+  cat(" Extracting posterior\n")
+  po <- fit$draws(c("yhat_strata_MM", "yhat_strata_FF", "yhat_strata_MF", "yhat_strata_FM",
+                    "row_major_idx_MM", "row_major_idx_FF", "row_major_idx_MF", "row_major_idx_FM"), 
+                  inc_warmup = FALSE, format="draws_matrix")
+  
+  
+  cat(" Making posterior predictive checks\n")
+  make_ppd_check_covimod(po, dt.cnt, outdir=export.path, new_hh=TRUE)
+
+  cat("\n DONE.\n")
+}
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){

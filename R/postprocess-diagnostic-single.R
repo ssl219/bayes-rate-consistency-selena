@@ -16,20 +16,20 @@ make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
   # Diagnostics
   sampler_diagnostics <- fit$diagnostic_summary()
 
-  # # Compute WAIC and LOO
-  # tryCatch({
-  #   log_lik <- fit$draws("log_lik", format = "matrix")
-  # 
-  #   n_inf_log_lik <- sum(is.infinite(log_lik))
-  #   if(n_inf_log_lik > 0){
-  #     .message <- paste("Detected", n_inf_log_lik, "Inf values in log_lik. Removing those iterations.")
-  #     warning(.message)
-  #     log_lik[is.infinite(log_lik)] <- NA
-  #   }
-  #   log_lik <- na.omit(log_lik)
-  #   WAIC <- loo::waic(log_lik)
-  #   LOO <- loo::loo(log_lik)
-  # }, error = function(e) e)
+  # Compute WAIC and LOO
+  tryCatch({
+    log_lik <- fit$draws("log_lik", format = "matrix")
+
+    n_inf_log_lik <- sum(is.infinite(log_lik))
+    if(n_inf_log_lik > 0){
+      .message <- paste("Detected", n_inf_log_lik, "Inf values in log_lik. Removing those iterations.")
+      warning(.message)
+      log_lik[is.infinite(log_lik)] <- NA
+    }
+    log_lik <- na.omit(log_lik)
+    WAIC <- loo::waic(log_lik)
+    LOO <- loo::loo(log_lik)
+  }, error = function(e) e)
 
   # Time of execution
   time <- fit$time()
@@ -37,8 +37,8 @@ make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
   # save
   if(!is.na(outdir)){
     saveRDS(fit_summary, file = file.path(outdir, "fit_summary.rds"))
-    # saveRDS(WAIC, file = file.path(outdir, "WAIC.rds"))
-    # saveRDS(LOO, file = file.path(outdir, "LOO.rds"))
+    saveRDS(WAIC, file = file.path(outdir, "WAIC.rds"))
+    saveRDS(LOO, file = file.path(outdir, "LOO.rds"))
     saveRDS(sampler_diagnostics, file = file.path(outdir, "sampler_diagnostics.rds"))
     saveRDS(time, file = file.path(outdir, "time_elapsed.rds"))
   } else {
@@ -114,8 +114,46 @@ extract_posterior_predictions <- function(fit, dt){
 
   return(dt)
 }
-
-make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE){
+add_row_major_idx_postproc <- function(dt.survey){
+  # this is assuming we have a single wave
+  covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+  d <- dt.survey
+  # making sure order of factors in alter_age_strata is ascending instead of decreasing
+  # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+  d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+  d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  # d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+  
+  d_MM <-  d[gender == "Male" & alter_gender == "Male"]
+  d_FF <-  d[gender == "Female" & alter_gender == "Female"]
+  d_MF <-  d[gender == "Male" & alter_gender == "Female"]
+  d_FM <-  d[gender == "Female" & alter_gender == "Male"]
+  
+  d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  
+  d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+  d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+  d_MM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+  
+  d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+  d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+  d_FF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+  
+  d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+  d_MF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+  d_MF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+  
+  d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+  d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+  d_FM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+  
+  d_full <- rbind(d_MM, d_FF, d_MF, d_FM)
+  return (d_full)
+}
+make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE, new_hh_all_strata=FALSE){
   if (new_hh){
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
@@ -124,7 +162,145 @@ make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE){
     po_FF <- subset(po, "yhat_strata_FF")
     po_MF <- subset(po, "yhat_strata_MF")
     po_FM <- subset(po, "yhat_strata_FM")
+
+    row_major_idx_MM <- subset(po, "row_major_idx_MM")
+    row_major_idx_FF <- subset(po, "row_major_idx_FF")
+    row_major_idx_MF <- subset(po, "row_major_idx_MF")
+    row_major_idx_FM <- subset(po, "row_major_idx_FM")
+
+    dt.po_MM <- as.data.table(reshape2::melt(po_MM))
+    dt.po_FF <- as.data.table(reshape2::melt(po_FF))
+    dt.po_MF <- as.data.table(reshape2::melt(po_MF))
+    dt.po_FM <- as.data.table(reshape2::melt(po_FM))
+
+    dt.po_rmi_MM <- as.data.table(reshape2::melt(row_major_idx_MM))
+    dt.po_rmi_FF <- as.data.table(reshape2::melt(row_major_idx_FF))
+    dt.po_rmi_MF <- as.data.table(reshape2::melt(row_major_idx_MF))
+    dt.po_rmi_FM <- as.data.table(reshape2::melt(row_major_idx_FM))
   
+    # Extract indices
+    .patternMM <- "yhat_strata_MM\\[([0-9]+)\\]"
+    .patternFF <- "yhat_strata_FF\\[([0-9]+)\\]"
+    .patternMF <- "yhat_strata_MF\\[([0-9]+)\\]"
+    .patternFM <- "yhat_strata_FM\\[([0-9]+)\\]"
+
+    .patternMM_rmi <- "row_major_idx_MM\\[([0-9]+)\\]"
+    .patternFF_rmi <- "row_major_idx_FF\\[([0-9]+)\\]"
+    .patternMF_rmi <- "row_major_idx_MF\\[([0-9]+)\\]"
+    .patternFM_rmi <- "row_major_idx_FM\\[([0-9]+)\\]"
+  
+    
+    dt.po_MM[, comb_idx := 1L]
+    dt.po_rmi_MM[, comb_idx := 1L]
+    dt.po_MM[, order_idx := as.numeric(gsub(.patternMM, "\\1", variable))]
+    dt.po_rmi_MM[, order_idx := as.numeric(gsub(.patternMM_rmi, "\\1", variable))]
+    
+
+    dt.po_FF[, comb_idx := 2L]
+    dt.po_rmi_FF[, comb_idx := 2L]
+    dt.po_FF[, order_idx := as.numeric(gsub(.patternFF, "\\1", variable))]
+    dt.po_rmi_FF[, order_idx := as.numeric(gsub(.patternFF_rmi, "\\1", variable))]
+    
+    dt.po_MF[, comb_idx := 3L]
+    dt.po_rmi_MF[, comb_idx := 3L]
+    dt.po_MF[, order_idx := as.numeric(gsub(.patternMF, "\\1", variable))]
+    dt.po_rmi_MF[, order_idx := as.numeric(gsub(.patternMF_rmi, "\\1", variable))]
+    
+    dt.po_FM[, comb_idx := 4L]
+    dt.po_rmi_FM[, comb_idx := 4L]
+    dt.po_FM[, order_idx := as.numeric(gsub(.patternFM, "\\1", variable))]
+    dt.po_rmi_FM[, order_idx := as.numeric(gsub(.patternFM_rmi, "\\1", variable))]
+    
+    # not needed
+    # # Recover participant sizes
+    # P_MM <- max(dt.po_MM$part_idx)
+    # P_FF <- max(dt.po_FF$part_idx)
+    # P_MF <- max(dt.po_MF$part_idx)
+    # P_FM <- max(dt.po_FM$part_idx)
+    # 
+    # # Adjust participant index part_idx to merge everything in one dataset
+    # dt.po_FF[, part_idx := part_idx + P_MM]
+    # dt.po_MF[, part_idx := part_idx + P_MM + P_FF]
+    # dt.po_FM[, part_idx := part_idx + P_MM + P_FF + P_MF]
+    
+    # Bind everything
+    dt.po <- rbind(dt.po_MM, dt.po_FF, dt.po_MF, dt.po_FM)
+    dt.po_rmi <- rbind(dt.po_rmi_MM, dt.po_rmi_FF, dt.po_rmi_MF, dt.po_rmi_FM)
+    setnames(dt.po_rmi, "value", "row_major_idx")
+    
+    # Merge row major index and values
+    dt.po <- merge(dt.po, dt.po_rmi[, list(row_major_idx, comb_idx, order_idx)], by = c("comb_idx", "order_idx"))
+    
+    # Calculate quantiles
+    dt.po <- dt.po[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs),
+                   by=list(comb_idx, order_idx, row_major_idx)]
+    dt.po <- data.table::dcast(dt.po, comb_idx + order_idx + row_major_idx ~ q_label, value.var = "q")
+    
+    # Recover gender and alter gender
+    dt.po[, gender := fcase(
+      comb_idx == 1, "Male",
+      comb_idx == 2, "Female",
+      comb_idx == 3, "Male",
+      comb_idx == 4, "Female",
+      default = NA)]
+    
+    dt.po[, alter_gender := fcase(
+      comb_idx == 1, "Male",
+      comb_idx == 2, "Female",
+      comb_idx == 3, "Female",
+      comb_idx == 4, "Male",
+      default = NA)]
+    
+    # add row major index and comb index to survey
+    dt.survey <- add_row_major_idx_postproc(dt.survey)
+    
+    # merge with contact data in dt.survey
+    dt <- merge(dt.survey, dt.po[, list(row_major_idx, gender, alter_gender, CL, CU, M)],
+                by=c("row_major_idx", "gender", "alter_gender"))
+    
+    dt[, inside.CI := y >= CL & y <= CU]
+    proportion_ppd <- mean(dt$inside.CI, na.rm=T)
+    cat(" Proportion of points within posterior predictive 95% CI: ", proportion_ppd, "\n")
+    
+    # plot ppd
+    # convert FALSE/TRUE to 0 and 1 to allow continuous scale
+    dt[, inside.CI := as.numeric(inside.CI)]
+    # stratify by age to age instead of individual to age
+    group_var <- c("age", "alter_age", "gender", "alter_gender")
+    dt.plot <- dt[, inside.CI := mean(inside.CI), by=group_var]
+   
+    p <- ggplot(dt.plot) +
+      geom_tile(aes(x = age, y = alter_age, fill = inside.CI)) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "PPC" ) +
+      facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+      coord_equal() +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_continuous(expand = c(0,0)) +
+      viridis::scale_fill_viridis(na.value="white", option="H") +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent")
+      )
+    
+    if(!is.na(outdir)){
+      saveRDS(dt, file.path(outdir, "ppc_dt.rds"))
+      saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
+      ggsave(file.path(outdir, "ppc_plot.png"), plot = p)
+    } else {
+      warning("\n outdir is not specified. Results were not saved.")
+    }
+  }
+  
+  else if (new_hh_all_strata){
+    ps <- c(0.5, 0.025, 0.975)
+    p_labs <- c('M','CL','CU')
+    
+    po_MM <- subset(po, "yhat_strata_MM")
+    po_FF <- subset(po, "yhat_strata_FF")
+    po_MF <- subset(po, "yhat_strata_MF")
+    po_FM <- subset(po, "yhat_strata_FM")
+
     dt.po_MM <- as.data.table(reshape2::melt(po_MM))
     dt.po_FF <- as.data.table(reshape2::melt(po_FF))
     dt.po_MF <- as.data.table(reshape2::melt(po_MF))
@@ -219,7 +395,7 @@ make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE){
       warning("\n outdir is not specified. Results were not saved.")
     }
   }
-  else{
+  else {
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
     

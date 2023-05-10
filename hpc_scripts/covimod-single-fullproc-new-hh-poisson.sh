@@ -5,14 +5,14 @@
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
-MODEL="hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson"
+MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
 
 # HMC Sampler params
-CHAINS=4
-WARMUP=500
-SAMPLING=1000
+CHAINS=2
+WARMUP=5
+SAMPLING=10
 
 # Post-processing
 MIXING=TRUE
