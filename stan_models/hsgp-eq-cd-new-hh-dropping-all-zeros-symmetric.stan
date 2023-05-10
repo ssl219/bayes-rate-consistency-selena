@@ -395,8 +395,6 @@ data
   int<lower=1> M2;  // Number of basis functions (age difference dimension)
   
 
-
-
 }
 
 transformed data
@@ -423,7 +421,11 @@ transformed data
 
 parameters
 {
-  vector[G] beta_0;
+  vector[P_MM] beta_0_MM;
+  vector[P_FF] beta_0_FF;
+  vector[P_MF] beta_0_MF;
+  vector[P_FM] beta_0_FM;
+  
   real<lower=0> nu;
 
   vector<lower=0>[G-1] gp_rho_1;
@@ -474,25 +476,25 @@ transformed parameters
 // have to add +1 to B_MM[j], cannot take index 0 for contact age 0, same thing for map_indiv_to_age_MM[i]
   for (i in 1:P_MM){
     for (j in cum_MM[i]+1:cum_MM[i+1]){
-    alpha_MM[i, B_MM[j]+1]= exp(beta_0[MM] + symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
+    alpha_MM[i, B_MM[j]+1]= exp(beta_0_MM[i] + symmetrize_from_lower_tri(f_MM)[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + log_H_MM[j]);
     }
   }
 
   for (i in 1:P_MF){
     for (j in cum_MF[i]+1:cum_MF[i+1]){
-    alpha_MF[i, B_MF[j]+1]=exp(beta_0[MF] + f_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] + log_H_MF[j]) ;
+    alpha_MF[i, B_MF[j]+1]=exp(beta_0_MF[i] + f_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] + log_H_MF[j]) ;
     }
   }
 
   for (i in 1:P_FM){
     for (j in cum_FM[i]+1:cum_FM[i+1]){
-    alpha_FM[i, B_FM[j]+1]=exp(beta_0[FM] + f_MF'[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
+    alpha_FM[i, B_FM[j]+1]=exp(beta_0_FM[i] + f_MF'[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + log_H_FM[j]) ;
     }
   }
 
   for (i in 1:P_FF){
     for (j in cum_FF[i]+1:cum_FF[i+1]){
-    alpha_FF[i, B_FF[j]+1]=exp(beta_0[FF] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
+    alpha_FF[i, B_FF[j]+1]=exp(beta_0_FF[i] + symmetrize_from_lower_tri(f_FF)[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + log_H_FF[j]) ;
     }
   }
 
@@ -580,7 +582,10 @@ model
   target += exponential_lpdf(nu | 1);
 
   // baseline
-  target += normal_lpdf(beta_0 | 0, 10);
+  target += normal_lpdf(beta_0_MM | 0, 10);
+  target += normal_lpdf(beta_0_FF | 0, 10);
+  target += normal_lpdf(beta_0_MF | 0, 10);
+  target += normal_lpdf(beta_0_FM | 0, 10);
 
   {
     vector[N] alpha_strata_flat_indiv =
@@ -611,7 +616,6 @@ generated quantities
   log_cnt_rate[FF] = beta_0[FF] + symmetrize_from_lower_tri(f_FF);
   log_cnt_rate[MF] = beta_0[MF] + f_MF;
   log_cnt_rate[FM] = beta_0[FM] + f_MF'; 
-
 
   {
     // row_vector[N] alpha_strata_flat_indiv_row = to_row_vector(alpha_strata_flat_indiv_row);

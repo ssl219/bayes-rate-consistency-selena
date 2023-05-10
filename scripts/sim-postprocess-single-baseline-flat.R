@@ -15,22 +15,22 @@ library(pammtools)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
-  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-  #                      help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-  #                      dest = "repo.path"),
-  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
-  #                      help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-  #                      dest = 'data.path'),
-  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                         dest = "repo.path"),
-  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                         dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                       dest = "repo.path"),
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                       dest = 'data.path'),
+  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+  #                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+  #                        dest = "repo.path"),
+  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+  #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+  #                        dest = 'data.path'),
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-no-symmetry-1-sim-flat-everyone-baseline",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-boarding",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -117,15 +117,15 @@ if(args$mixing){
 }
 
 # ##### ---------- Posterior predictive checks ---------- #####
-if(args$ppc){
-  cat(" Extracting posterior\n")
-  po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-
-  cat(" Making posterior predictive checks\n")
-  make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-
-  cat("\n DONE.\n")
-}
+# if(args$ppc){
+#   cat(" Extracting posterior\n")
+#   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
+# 
+#   cat(" Making posterior predictive checks\n")
+#   make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+# 
+#   cat("\n DONE.\n")
+# }
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
