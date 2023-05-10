@@ -546,7 +546,7 @@ generated quantities
   array[P_FF + 1] int cumulative_FF;
   array[P_FM + 1] int cumulative_FM;
   array[P_MF + 1] int cumulative_MF;
-  array[N] real log_lik;
+  // array[N] real log_lik;
   
   /*array[N_MM] int yhat_strata_MM;
   array[N_FF] int yhat_strata_FF;
@@ -595,7 +595,7 @@ generated quantities
   }
   
   //try log-lik for individual-strata space, not age-age space as done below
-  {
+  /*{
    vector[N] alpha_strata_flat_indiv =
     append_row(
         append_row(
@@ -611,7 +611,7 @@ generated quantities
     log_lik[i] = poisson_lpmf( Y[i] | alpha_strata_flat_indiv[i]);
     }
   }
-  
+  */
 }
 
 
