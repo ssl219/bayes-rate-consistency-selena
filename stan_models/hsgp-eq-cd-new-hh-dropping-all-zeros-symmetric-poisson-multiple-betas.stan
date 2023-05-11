@@ -534,75 +534,24 @@ generated quantities
   matrix[P_FF, A] alpha_age_FF;
   matrix[P_FM, A] alpha_age_FM;
   matrix[P_MF, A] alpha_age_MF;
-  array[P_MM] int part_age_MM; 
-  array[P_FF] int part_age_FF; 
-  array[P_FM] int part_age_FM; 
-  array[P_MF] int part_age_MF; 
-  array[A_MM] int contact_age_MM; 
-  array[A_FF] int contact_age_FF;
-  array[A_MF] int contact_age_MF;
-  array[A_FM] int contact_age_FM;
-  vector[N_MM] alpha_strata_flat_MM;
-  vector[N_FF] alpha_strata_flat_FF;
-  vector[N_MF] alpha_strata_flat_MF;
-  vector[N_FM] alpha_strata_flat_FM;
-  array[P_MM + 1] int cumulative_MM; 
-  array[P_FF + 1] int cumulative_FF;
-  array[P_FM + 1] int cumulative_FM;
-  array[P_MF + 1] int cumulative_MF;
   array[N] real log_lik;
-  
   array[N_MM] int yhat_strata_MM;
   array[N_FF] int yhat_strata_FF;
   array[N_MF] int yhat_strata_MF;
   array[N_FM] int yhat_strata_FM;
   
-  array[N_MM] int row_major_idx_MM;
-  array[N_FF] int row_major_idx_FF;
-  array[N_MF] int row_major_idx_MF;
-  array[N_FM] int row_major_idx_FM;
-  
-  cumulative_MM = cum_MM; 
-  cumulative_FF = cum_FF;
-  cumulative_FM = cum_FM;
-  cumulative_MF = cum_MF;
-
-  contact_age_MM = B_MM;
-  contact_age_FF = B_FF;
-  contact_age_MF = B_MF;
-  contact_age_FM = B_FM; 
-  
-  // will need to add baseline offset in R postprocessing
-  log_cnt_rate[MM] = symmetrize_from_lower_tri(f_MM);
-  log_cnt_rate[FF] = symmetrize_from_lower_tri(f_FF);
-  log_cnt_rate[MF] = f_MF;
-  log_cnt_rate[FM] = f_MF'; 
-  
   alpha_age_MM = alpha_MM;
   alpha_age_MF = alpha_MF;
   alpha_age_FM = alpha_FM;
   alpha_age_FF = alpha_FF;
-
-  part_age_MM = map_indiv_to_age_MM;
-  part_age_FF = map_indiv_to_age_FF;
-  part_age_FM = map_indiv_to_age_FM;
-  part_age_MF = map_indiv_to_age_MF;
-  
-  row_major_idx_MM = ROW_MAJOR_IDX_MM;
-  row_major_idx_FF = ROW_MAJOR_IDX_FF;
-  row_major_idx_MF = ROW_MAJOR_IDX_MF;
-  row_major_idx_FM = ROW_MAJOR_IDX_FM;
   
   // yhat_strata, not extracting values for all strata ages to improve computational efficiency
-  alpha_strata_flat_MM = to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM];
-  alpha_strata_flat_FF = to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF];
-  alpha_strata_flat_FM = to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM];
-  alpha_strata_flat_MF = to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF];
-  
-  yhat_strata_MM = poisson_rng(alpha_strata_flat_MM);
-  yhat_strata_FF = poisson_rng(alpha_strata_flat_FF);
-  yhat_strata_MF = poisson_rng(alpha_strata_flat_MF);
-  yhat_strata_FM = poisson_rng(alpha_strata_flat_FM);
+  {
+  yhat_strata_MM = poisson_rng(to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM]);
+  yhat_strata_FF = poisson_rng(to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF]);
+  yhat_strata_MF = poisson_rng(to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]);
+  yhat_strata_FM = poisson_rng(to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF]);
+  }
   
   //try log-lik for individual-strata space, not age-age space as done below
   {
@@ -621,34 +570,42 @@ generated quantities
     log_lik[i] = poisson_lpmf( Y[i] | alpha_strata_flat_indiv[i]);
     }
   }
-  
-}
 
   // need to find a way to take means of betas for participants of same age/same contact - keep like this for now
-  /*for (i in 1:P_MM){
+  {
+    
+  // will need to add baseline offset in R postprocessing
+  log_cnt_rate[MM] = symmetrize_from_lower_tri(f_MM);
+  log_cnt_rate[FF] = symmetrize_from_lower_tri(f_FF);
+  log_cnt_rate[MF] = f_MF;
+  log_cnt_rate[FM] = f_MF'; 
+  
+  for (i in 1:P_MM){
     for (j in cum_MM[i]+1:cum_MM[i+1]){
     log_cnt_rate[MM][i, B_MM[j]+1] += beta_0_MM[i];
     }
   }
-  
+
   for (i in 1:P_FF){
     for (j in cum_FF[i]+1:cum_FF[i+1]){
     log_cnt_rate[FF][i, B_FF[j]+1] += beta_0_FF[i];
     }
   }
-  
+
   for (i in 1:P_MF){
     for (j in cum_MF[i]+1:cum_MF[i+1]){
     log_cnt_rate[MF][i, B_MF[j]+1] += beta_0_MF[i];
     }
   }
-  
+
   for (i in 1:P_FM){
     for (j in cum_FM[i]+1:cum_FM[i+1]){
     log_cnt_rate[FM][i, B_FM[j]+1] += beta_0_FM[i];
     }
   }
-  */
+  }
+  }
+  
 
   // {
     // row_vector[N] alpha_strata_flat_indiv_row = to_row_vector(alpha_strata_flat_indiv_row);

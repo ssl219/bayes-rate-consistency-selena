@@ -14,16 +14,16 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 5,
+  optparse::make_option("--iter_warmup", type = "integer", default = 2,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 10,
+  optparse::make_option("--iter_sampling", type = "integer", default = 1,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-multiple-betas",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -164,13 +164,6 @@ library(pammtools)
 # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
 #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
 #                        dest = 'data.path'),
-
-cat("\n before args")
-
-args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1"
-
-cat("\n after args")
 
 data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
 

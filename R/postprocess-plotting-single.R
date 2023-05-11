@@ -100,7 +100,7 @@ plot_posterior_intensities <- function(dt, outdir=NA, new_hh=FALSE){
       theme(
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent"),
-        text = element_text(size = 3.5)) 
+        text = element_text(size = 8)) 
       # scale_fill_continuous(labels = scales::label_number(scale = 10000, suffix = "k")) 
     
     if(!is.na(outdir)){
