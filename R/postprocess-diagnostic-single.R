@@ -153,7 +153,7 @@ add_row_major_idx_postproc <- function(dt.survey){
   d_full <- rbind(d_MM, d_FF, d_MF, d_FM)
   return (d_full)
 }
-make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE, new_hh_all_strata=FALSE){
+make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA, new_hh=FALSE, new_hh_all_strata=FALSE){
   if (new_hh){
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
@@ -163,11 +163,16 @@ make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE, new_h
     po_MF <- subset(po, "yhat_strata_MF")
     po_FM <- subset(po, "yhat_strata_FM")
 
-    row_major_idx_MM <- subset(po, "row_major_idx_MM")
-    row_major_idx_FF <- subset(po, "row_major_idx_FF")
-    row_major_idx_MF <- subset(po, "row_major_idx_MF")
-    row_major_idx_FM <- subset(po, "row_major_idx_FM")
-
+    # row_major_idx_MM <- subset(po, "row_major_idx_MM")
+    # row_major_idx_FF <- subset(po, "row_major_idx_FF")
+    # row_major_idx_MF <- subset(po, "row_major_idx_MF")
+    # row_major_idx_FM <- subset(po, "row_major_idx_FM")
+    
+    row_major_idx_MM <- stan_data$ROW_MAJOR_IDX_MM
+    row_major_idx_FF <- stan_data$ROW_MAJOR_IDX_FF
+    row_major_idx_MF <- stan_data$ROW_MAJOR_IDX_MF
+    row_major_idx_FM <- stan_data$ROW_MAJOR_IDX_FM
+    
     dt.po_MM <- as.data.table(reshape2::melt(po_MM))
     dt.po_FF <- as.data.table(reshape2::melt(po_FF))
     dt.po_MF <- as.data.table(reshape2::melt(po_MF))
@@ -183,33 +188,31 @@ make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE, new_h
     .patternFF <- "yhat_strata_FF\\[([0-9]+)\\]"
     .patternMF <- "yhat_strata_MF\\[([0-9]+)\\]"
     .patternFM <- "yhat_strata_FM\\[([0-9]+)\\]"
-
-    .patternMM_rmi <- "row_major_idx_MM\\[([0-9]+)\\]"
-    .patternFF_rmi <- "row_major_idx_FF\\[([0-9]+)\\]"
-    .patternMF_rmi <- "row_major_idx_MF\\[([0-9]+)\\]"
-    .patternFM_rmi <- "row_major_idx_FM\\[([0-9]+)\\]"
-  
+# 
+#     .patternMM_rmi <- "row_major_idx_MM\\[([0-9]+)\\]"
+#     .patternFF_rmi <- "row_major_idx_FF\\[([0-9]+)\\]"
+#     .patternMF_rmi <- "row_major_idx_MF\\[([0-9]+)\\]"
+#     .patternFM_rmi <- "row_major_idx_FM\\[([0-9]+)\\]"
     
     dt.po_MM[, comb_idx := 1L]
     dt.po_rmi_MM[, comb_idx := 1L]
     dt.po_MM[, order_idx := as.numeric(gsub(.patternMM, "\\1", variable))]
-    dt.po_rmi_MM[, order_idx := as.numeric(gsub(.patternMM_rmi, "\\1", variable))]
+    dt.po_rmi_MM$order_idx <- seq.int(nrow(dt.po_rmi_MM))
     
-
     dt.po_FF[, comb_idx := 2L]
     dt.po_rmi_FF[, comb_idx := 2L]
     dt.po_FF[, order_idx := as.numeric(gsub(.patternFF, "\\1", variable))]
-    dt.po_rmi_FF[, order_idx := as.numeric(gsub(.patternFF_rmi, "\\1", variable))]
+    dt.po_rmi_FF$order_idx <- seq.int(nrow(dt.po_rmi_FF))
     
     dt.po_MF[, comb_idx := 3L]
     dt.po_rmi_MF[, comb_idx := 3L]
     dt.po_MF[, order_idx := as.numeric(gsub(.patternMF, "\\1", variable))]
-    dt.po_rmi_MF[, order_idx := as.numeric(gsub(.patternMF_rmi, "\\1", variable))]
+    dt.po_rmi_MF$order_idx <- seq.int(nrow(dt.po_rmi_MF))
     
     dt.po_FM[, comb_idx := 4L]
     dt.po_rmi_FM[, comb_idx := 4L]
     dt.po_FM[, order_idx := as.numeric(gsub(.patternFM, "\\1", variable))]
-    dt.po_rmi_FM[, order_idx := as.numeric(gsub(.patternFM_rmi, "\\1", variable))]
+    dt.po_rmi_FM$order_idx <- seq.int(nrow(dt.po_rmi_FM))
     
     # not needed
     # # Recover participant sizes
@@ -286,7 +289,7 @@ make_ppd_check_covimod <- function(po, dt.survey, outdir=NA, new_hh=FALSE, new_h
     if(!is.na(outdir)){
       saveRDS(dt, file.path(outdir, "ppc_dt.rds"))
       saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
-      ggsave(file.path(outdir, "ppc_plot.png"), plot = p)
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
@@ -465,7 +468,6 @@ extract_posterior_rates <- function(po){
 }
 
 extract_posterior_alpha <- function(po, gender_comb="MM"){
-  # po <- subset(po, "alpha_age")
   dt.po <- as.data.table(reshape2::melt(po))
   
   # Extract indices
@@ -492,7 +494,7 @@ extract_posterior_alpha <- function(po, gender_comb="MM"){
   return(dt.po)
 }
 
-posterior_alpha <- function(fit, dt.po, type="matrix", outdir=NA, gender_comb="MM"){
+posterior_alpha <- function(fit, dt.po, stan_data, type="matrix", outdir=NA, gender_comb="MM"){
   ps <- c(0.5, 0.025, 0.975)
   p_labs <- c('M','CL','CU')
   
@@ -513,25 +515,25 @@ posterior_alpha <- function(fit, dt.po, type="matrix", outdir=NA, gender_comb="M
     if (gender_comb=="MM"){
       dt.po[, gender:="Male"]
       dt.po[, alter_gender:="Male"]
-      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_MM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_MM))
     }
     
     if (gender_comb=="FF"){
       dt.po[, gender:="Female"]
       dt.po[, alter_gender:="Female"]
-      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FF"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_FF))
     }
     
     if (gender_comb=="MF"){
       dt.po[, gender:="Male"]
       dt.po[, alter_gender:="Female"]
-      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_MF"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_MF))
     }
     
     if (gender_comb=="FM"){
       dt.po[, gender:="Female"]
       dt.po[, alter_gender:="Male"]
-      dt.part_age <- as.data.table(reshape2::melt(fit$draws(c("part_age_FM"),inc_warmup = FALSE, format="draws_matrix")[1, c(1:N_part)]))
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_FM))
     }
     
     # create smaller dataset with id and age
@@ -713,20 +715,23 @@ make_posterior_predictive_check <- function(dt, outdir=NA){
 #' make_mse_table(dt.po)
 #' }
 make_error_table <- function(dt, outdir=NA){
-  mse <- function(y, y_pred) mean( (y - y_pred)**2, na.rm=T )
+  rmse <- function(y, y_pred) sqrt(mean( (y - y_pred)**2, na.rm=T ))
   sbias <- function(y, y_pred) mean( y - y_pred, na.rm=T )^2
+  mae <- function(y, y_pred) mean( abs(y - y_pred), na.rm=T )
 
   df <- data.frame(
     metric = c("bias", "bias", "mse", "mse"),
     name = c("intensity", "rate", "intensity", "rate"),
     value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
               sbias(dt$cntct_rate, dt$cntct_rate_predict),
-              mse(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              mse(dt$cntct_rate, dt$cntct_rate_predict))
+              rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+              rmse(dt$cntct_rate, dt$cntct_rate_predict),
+              mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
+              mae(dt$cntct_rate, dt$cntct_rate_predict),)
   )
 
   if(!is.na(outdir)){
-    saveRDS(df, file = file.path(outdir, "mse.rds"))
+    saveRDS(df, file = file.path(outdir, "mae.rds"))
   } else {
     return(df)
   }

@@ -20,7 +20,7 @@ option_list <- list(
   optparse::make_option("--iter_sampling", type = "integer", default = 10,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
-  optparse::make_option("--chains", type = "integer", default = 2,
+  optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
   optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
@@ -32,21 +32,30 @@ option_list <- list(
   optparse::make_option("--hsgp_m", type = "integer", default = 20,
                         help = "The number of the HSGP basis functions in any dimension [default \"%default\"]",
                         dest = "hsgp_m"),
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                        dest = 'repo.path'),
-  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
-                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path'),
-  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
   #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
   #                       dest = 'repo.path'),
-  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
   #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
   #                       dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                        dest = 'repo.path'),
+  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                        dest = 'data.path'),
   optparse::make_option("--wave", type = "integer", default = 1,
                         help = "COVIMOD wave",
-                        dest = "wave")
+                        dest = "wave"),
+  optparse::make_option("--mixing", type = "logical", default = TRUE,
+                        help = "Whether to assess mixing",
+                        dest = "mixing"),
+  optparse::make_option("--ppc", type = "logical", default = TRUE,
+                        help = "Whether to run posterior predictive checks",
+                        dest = "ppc"),
+  optparse::make_option("--plot", type = "logical", default = TRUE,
+                        help = "Whether to plot posterior distributions",
+                        dest = "plot")
 )
 
 
@@ -133,9 +142,10 @@ fit <- model$sample(
 )
 cat(" DONE!\n")
 
+cat("\n Run Stan ALL DONE.\n")
+
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
 fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
 cat(" DONE!\n")
 
-cat("\n Run Stan ALL DONE.\n")
