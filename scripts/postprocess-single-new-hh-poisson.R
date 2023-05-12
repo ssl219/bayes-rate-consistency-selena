@@ -92,6 +92,50 @@ source(file.path(args$repo.path, "R/stan-utility.R"))
 source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 
+
+#### ------------------- Stan data --------------------- #####
+
+## Configure Stan data
+cat(" Configuring Stan data ...")
+
+# Initialize
+stan_data <- init_stan_data()
+
+# Add contact counts
+stan_data <- add_contact_vector(stan_data, dt.cnt, survey="COVIMOD", single = TRUE, new_hh = TRUE)
+
+# Add obs counts
+stan_data <- add_N(stan_data, dt.cnt, survey = "COVIMOD", new_hh=TRUE)
+
+# # Add missing u index
+# dt.cnt[, u := fcase(wave == 1, 1)]
+
+# Add flattened list of ages of contacts and corresponding cumulative list
+stan_data <- add_ages_contacts(stan_data, dt.offsets)
+
+# Add row major index
+stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
+
+# Add household offsets
+stan_data <- add_household_offsets(stan_data, dt.offsets)
+
+# Map age to age strata
+stan_data <- add_map_age_to_strata(stan_data)
+
+# Map individual to age for each gender combination
+stan_data <- add_map_indiv_to_age(stan_data, dt.cnt, dt.offsets)
+
+# Add Non-nuisance index
+stan_data <- add_nn_idx(stan_data)
+
+# Add standardized age indexes
+stan_data <- add_std_age_idx(stan_data)
+
+# Add HSGP parameters
+stan_data <- add_hsgp_parms(stan_data, args$hsgp_c, args$hsgp_m , args$hsgp_m)
+cat(" DONE!\n")
+
+
 #### ---------- Assess convergence and mixing ---------- #####
 if(args$mixing){
   cat(" Assess convergence and mixing\n")
