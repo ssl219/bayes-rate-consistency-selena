@@ -385,8 +385,11 @@ data
   array[A_MF] real log_H_MF;
   array[A_FM] real log_H_FM;
  
-  vector[A] age_idx_std;         // Standardized age index
-  matrix[A,C] map_age_to_strata; // Indicator Matrix that maps age to age strata
+  vector[A] age_idx_std;          // Standardized age index
+  vector[2*A-1] diff_idx_std;     // Standardized age difference index
+  matrix[A,C] map_age_to_strata;  // Indicator Matrix that maps age to age strata
+  array[A*A] int NN_IDX;          // Index indicating the locations of the non-nuisance parameters in the resturctured HSGP matrix
+
 
   // HSGP parameters
   real<lower=0> C1; // Factor to determine the boundary value L (cohort age dimension)
@@ -405,8 +408,8 @@ transformed data
   real epsilon = 1e-13;               // Prevent shape parameter to be 0
 
   real L1, L2;
-  matrix[A,M1] PHI1;
-  matrix[A,M2] PHI2;
+  matrix[2*A-1, M1] PHI1;
+  matrix[A, M2] PHI2;
 
   // Precompute HSGP basis functions
   L1 = C1 * max(age_idx_std);
@@ -449,13 +452,17 @@ transformed parameters
   matrix<lower=0>[P_MF,C] alpha_strata_MF;
 
 
-  f_MM = hsgp(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
-              L1, L2, M1, M2, PHI1, PHI2, z[1:M1,]);
-  f_FF = hsgp(A, gp_alpha[FF], gp_rho_1[FF], gp_rho_2[FF],
-              L1, L2, M1, M2, PHI1, PHI2, z[(M1+1):2*M1,]);
-  f_MF = hsgp(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
-              L1, L2, M1, M2, PHI1, PHI2, z[(2*M1+1):3*M1,]);
-
+  f_MM = hsgp_restruct(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
+                       L1, L2, M1, M2, PHI1, PHI2,
+                       z[1:M1,], NN_IDX);
+  f_FF = hsgp_restruct(A, gp_alpha[FF], gp_rho_1[FF], gp_rho_2[FF],
+                       L1, L2, M1, M2, PHI1, PHI2,
+                       z[(M1+1):2*M1,], NN_IDX);
+  f_MF = hsgp_restruct(A, gp_alpha[MF], gp_rho_1[MF], gp_rho_2[MF],
+                       L1, L2, M1, M2, PHI1, PHI2,
+                       z[(2*M1+1):3*M1,], NN_IDX);
+                       
+                       
   alpha_MM = rep_matrix(epsilon, P_MM, A); // initialize alpha_strata to zeros
   alpha_FF = rep_matrix(epsilon, P_FF, A);
   alpha_MF = rep_matrix(epsilon, P_MF, A);
