@@ -207,6 +207,8 @@ if(args$plot){
   # combine datasets with all gender combinations
   dt.matrix.alpha <- rbind(dt.matrix.alphaMM, dt.matrix.alphaFF, dt.matrix.alphaMF, dt.matrix.alphaFM)
   
+  saveRDS(dt.matrix.alpha, file.path(outdir=export.path, "alpha_matrix.rds"))
+  
   # Ease memory
   rm(dt.po.alphaMM); suppressMessages(gc());
   rm(dt.matrix.alphaMM); suppressMessages(gc());
@@ -221,7 +223,8 @@ if(args$plot){
   cat(" Making figures\n")
   
   p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
-  # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
+  p <- plot_sliced_intensities(dt.matrix.alpha, outdir=export.path, new_hh=TRUE)
+  p <- plot_sliced_intensities(dt.matrix, outdir=export.path, new_hh_intensity=TRUE)
   # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
   
   p <- plot_alpha(dt.matrix.alpha, outdir=export.fig.path)

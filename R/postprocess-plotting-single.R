@@ -204,29 +204,75 @@ plot_alpha <- function(dt, outdir=NA){
 #' @export
 #'
 #' @examples
-plot_sliced_intensities <- function(dt, age.cut = c(20, 40, 60), outdir=NA)
+plot_sliced_intensities <- function(dt, age.cut = c(20, 40, 60), outdir=NA, new_hh=FALSE, new_hh_intensity=FALSE)
 {
-  tmp <- dt[age %in% age.cut]
-  tmp[, age_label := paste("Participants' age:", age)]
-  tmp[, comb := paste(gender, "to", alter_gender)]
-
-  p <- ggplot(tmp, aes(x=alter_age)) +
-    geom_stepribbon(aes(ymin = intensity_CL, ymax = intensity_CU), alpha=0.3) +
-    geom_step(aes(y = intensity_M)) +
-    labs(x="Contacts' age", y="Contact intensity") +
-    facet_grid(age_label ~ comb) +
-    theme_bw() +
-    theme(
-      legend.position = "bottom",
-      strip.background = element_rect(color=NA, fill = "transparent"),
-      strip.text = element_text(face = "bold")
-    )
-
-  if(!is.na(outdir)){
-    ggsave(file.path(outdir, "figures", "sliced_intensities.png"), plot = p, width=7, height=6)
+  if (new_hh){
+    tmp <- dt[age %in% age.cut]
+    tmp[, age_label := paste("Participants' age:", age)]
+    tmp[, comb := paste(gender, "to", alter_gender)]
+    
+    p <- ggplot(tmp, aes(x=alter_age)) +
+      geom_stepribbon(aes(ymin = CL, ymax = CU), alpha=0.3) +
+      geom_step(aes(y = M)) +
+      labs(x="Contacts' age", y="Alpha") +
+      facet_grid(age_label ~ comb) +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent"),
+        strip.text = element_text(face = "bold")
+      )
+    if(!is.na(outdir)){
+      ggsave(file.path(outdir, "figures", "sliced_alphas.png"), plot = p, width=7, height=6)
+    }
+    
+    return(p)
   }
-
-  return(p)
+  
+  else if (new_hh_intensity){
+      tmp <- dt[age %in% age.cut]
+      tmp[, age_label := paste("Participants' age:", age)]
+      tmp[, comb := paste(gender, "to", alter_gender)]
+      
+      p <- ggplot(tmp, aes(x=alter_age)) +
+        geom_stepribbon(aes(ymin = CL, ymax = CU), alpha=0.3) +
+        geom_step(aes(y = M)) +
+        labs(x="Contacts' age", y="Contact intensity") +
+        facet_grid(age_label ~ comb) +
+        theme_bw() +
+        theme(
+          legend.position = "bottom",
+          strip.background = element_rect(color=NA, fill = "transparent"),
+          strip.text = element_text(face = "bold")
+        )
+      if(!is.na(outdir)){
+        ggsave(file.path(outdir, "figures", "sliced_intensities.png"), plot = p, width=7, height=6)
+      }
+      
+      return(p)
+    }
+  else{
+    tmp <- dt[age %in% age.cut]
+    tmp[, age_label := paste("Participants' age:", age)]
+    tmp[, comb := paste(gender, "to", alter_gender)]
+    
+    p <- ggplot(tmp, aes(x=alter_age)) +
+      geom_stepribbon(aes(ymin = intensity_CL, ymax = intensity_CU), alpha=0.3) +
+      geom_step(aes(y = intensity_M)) +
+      labs(x="Contacts' age", y="Contact intensity") +
+      facet_grid(age_label ~ comb) +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent"),
+        strip.text = element_text(face = "bold")
+      )
+    if(!is.na(outdir)){
+      ggsave(file.path(outdir, "figures", "sliced_intensities.png"), plot = p, width=7, height=6)
+    }
+    
+    return(p)
+  }
 }
 
 plot_marginal_intensities <- function(dt, outdir=NA){

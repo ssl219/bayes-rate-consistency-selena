@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #PBS -l walltime=72:00:00
-#PBS -l select=1:ncpus=10:ompthreads=1:mem=500gb
+#PBS -l select=1:ncpus=10:ompthreads=1:mem=200gb
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
