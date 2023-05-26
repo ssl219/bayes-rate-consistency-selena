@@ -37,29 +37,14 @@ option_list <- list(
                         dest = 'repo.path'),
   optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path'),
+                        dest = 'data.path')
   # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
   #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
   #                       dest = 'repo.path'),
   # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
   #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-  #                       dest = 'data.path'),
-  optparse::make_option("--wave", type = "integer", default = 1,
-                        help = "COVIMOD wave",
-                        dest = "wave"),
-  optparse::make_option("--mixing", type = "logical", default = TRUE,
-                        help = "Whether to assess mixing",
-                        dest = "mixing"),
-  optparse::make_option("--ppc", type = "logical", default = TRUE,
-                        help = "Whether to run posterior predictive checks",
-                        dest = "ppc"),
-  optparse::make_option("--plot", type = "logical", default = TRUE,
-                        help = "Whether to plot posterior distributions",
-                        dest = "plot")
+  #                       dest = 'data.path')
 )
-
-
-
 
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
