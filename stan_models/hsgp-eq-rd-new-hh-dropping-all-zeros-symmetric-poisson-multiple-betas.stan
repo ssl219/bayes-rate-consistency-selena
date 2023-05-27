@@ -377,8 +377,9 @@ data
   array[P_MF] int map_indiv_to_age_MF; 
   array[P_FM] int map_indiv_to_age_FM; 
   
+  matrix[A, A] beta_weights_MM, beta_weights_FF, beta_weights_MF, beta_weights_FM;
+  
   // matrix[N_MM + N_FF + N_MF + N_FM, U] map_indiv_to_age; // map individual-age space to age-age space
-
 
   array[A_MM] real log_H_MM; // Log of household offsets (ordered in ascending order of participant age then contact age)
   array[A_FF] real log_H_FF;
@@ -450,6 +451,7 @@ transformed parameters
   matrix<lower=0>[P_FF,C] alpha_strata_FF;
   matrix<lower=0>[P_FM,C] alpha_strata_FM;
   matrix<lower=0>[P_MF,C] alpha_strata_MF;
+  array[G] matrix[A,A] sum_beta_0;
 
 
   f_MM = hsgp_restruct(A, gp_alpha[MM], gp_rho_1[MM], gp_rho_2[MM],
@@ -463,7 +465,7 @@ transformed parameters
                        z[(2*M1+1):3*M1,], NN_IDX);
                        
                        
-  alpha_MM = rep_matrix(epsilon, P_MM, A); // initialize alpha_strata to zeros
+  alpha_MM = rep_matrix(epsilon, P_MM, A); // initialize alpha_strata to close to zeros
   alpha_FF = rep_matrix(epsilon, P_FF, A);
   alpha_MF = rep_matrix(epsilon, P_MF, A);
   alpha_FM = rep_matrix(epsilon, P_FM, A);
@@ -498,6 +500,36 @@ transformed parameters
   alpha_strata_MF = alpha_MF * map_age_to_strata + epsilon;
   alpha_strata_FM = alpha_FM * map_age_to_strata + epsilon;
   alpha_strata_FF = alpha_FF * map_age_to_strata + epsilon;
+  
+  sum_beta_0[MM] = rep_matrix(0, A, A); // initialize betas to zeros
+  sum_beta_0[FF] = rep_matrix(0, A, A);
+  sum_beta_0[MF] = rep_matrix(0, A, A);
+  sum_beta_0[FM] = rep_matrix(0, A, A);
+  
+  // add betas for later, giving matrix in age-age space
+  for (i in 1:P_MM){
+    for (j in cum_MM[i]+1:cum_MM[i+1]){
+    sum_beta_0[MM][map_indiv_to_age_MM[i]+1, B_MM[j]+1] += beta_0_MM[i];
+    }
+  }
+
+  for (i in 1:P_FF){
+    for (j in cum_FF[i]+1:cum_FF[i+1]){
+    sum_beta_0[FF][map_indiv_to_age_FF[i]+1, B_FF[j]+1] += beta_0_FF[i];
+    }
+  }
+
+  for (i in 1:P_MF){
+    for (j in cum_MF[i]+1:cum_MF[i+1]){
+    sum_beta_0[MF][map_indiv_to_age_MF[i]+1, B_MF[j]+1] += beta_0_MF[i];
+    }
+  }
+
+  for (i in 1:P_FM){
+    for (j in cum_FM[i]+1:cum_FM[i+1]){
+    sum_beta_0[FM][map_indiv_to_age_FM[i]+1, B_FM[j]+1] += beta_0_FM[i];
+    }
+  }
 
 }
 
@@ -537,6 +569,7 @@ model
 generated quantities
 {
   array[G] matrix[A,A] log_cnt_rate;
+  array[G] matrix[A,A] average_beta_0;
   matrix[P_MM, A] alpha_age_MM;
   matrix[P_FF, A] alpha_age_FF;
   matrix[P_FM, A] alpha_age_FM;
@@ -556,8 +589,8 @@ generated quantities
   {
   yhat_strata_MM = poisson_rng(to_vector(alpha_strata_MM')[ROW_MAJOR_IDX_MM]);
   yhat_strata_FF = poisson_rng(to_vector(alpha_strata_FF')[ROW_MAJOR_IDX_FF]);
-  yhat_strata_MF = poisson_rng(to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]);
-  yhat_strata_FM = poisson_rng(to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF]);
+  yhat_strata_FM = poisson_rng(to_vector(alpha_strata_FM')[ROW_MAJOR_IDX_FM]);
+  yhat_strata_MF = poisson_rng(to_vector(alpha_strata_MF')[ROW_MAJOR_IDX_MF]);
   }
   
   //try log-lik for individual-strata space, not age-age space as done below
@@ -578,38 +611,41 @@ generated quantities
     }
   }
 
-  // need to find a way to take means of betas for participants of same age/same contact - keep like this for now
+  // need to find a way to take means of betas for participants of same age/same contact
   {
-    
-  // will need to add baseline offset in R postprocessing
-  log_cnt_rate[MM] = symmetrize_from_lower_tri(f_MM);
-  log_cnt_rate[FF] = symmetrize_from_lower_tri(f_FF);
-  log_cnt_rate[MF] = f_MF;
-  log_cnt_rate[FM] = f_MF'; 
+  average_beta_0[MM] = sum_beta_0[MM] .* beta_weights_MM;
+  average_beta_0[FF] = sum_beta_0[FF] .* beta_weights_FF;
+  average_beta_0[MF] = sum_beta_0[MF] .* beta_weights_MF;
+  average_beta_0[FM] = sum_beta_0[FM] .* beta_weights_FM;
   
-  for (i in 1:P_MM){
+  log_cnt_rate[MM] = symmetrize_from_lower_tri(f_MM) + average_beta_0[MM];
+  log_cnt_rate[FF] = symmetrize_from_lower_tri(f_FF) + average_beta_0[FF];
+  log_cnt_rate[MF] = f_MF + average_beta_0[MF];
+  log_cnt_rate[FM] = f_MF' + average_beta_0[FM]; 
+  
+  /*for (i in 1:P_MM){
     for (j in cum_MM[i]+1:cum_MM[i+1]){
-    log_cnt_rate[MM][i, B_MM[j]+1] += beta_0_MM[i];
+    log_cnt_rate[MM][map_indiv_to_age_MM[i]+1, B_MM[j]+1] += beta_0_MM[i];
     }
   }
 
   for (i in 1:P_FF){
     for (j in cum_FF[i]+1:cum_FF[i+1]){
-    log_cnt_rate[FF][i, B_FF[j]+1] += beta_0_FF[i];
+    log_cnt_rate[FF][map_indiv_to_age_FF[i]+1, B_FF[j]+1] += beta_0_FF[i];
     }
   }
 
   for (i in 1:P_MF){
     for (j in cum_MF[i]+1:cum_MF[i+1]){
-    log_cnt_rate[MF][i, B_MF[j]+1] += beta_0_MF[i];
+    log_cnt_rate[MF][map_indiv_to_age_MF[i]+1, B_MF[j]+1] += beta_0_MF[i];
     }
   }
 
   for (i in 1:P_FM){
     for (j in cum_FM[i]+1:cum_FM[i+1]){
-    log_cnt_rate[FM][i, B_FM[j]+1] += beta_0_FM[i];
+    log_cnt_rate[FM][map_indiv_to_age_FM[i]+1, B_FM[j]+1] += beta_0_FM[i];
     }
-  }
+  }*/
   }
   }
   

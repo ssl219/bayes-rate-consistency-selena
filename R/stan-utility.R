@@ -764,6 +764,77 @@ add_map_age_to_strata <- function(stan_data, survey = "COVIMOD"){
   }
 }
 
+reciprocal_matrix <- function(mat){
+  for (i in 1:nrow(mat)){
+    for (j in 1:ncol(mat)){
+      if (mat[i, j] !=0){
+        mat[i, j] = 1/mat[i, j]
+      }
+    }
+  }
+  return(mat)
+}
+# Add beta weights
+add_beta_weights <- function(stan_data){
+  
+  # extract values needed
+  A <- stan_data$A
+  P_MM <- stan_data$P_MM
+  P_FF <- stan_data$P_FF
+  P_MF <- stan_data$P_MF
+  P_FM <- stan_data$P_FM
+  B_MM <- stan_data$B_MM
+  B_FF <- stan_data$B_FF
+  B_MF <- stan_data$B_MF
+  B_FM <- stan_data$B_FM
+  cum_MM <- stan_data$cum_MM
+  cum_FF <- stan_data$cum_FF
+  cum_MF <- stan_data$cum_MF
+  cum_FM <- stan_data$cum_FM
+  map_indiv_to_age_MM <- stan_data$map_indiv_to_age_MM
+  map_indiv_to_age_FF <- stan_data$map_indiv_to_age_FF
+  map_indiv_to_age_MF <- stan_data$map_indiv_to_age_MF
+  map_indiv_to_age_FM <- stan_data$map_indiv_to_age_FM
+  
+  # initialise
+  beta_weights_MM = matrix(0, A, A)
+  beta_weights_FF = matrix(0, A, A)
+  beta_weights_MF = matrix(0, A, A)
+  beta_weights_FM = matrix(0, A, A)
+  
+  
+  for (i in 1:P_MM){
+    for (j in cum_MM[i]+1:cum_MM[i+1]){
+      beta_weights_MM[map_indiv_to_age_MM[i]+1, B_MM[j]+1] = beta_weights_MM[map_indiv_to_age_MM[i]+1, B_MM[j]+1] + 1;
+    }
+  }
+  
+  for (i in 1:P_FF){
+    for (j in cum_FF[i]+1:cum_FF[i+1]){
+      beta_weights_FF[map_indiv_to_age_FF[i]+1, B_FF[j]+1] = beta_weights_FF[map_indiv_to_age_FF[i]+1, B_FF[j]+1] + 1;
+    }
+  }
+  
+  for (i in 1:P_MF){
+    for (j in cum_MF[i]+1:cum_MF[i+1]){
+      beta_weights_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] =  beta_weights_MF[map_indiv_to_age_MF[i]+1, B_MF[j]+1] + 1;
+    }
+  }
+  
+  for (i in 1:P_FM){
+    for (j in cum_FM[i]+1:cum_FM[i+1]){
+      beta_weights_FM[map_indiv_to_age_FM[i]+1, B_FM[j]+1] = beta_weights_FM[map_indiv_to_age_FM[i]+1, B_FM[j]+1] + 1;
+    }
+  }
+  
+  stan_data$beta_weights_MM <- reciprocal_matrix(beta_weights_MM)
+  stan_data$beta_weights_FF <- reciprocal_matrix(beta_weights_FF)
+  stan_data$beta_weights_MF <- reciprocal_matrix(beta_weights_MF)
+  stan_data$beta_weights_FM <- reciprocal_matrix(beta_weights_FM)
+  
+  return (stan_data)
+}
+
 # Add non-nuisance index
 add_nn_idx <- function(stan_data){
   A <- stan_data$A

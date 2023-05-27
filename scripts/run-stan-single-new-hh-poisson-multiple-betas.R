@@ -32,15 +32,15 @@ option_list <- list(
   optparse::make_option("--hsgp_m", type = "integer", default = 20,
                         help = "The number of the HSGP basis functions in any dimension [default \"%default\"]",
                         dest = "hsgp_m"),
+  optparse::make_option("--wave", type = "integer", default = 1,
+                        help = "COVIMOD wave",
+                        dest = "wave"),
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                         dest = 'repo.path'),
   optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path'),
-  optparse::make_option("--wave", type = "integer", default = 1,
-                        help = "COVIMOD wave",
-                        dest = "wave")
+                        dest = 'data.path')
   # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
   #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
   #                       dest = 'repo.path'),
@@ -101,6 +101,9 @@ stan_data <- add_map_age_to_strata(stan_data)
 
 # Map individual to age for each gender combination
 stan_data <- add_map_indiv_to_age(stan_data, dt.cnt, dt.offsets)
+
+# Add beta weights
+stan_data <- add_beta_weights(stan_data)
 
 # Add Non-nuisance index
 stan_data <- add_nn_idx(stan_data)
