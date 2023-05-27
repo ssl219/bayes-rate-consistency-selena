@@ -412,9 +412,9 @@ transformed data
   matrix[A, M2] PHI2;
 
   // Precompute HSGP basis functions
-  L1 = C1 * max(age_idx_std);
+  L1 = C1 * max(diff_idx_std);
   L2 = C2 * max(age_idx_std);
-  PHI1 = PHI(A, M1, L1, age_idx_std);
+  PHI1 = PHI(2*A-1, M1, L1, diff_idx_std);
   PHI2 = PHI(A, M2, L2, age_idx_std);
 
   // append data

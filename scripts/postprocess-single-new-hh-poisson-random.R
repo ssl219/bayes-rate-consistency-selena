@@ -45,6 +45,7 @@ option_list <- list(
 # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
 #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
 #                        dest = 'data.path'),
+args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
 data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-random.rds")
