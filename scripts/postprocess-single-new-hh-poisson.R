@@ -15,16 +15,23 @@ library(pammtools)
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
-  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                       dest = "repo.path"),
-  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
-                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                       dest = 'data.path'),
+  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+  #                      help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+  #                      dest = "repo.path"),
+  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+  #                      help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+  #                      dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                         dest = "repo.path"),
+  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                         dest = 'data.path'),
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-multiple-betas-1",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat_50_100",
+                          #"hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -39,22 +46,17 @@ option_list <- list(
 )
 
 
-# optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-#                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-#                        dest = "repo.path"),
-# optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-#                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-#                        dest = 'data.path'),
 
 cat("\n before args")
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1"
+cat("\n model name:", args$model.name)
 
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
+data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-debugging.rds")
+# data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds")
 
 # Error handling
 if(!file.exists(model.path)) {
@@ -180,7 +182,7 @@ if(args$plot){
   po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   dt.po <- extract_posterior_rates(po)
   dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
-  # dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
+  dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
   
   rm(dt.po); suppressMessages(gc()); # Ease memory
   
@@ -219,14 +221,13 @@ if(args$plot){
   rm(dt.po.alphaFM); suppressMessages(gc());
   rm(dt.matrix.alphaFM); suppressMessages(gc());
   
-  
   cat(" Making figures\n")
   
   p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
   p <- plot_sliced_intensities(dt.matrix.alpha, outdir=export.path, new_hh=TRUE)
   p <- plot_sliced_intensities(dt.matrix, outdir=export.path, new_hh_intensity=TRUE)
-  # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
-  
+  p <- plot_marginal_intensities(dt.margin, outdir=export.path, new_hh=TRUE, rate=TRUE)
+  p <- plot_marginal_intensities(dt.margin.alpha, outdir=export.path, new_hh=TRUE)
   p <- plot_alpha(dt.matrix.alpha, outdir=export.fig.path)
 }
 

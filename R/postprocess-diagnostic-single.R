@@ -570,6 +570,47 @@ posterior_alpha <- function(fit, dt.po, stan_data, type="matrix", outdir=NA, gen
     return(dt.po)
   }
   
+  if (type=="marginal"){
+    # first recover age of participant
+    
+    # unique number of participants
+    N_part <- max(dt.po$part_idx)
+    # extract participant ages and add gender and alter_gender
+    if (gender_comb=="MM"){
+      dt.po[, gender:="Male"]
+      dt.po[, alter_gender:="Male"]
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_MM))
+    }
+    
+    if (gender_comb=="FF"){
+      dt.po[, gender:="Female"]
+      dt.po[, alter_gender:="Female"]
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_FF))
+    }
+    
+    if (gender_comb=="MF"){
+      dt.po[, gender:="Male"]
+      dt.po[, alter_gender:="Female"]
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_MF))
+    }
+    
+    if (gender_comb=="FM"){
+      dt.po[, gender:="Female"]
+      dt.po[, alter_gender:="Male"]
+      dt.part_age <- as.data.table(reshape2::melt(stan_data$map_indiv_to_age_FM))
+    }
+    # create smaller dataset with id and age
+    id_age_alpha <- data.table(part_idx=1:N_part, age=dt.part_age$value)
+    
+    # add to dataset
+    dt.po <- merge(dt.po, id_age_alpha, by=c("part_idx"))
+    
+    dt.po <- dt.po[, .(value = sum(value)), by=c("draw", "age")]
+    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
+    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
+    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
+  }
+  
 }  
 
 
@@ -609,9 +650,7 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
       } else {
         warning("\n outdir is not specified. Results were not saved.")
       }
-    }
-    
-    else{
+    }else{
       # Load datasets
       dtp <- copy(dt.pop)
       setnames(dtp, c("age", "gender"), c("alter_age", "alter_gender"))
@@ -630,40 +669,72 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
     }
     
     return(dt.po)
-  } else { # Marginal contact intensity by gender
-
-    dtm <- dt.po[comb_idx == 1 | comb_idx == 3]
-    if (simulation){
-      dtm[, age := age_idx + 5]
-    } else {
-      dtm[, age := age_idx - 1]
+  } else { # Marginal contact intensity by combination type
+    
+    # Recover age
+    if(simulation){ # If simulation data
+      dt.po[, age := age_idx + 5]
+      dt.po[, alter_age := alter_age_idx + 5]
+    } else { # If COVIMOD data
+      dt.po[, age := age_idx - 1]
+      dt.po[, alter_age := alter_age_idx - 1]
     }
 
-    dtm <- merge(dtm, dt.pop[gender == "Male"], by="age")
-    dtm <- dtm[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
-    dtm <- dtm[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
-    dtm[, gender := "Male"]
-    gc()
+    dtmm <- dt.po[comb_idx == 1]
+    dtff <- dt.po[comb_idx == 2]
+    dtmf <- dt.po[comb_idx == 3]
+    dtfm <- dt.po[comb_idx == 4]
+    # if (simulation){
+    #   dtm[, age := age_idx + 5]
+    # } else {
+    #   dtm[, age := age_idx - 1]
+    # }
 
-    dtf <- dt.po[comb_idx == 2 | comb_idx == 4]
-    if (simulation){
-      dtf[, age := age_idx + 5]
-    } else {
-      dtf[, age := age_idx - 1]
+    if (new_hh){
+      dtmm <- dtmm[, .(value = sum(exp(value))), by=c("draw", "age")]
+      dtff <- dtff[, .(value = sum(exp(value))), by=c("draw", "age")]
+      dtmf <- dtmf[, .(value = sum(exp(value))), by=c("draw", "age")]
+      dtfm <- dtfm[, .(value = sum(exp(value))), by=c("draw", "age")]
+    }else{
+      dtmm <- merge(dtmm, dt.pop[gender == "Male"], by=c("age"))
+      dtmm <- dtmm[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
+      
+      dtff <- merge(dtff, dt.pop[gender == "Female"], by=c("age"))
+      dtff <- dtff[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
+  
+      dtmf <- merge(dtmf, dt.pop[gender == "Male"], by=c("age"))
+      dtmf <- dtmf[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
+      
+      dtfm <- merge(dtfm, dt.pop[gender == "Female"], by=c("age"))
+      dtfm <- dtfm[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
     }
-
-    dtf <- merge(dtf, dt.pop[gender == "Female"], by="age")
-    dtf <- dtf[, .(value = sum(exp(value + log(pop)))), by=c("draw", "age")]
-    dtf <- dtf[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
-    dtf[, gender := "Female"]
+    
+    dtmm <- dtmm[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
+    dtff <- dtff[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
+    dtmf <- dtmf[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
+    dtfm <- dtfm[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
     gc()
-
-    dt <- rbind(dtm, dtf)
-    dt <- data.table::dcast(dt, age + gender ~ q_label, value.var = "q")
-    setnames(dt, c("M", "CL", "CU"), c("intensity_M", "intensity_CL", "intensity_CU"))
-
+    # recover gender combination
+    dtmm <- dtmm[, comb:="Male-Male"]
+    dtff <- dtff[, comb:="Female-Female"]
+    dtmf <- dtmf[, comb:="Male-Female"]
+    dtfm <- dtfm[, comb:="Female-Male"]
+    
+    dt <- rbind(dtmm, dtff, dtmf, dtfm)
+    dt <- data.table::dcast(dt, age + comb ~ q_label, value.var = "q")
+    
+    if (new_hh){
+      setnames(dt, c("M", "CL", "CU"), c("rate_M", "rate_CL", "rate_CU"))
+    }else{
+      setnames(dt, c("M", "CL", "CU"), c("intensity_M", "intensity_CL", "intensity_CU"))
+    }
+    
     if(!is.na(outdir)){
-      saveRDS(dt, file.path(outdir, "intensity_marginal.rds"))
+      if (new_hh){
+        saveRDS(dt, file.path(outdir, "rate_marginal.rds"))
+      }else{
+        saveRDS(dt, file.path(outdir, "intensity_marginal.rds"))
+      }
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
@@ -720,14 +791,15 @@ make_error_table <- function(dt, outdir=NA){
   mae <- function(y, y_pred) mean( abs(y - y_pred), na.rm=T )
 
   df <- data.frame(
-    metric = c("bias", "bias", "mse", "mse"),
-    name = c("intensity", "rate", "intensity", "rate"),
+    metric = c("bias", "rmse", "mae"),
+    name = c("intensity", "intensity", "intensity"),
     value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              sbias(dt$cntct_rate, dt$cntct_rate_predict),
+              # sbias(dt$cntct_rate, dt$cntct_rate_predict),
               rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              rmse(dt$cntct_rate, dt$cntct_rate_predict),
-              mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              mae(dt$cntct_rate, dt$cntct_rate_predict),)
+              # rmse(dt$cntct_rate, dt$cntct_rate_predict),
+              mae(dt$cntct_intensity ,dt$cntct_intensity_predict)
+              # mae(dt$cntct_rate, dt$cntct_rate_predict),
+              )
   )
 
   if(!is.na(outdir)){

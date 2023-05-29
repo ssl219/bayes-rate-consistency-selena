@@ -39,12 +39,12 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
+args$model.name <- "hsgp-eq-rd-1-hh"
 args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
 args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
-args$model.name <- "hsgp-eq-cd-1-nhh"
-
-model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-full.data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-nhh.rds")
+intensity.path <- file.path("/Users/mac/Documents/M4R/hpc_results", paste0(args$model.name), "intensity_matrix.rds")
+full.data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-hh.rds")
 
 # Error handling
 if(!file.exists(model.path)) {
@@ -71,7 +71,7 @@ if(!dir.exists(export.path)){
 cat(paste("\n Model path:", model.path))
 cat(paste("\n Full data path:", full.data.path))
 
-fit <- readRDS(model.path)
+intensity_matrix <- readRDS(intensity.path)
 data <- readRDS(full.data.path)
 dt.cnt <- data$contacts[wave == args$wave]
 dt.offsets <- data$offsets[wave == args$wave]
@@ -82,57 +82,31 @@ source(file.path(args$repo.path, "R/stan-utility.R"))
 source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 
-##### ---------- Assess convergence and mixing ---------- #####
-if(args$mixing){
-  cat(" Assess convergence and mixing\n")
+intensity_matrix[, alter_age_strata := fcase(
+  alter_age <= 4,  "0-4",
+  alter_age <= 9,  "5-9",
+  alter_age <= 14, "10-14",
+  alter_age <= 19, "15-19",
+  alter_age <= 24, "20-24",
+  alter_age <= 34, "25-34",
+  alter_age <= 44, "35-44",
+  alter_age <= 54, "45-54",
+  alter_age <= 64, "55-64",
+  alter_age <= 69, "65-69",
+  alter_age <= 74, "70-74",
+  alter_age <= 79, "75-79",
+  alter_age <= 84, "80-84",
+  alter_age > 84, "85+",
+  default = NA
+)]
 
-  # Make convergence diagnostic tables
-  fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
+intensity_matrix <- intensity_matrix[,strata_cntct_intensity := sum(intensity_M*N), by = c("age", "gender", "alter_age_strata", "alter_gender") ]
+intensity_matrix <- unique(intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"))
 
-  # Make trace plots
-  cat("\n Making trace plots")
-  bayesplot::color_scheme_set(scheme = "mix-blue-pink")
+dt_intensity <- merge(dt.cnt, intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE, all.y=FALSE)
+dt_intensity <- unique(dt_intensity, by = c("age", "gender", "alter_age_strata", "alter_gender"))
+dt_intensity[, cntct_intensity:=y]
+dt_intensity[, cntct_intensity_predict:=strata_cntct_intensity]
 
-  pars <- c('nu', 'gp_alpha', 'gp_rho_1', 'gp_rho_2')
-
-  pars_po <- fit$draws(pars)
-  p <- bayesplot::mcmc_trace(pars_po)
-  ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  # Make pairs plots
-  cat(" Making pairs plots\n")
-  p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
-  ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
-  cat("\n DONE!\n")
-}
-
-##### ---------- Posterior predictive checks ---------- #####
-if(args$ppc){
-  cat(" Extracting posterior\n")
-  po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-
-  cat(" Making posterior predictive checks\n")
-  make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-
-  cat("\n DONE.\n")
-}
-
-##### ---------- Plotting ---------- #####
-if(args$plot){
-  cat(" Extracting posterior contact intensities\n")
-  dt.po <- extract_posterior_rates(po)
-  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path)
-  dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path)
-
-  rm(dt.po); suppressMessages(gc()); # Ease memory
-
-  cat(" Making figures\n")
-
-  p <- plot_posterior_intensities(dt.matrix, outdir=export.path)
-  p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
-  p <- plot_marginal_intensities(dt.margin, outdir=export.path)
-
-  cat("\n DONE.\n")
-}
-
+error_table <- make_error_table(dt_intensity)
+error_table
