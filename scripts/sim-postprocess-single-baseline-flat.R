@@ -30,7 +30,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-boarding",
+  optparse::make_option("--model", type = "character", default = NA_character_,
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -52,7 +52,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended-baseline.rds")
 
 
 # Error handling
@@ -78,10 +78,10 @@ if(!dir.exists(export.path)){
 
 ##### ---------- Setup ---------- #####
 cat(paste("\n Model path:", model.path))
-cat(paste("\n Data path:", data.path))
+cat(paste("\n Full data path:", full.data.path))
 
 fit <- readRDS(model.path)
-data <- readRDS(data.path)
+data <- readRDS(full.data.path)
 dt.cnt <- data$contacts[wave == args$wave]
 dt.offsets <- data$offsets[wave == args$wave]
 dt.pop <- data$pop
@@ -94,54 +94,65 @@ source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 ##### ---------- Assess convergence and mixing ---------- #####
 if(args$mixing){
   cat(" Assess convergence and mixing\n")
-
+  
   # Make convergence diagnostic tables
   fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
-
+  
   # Make trace plots
   cat("\n Making trace plots")
   bayesplot::color_scheme_set(scheme = "mix-blue-pink")
-
-  pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2')
-
+  
+  pars <- c('nu', 'gp_alpha', 'gp_rho_1', 'gp_rho_2')
+  
   pars_po <- fit$draws(pars)
   p <- bayesplot::mcmc_trace(pars_po)
   ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
+  
   # Make pairs plots
   cat(" Making pairs plots\n")
   p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
   ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
+  
   cat("\n DONE!\n")
 }
 
-# ##### ---------- Posterior predictive checks ---------- #####
-# if(args$ppc){
-#   cat(" Extracting posterior\n")
-#   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-# 
-#   cat(" Making posterior predictive checks\n")
-#   make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-# 
-#   cat("\n DONE.\n")
-# }
+##### ---------- Posterior predictive checks ---------- #####
+if(args$ppc){
+  cat(" Extracting posterior\n")
+  po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
+  
+  cat(" Making posterior predictive checks\n")
+  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+  
+  cat("\n DONE.\n")
+}
+
+##### ---------- Error Table ---------- #####
+
+dt.ppc[, cntct_count_predict := M]
+dt.ppc[, cntct_count := y]
+dt.ppc[, cntct_intensity_predict := M/N]
+dt.ppc[, cntct_intensity := y/N]
+error_table <- make_error_table(dt.ppc, count=TRUE)
+saveRDS(dt.ppc, file.path(outdir=export.path, "error_dt.rds"))
+saveRDS(error_table, file.path(outdir=export.path, "error_table.rds"))
+cat("\n DONE.\n")
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
   cat(" Extracting posterior contact intensities\n")
-  po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   dt.po <- extract_posterior_rates(po)
-  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
-  # dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
-
+  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path)
+  dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path)
+  
   rm(dt.po); suppressMessages(gc()); # Ease memory
-
+  
   cat(" Making figures\n")
-
-  p <- plot_posterior_intensities(dt.matrix, outdir=export.path, new_hh=TRUE)
-  # p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
-  # p <- plot_marginal_intensities(dt.margin, outdir=export.path)
-
+  
+  p <- plot_posterior_intensities(dt.matrix, outdir=export.path)
+  p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
+  p <- plot_marginal_intensities(dt.margin, outdir=export.path)
+  
   cat("\n DONE.\n")
 }
+

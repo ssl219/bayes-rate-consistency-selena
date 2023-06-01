@@ -100,12 +100,12 @@ intensity_matrix[, alter_age_strata := fcase(
   default = NA
 )]
 
-intensity_matrix <- intensity_matrix[,strata_cntct_intensity := sum(intensity_M*N), by = c("age", "gender", "alter_age_strata", "alter_gender") ]
+intensity_matrix <- intensity_matrix[,strata_cntct_intensity := sum(intensity_M), by = c("age", "gender", "alter_age_strata", "alter_gender") ]
 intensity_matrix <- unique(intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"))
 
 dt_intensity <- merge(dt.cnt, intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE, all.y=FALSE)
 dt_intensity <- unique(dt_intensity, by = c("age", "gender", "alter_age_strata", "alter_gender"))
-dt_intensity[, cntct_intensity:=y]
+dt_intensity[, cntct_intensity:=y/N]
 dt_intensity[, cntct_intensity_predict:=strata_cntct_intensity]
 
 error_table <- make_error_table(dt_intensity)

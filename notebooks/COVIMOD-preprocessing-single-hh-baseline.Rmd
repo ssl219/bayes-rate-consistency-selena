@@ -156,7 +156,8 @@ dt.part.size
 ```
 ```{r}
 # Aggregate by household type
-dt.cmb.h <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, type, imp_age, gender, alter_age_strata, alter_gender)]
+dt.cmb <- dt.cmb[, hhsize:= mean(hh_p_incl_0), by=.(wave, type, imp_age, gender, alter_age_strata, alter_gender)]
+dt.cmb.h <- dt.cmb[, .(y = sum(y, na.rm=TRUE)), by=.(wave, type, imp_age, gender, alter_age_strata, alter_gender, hhsize)]
 setnames(dt.cmb.h, "imp_age", "age")
 
 dt.cmb.h
@@ -164,7 +165,7 @@ dt.cmb.h
 
 ```{r}
 dt.cmb.hh <- dt.cmb.h[dt.cmb.h$type=="hh"]
-dt.cmb.hh <- dt.cmb.hh[, .(wave, age, gender, alter_age_strata, alter_gender, y)]
+dt.cmb.hh <- dt.cmb.hh[, .(wave, age, gender, alter_age_strata, alter_gender, hhsize, y)]
 dt.cmb.hh
 ```
 
@@ -249,16 +250,20 @@ d
 fig.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena/notebooks/COVIMOD-preprocessing_files/figure-html"
 
 tmp <- d[, m := y/N]
+```
+
+
+```{r}
 p1 <- ggplot(tmp, aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = m)) + 
   facet_grid(gender ~ alter_gender) + 
   viridis::scale_fill_viridis(option='H') +
   theme_bw() + 
   labs(x = "Age of participants", y = "Age of contacts", fill = "Empirical contact intensity") +
-  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=20))
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=5))
 
 p1
-ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh.png")), plot = p1, height = 20, width = 20, limitsize = FALSE)
+ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh.png")), plot = p1)
 
 p2 <- ggplot(tmp, aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = log(y))) + 
@@ -266,10 +271,81 @@ p2 <- ggplot(tmp, aes(age, alter_age_strata)) +
   viridis::scale_fill_viridis(option='H') +
   theme_bw() + 
   labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of contact counts") +
-  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=20))
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=5))
 
 p2
-ggsave(file.path(fig.path, paste0("log-contact-counts-hh.png")), plot = p2, height = 20, width = 20, limitsize = FALSE)
+ggsave(file.path(fig.path, paste0("log-contact-counts-hh.png")), plot = p2)
+```
+```{r}
+d
+```
+```{r}
+d[is.na(hhsize), hhsize := 0]
+d[, hhsize_round := ceiling(hhsize) ]
+d[, hhsize_plot := fcase(
+  hhsize_round == 2, "Household size 2",
+  hhsize_round == 3, "Household size 3",
+  hhsize_round == 4, "Household size 4",
+  hhsize_round == 5, "Household size 5",
+  hhsize_round >= 6, "Household size 6+",
+  default = NA
+) ]
+d[, gender_comb := fcase(
+  gender == "Male" & alter_gender == "Male", "Male to Male",
+  gender == "Male" & alter_gender == "Female", "Male to Female",
+  gender == "Female" & alter_gender == "Male", "Female to Male",
+  gender == "Female" & alter_gender == "Female", "Female to Female",
+  default = NA
+)]
+```
+```{r}
+d[complete.cases(d), ]
+```
+```{r}
+d
+```
+
+
+```{r}
+p3 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = m)) + 
+  facet_grid(hhsize_plot~gender_comb) + 
+  viridis::scale_fill_viridis(option='H') +
+    scale_x_continuous(expand = c(0,0)) +
+  scale_y_discrete(expand = c(0,0)) +
+  theme_bw() + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Empirical contact intensity") +
+  theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
+
+p3
+ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-per-hhsize.png")), plot = p3)
+
+p4 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = log(y))) + 
+  facet_grid(hhsize_plot~gender_comb) + 
+  viridis::scale_fill_viridis(option='H') +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_discrete(expand = c(0,0)) +
+  theme_bw() + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of contact counts") +
+  theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
+
+p4
+ggsave(file.path(fig.path, paste0("log-contact-counts-hh-per-hhsize.png")), plot = p4)
+```
+```{r}
+p5 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = y)) + 
+  facet_grid(hhsize_plot~gender_comb) + 
+  viridis::scale_fill_viridis(option='H') +
+  theme_bw() + 
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_discrete(expand = c(0,0)) +
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Contact counts") +
+  theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
+
+p5
+ggsave(file.path(fig.path, paste0("contact-counts-hh-per-hhsize.png")), plot = p5)
 ```
 
 

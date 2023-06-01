@@ -130,3 +130,36 @@ if(args$plot){
   cat("\n DONE.\n")
 }
 
+##### ---------- Error Table ---------- #####
+intensity_matrix[, alter_age_strata := fcase(
+  alter_age <= 4,  "0-4",
+  alter_age <= 9,  "5-9",
+  alter_age <= 14, "10-14",
+  alter_age <= 19, "15-19",
+  alter_age <= 24, "20-24",
+  alter_age <= 34, "25-34",
+  alter_age <= 44, "35-44",
+  alter_age <= 54, "45-54",
+  alter_age <= 64, "55-64",
+  alter_age <= 69, "65-69",
+  alter_age <= 74, "70-74",
+  alter_age <= 79, "75-79",
+  alter_age <= 84, "80-84",
+  alter_age > 84, "85+",
+  default = NA
+)]
+
+intensity_matrix <- intensity_matrix[,strata_cntct_intensity := sum(intensity_M), by = c("age", "gender", "alter_age_strata", "alter_gender") ]
+intensity_matrix <- unique(intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"))
+
+dt_intensity <- merge(dt.cnt, intensity_matrix, by = c("age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE, all.y=FALSE)
+dt_intensity <- unique(dt_intensity, by = c("age", "gender", "alter_age_strata", "alter_gender"))
+dt_intensity[, cntct_intensity:=y/N]
+dt_intensity[, cntct_intensity_predict:=strata_cntct_intensity]
+
+error_table <- make_error_table(dt_intensity)
+
+saveRDS(dt.intensity, file.path(outdir=export.path, "error_intensity_matrix.rds"))
+saveRDS(error_table, file.path(outdir=export.path, "intensity_error_table.rds"))
+cat("\n DONE.\n")
+

@@ -73,10 +73,20 @@ cntct_sim_rates_by_age <- function(dsim)
   # Male-Female contact rate pattern and Female-Male pattern are symmetric
   # Male-Male and Female-Female patterns are self-symmetric
   # first select the whole pattern of Male-Female and convert to Female-Male pattern
-  dMF <- dsim[gender == "Male" & alter_gender == "Female"]
-  dFM <- copy(dMF)
-  setnames(dFM, c("gender","age","alter_gender","alter_age"), c("alter_gender","alter_age","gender","age"))
-
+  # dMF <- dsim[gender == "Male" & alter_gender == "Female"]
+  # dFM <- copy(dMF)
+  # setnames(dFM, c("gender","age","alter_gender","alter_age"), c("alter_gender","alter_age","gender","age"))
+  
+  dMF <- dsim[gender == "Male" & alter_gender == "Female" & age >= alter_age]
+  tmp <- copy(dMF)
+  setnames(tmp, c("age","alter_age"), c("alter_age","age"))
+  dMF <- rbind(tmp[age != alter_age], dMF)
+  
+  dFM <- dsim[gender == "Female" & alter_gender == "Male" & age >= alter_age]
+  tmp <- copy(dFM)
+  setnames(tmp, c("age","alter_age"), c("alter_age","age"))
+  dFM <- rbind(tmp[age != alter_age], dFM)
+  
   # next select the lower triangle pattern of Male-Male and Female-Female patterns, and fill out the other part by symmetry
   dMM <- dsim[gender == "Male" & alter_gender == "Male" & age >= alter_age]
   tmp <- copy(dMM)
@@ -163,7 +173,7 @@ ggsave(file.path(fig.path, "boarding-rates.pdf"), plot = p_boarding, width = 10,
 # tmp <- di[, list(cntct_intensity = sum(cntct_intensity)), by = c('gender','age')]
 # p <- ggplot(tmp, aes(x = age, y = cntct_intensity) ) +
 #   geom_step(aes(colour = gender)) +
-#   scale_x_continuous(expand = c(0,0)) +
+#   scale_x_continuous(expand = c(0,0)) +3
 #   scale_color_brewer(palette = "Set1") +
 #   labs(x = "Participants' age", y = 'Contact rate', color = 'Gender') +
 #   theme_bw() +

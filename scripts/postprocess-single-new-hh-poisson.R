@@ -12,6 +12,7 @@ library(stringr)
 library(ggplot2)
 library(viridis)
 library(pammtools)
+library(data.table) 
 
 ##### ---------- I/O ---------- #####
 option_list <- list(
@@ -30,7 +31,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat_50_100",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-everyone-ppd",
                           #"hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
                         help = "Name of the model",
                         dest = "model.name"),
@@ -55,8 +56,8 @@ cat("\n model name:", args$model.name)
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-debugging.rds")
-# data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds")
+# data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds")
 
 # Error handling
 if(!file.exists(model.path)) {
@@ -169,12 +170,52 @@ if(args$ppc){
   po <- fit$draws(c("yhat_strata_MM", "yhat_strata_FF", "yhat_strata_MF", "yhat_strata_FM"), 
                   inc_warmup = FALSE, format="draws_matrix")
   
-  
   cat(" Making posterior predictive checks\n")
-  make_ppd_check_covimod(po, dt.offsets, stan_data, outdir=export.path, fig.outdir=export.fig.path, new_hh=TRUE)
+  dt.ppc <- make_ppd_check_covimod(po, dt.offsets, stan_data, outdir=export.path, fig.outdir=export.fig.path, new_hh=TRUE)
   
   cat("\n DONE.\n")
 }
+
+##### ---------- Error Table ---------- #####
+
+dt.ppc[, cntct_intensity_predict := M]
+dt.ppc[, cntct_intensity := y]
+dt.ppc[, cntct_rate:=y/Hic_b]
+dt.ppc[, cntct_rate_predict:=M/Hic_b]
+dt.ppc <- unique(dt.ppc, by=c("age", "gender", "alter_gender", "alter_age_strata", "new_id"))
+error_table <- make_error_table(dt.ppc, rate=TRUE)
+
+saveRDS(dt.ppc, file.path(outdir=export.path, "error_dt.rds"))
+saveRDS(error_table, file.path(outdir=export.path, "error_table.rds"))
+
+p3 <- ggplot(dt.ppc) +
+  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_discrete(expand=c(0,0)) +
+  coord_equal() +
+  viridis::scale_fill_viridis(na.value = "white", option="H") +
+  labs(x="Participants' age", y="Contacts' age ", fill="Counts") +
+  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+        strip.background = element_rect(color=NA, fill = "transparent"))
+
+p4 <- ggplot(dt.ppc) +
+  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity_predict)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_discrete(expand=c(0,0)) +
+  coord_equal() +
+  viridis::scale_fill_viridis(na.value = "white", option="H") +
+  labs(x="Participants' age", y="Contacts' age ", fill="Predicted counts") +
+  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+        strip.background = element_rect(color=NA, fill = "transparent"))
+
+ggsave(file.path(export.fig.path, "empirical_cntct_intensity.png"), plot = p3, height = 3, width = 7)
+ggsave(file.path(export.fig.path, "estimated_cntct_intensity.png"), plot = p4, height = 3, width = 7)
+
+cat("\n DONE.\n")
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
@@ -185,6 +226,7 @@ if(args$plot){
   dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
   
   rm(dt.po); suppressMessages(gc()); # Ease memory
+  rm(dt.ppc); suppressMessages(gc()); # Ease memory
   
   po.alphaMM <- fit$draws(c("alpha_age_MM"), inc_warmup = FALSE, format="draws_matrix")
   po.alphaFF <- fit$draws(c("alpha_age_FF"), inc_warmup = FALSE, format="draws_matrix")
@@ -193,23 +235,29 @@ if(args$plot){
   
   dt.po.alphaMM <- extract_posterior_alpha(po.alphaMM, gender_comb = "MM")
   dt.matrix.alphaMM <- posterior_alpha(fit, dt.po.alphaMM, stan_data, type="matrix", outdir=export.path, gender_comb="MM")
+  dt.margin.alphaMM <- posterior_alpha(fit, dt.po.alphaMM, stan_data, type="marginal", outdir=export.path, gender_comb="MM")
   
   
   dt.po.alphaFF <- extract_posterior_alpha(po.alphaFF, gender_comb = "FF")
   dt.matrix.alphaFF <- posterior_alpha(fit, dt.po.alphaFF, stan_data, type="matrix", outdir=export.path, gender_comb="FF")
+  dt.margin.alphaFF <- posterior_alpha(fit, dt.po.alphaFF, stan_data, type="marginal", outdir=export.path, gender_comb="FF")
   
   
   dt.po.alphaMF <- extract_posterior_alpha(po.alphaMF, gender_comb = "MF")
   dt.matrix.alphaMF <- posterior_alpha(fit, dt.po.alphaMF, stan_data, type="matrix", outdir=export.path, gender_comb="MF")
+  dt.margin.alphaMF <- posterior_alpha(fit, dt.po.alphaMF, stan_data, type="marginal", outdir=export.path, gender_comb="MF")
   
   
   dt.po.alphaFM <- extract_posterior_alpha(po.alphaFM, gender_comb = "FM")
   dt.matrix.alphaFM <- posterior_alpha(fit, dt.po.alphaFM, stan_data, type="matrix", outdir=export.path, gender_comb="FM")
+  dt.margin.alphaFM <- posterior_alpha(fit, dt.po.alphaFM, stan_data, type="marginal", outdir=export.path, gender_comb="FM")
   
   # combine datasets with all gender combinations
   dt.matrix.alpha <- rbind(dt.matrix.alphaMM, dt.matrix.alphaFF, dt.matrix.alphaMF, dt.matrix.alphaFM)
+  dt.margin.alpha <- rbind(dt.margin.alphaMM, dt.margin.alphaFF, dt.margin.alphaMF, dt.margin.alphaFM)
   
   saveRDS(dt.matrix.alpha, file.path(outdir=export.path, "alpha_matrix.rds"))
+  saveRDS(dt.margin.alpha, file.path(outdir=export.path, "alpha_margin.rds"))
   
   # Ease memory
   rm(dt.po.alphaMM); suppressMessages(gc());
@@ -229,12 +277,92 @@ if(args$plot){
   p <- plot_marginal_intensities(dt.margin, outdir=export.path, new_hh=TRUE, rate=TRUE)
   p <- plot_marginal_intensities(dt.margin.alpha, outdir=export.path, new_hh=TRUE)
   p <- plot_alpha(dt.matrix.alpha, outdir=export.fig.path)
+  
+  cat("\n DONE.\n")
 }
+# ##### ----------Error Table ---------- #####
+# group_var_0 <- c("part_idx", "age", "gender", "alter_gender", "alter_age_strata")
+# alpha_matrix[, alter_age_strata := fcase(
+#   alter_age <= 4,  "0-4",
+#   alter_age <= 9,  "5-9",
+#   alter_age <= 14, "10-14",
+#   alter_age <= 19, "15-19",
+#   alter_age <= 24, "20-24",
+#   alter_age <= 34, "25-34",
+#   alter_age <= 44, "35-44",
+#   alter_age <= 54, "45-54",
+#   alter_age <= 64, "55-64",
+#   alter_age <= 69, "65-69",
+#   alter_age <= 74, "70-74",
+#   alter_age <= 79, "75-79",
+#   alter_age <= 84, "80-84",
+#   alter_age > 84, "85+",
+#   default = NA
+# )]
+# dt.matrix.alpha[, cntct_intensity_predict := sum(M), by=c("part_idx", "age", "gender", "alter_gender", "alter_age_strata")]
+# 
+# # ordering dt.cnt like in model
+# covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+# # making sure order of factors in alter_age_strata is ascending instead of decreasing
+# # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+# dt.cnt[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+# dt.cnt<- dt.cnt[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+# dt_intensity_MM <- dt.cnt[gender=="Male"& alter_gender=="Male"]
+# dt_intensity_FF <- dt.cnt[gender=="Female"& alter_gender=="Female"]
+# dt_intensity_MF <- dt.cnt[gender=="Male"& alter_gender=="Female"]
+# dt_intensity_FM <- dt.cnt[gender=="Female"& alter_gender=="Male"]
+# 
+# # adding a part_idx
+# dt_intensity_MM[ , part_idx := .GRP, by = new_id]      
+# dt_intensity_FF[ , part_idx := .GRP, by = new_id]      
+# dt_intensity_MF[ , part_idx := .GRP, by = new_id]  
+# dt_intensity_FM[ , part_idx := .GRP, by = new_id]      
+# 
+# # check max(dt.matrix.alpha[gender=="Male" & alter_gender=="Male"]$part_idx) == max(dt_intensity_MM$part_idx)
+# 
+# # bind everything
+# dt_intensity <- rbind(dt_intensity_MM, dt_intensity_FF, dt_intensity_MF, dt_intensity_FM)
+# setnames(dt_intensity, c("y"), c("cntct_intensity"))
+# dt_intensity <- merge(dt_intensity, dt.matrix.alpha, by=c("part_idx", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
+# dt_intensity <- unique(dt_intensity, by = group_var_0)
+# 
+# error_table <- make_error_table(dt_intensity)
+# saveRDS(dt.intensity, file.path(outdir=export.path, "error_intensity_matrix.rds"))
+# saveRDS(error_table, file.path(outdir=export.path, "intensity_indiv_error_table.rds"))
+# 
+# p3 <- ggplot(dt_intensity) +
+#   geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity)) +
+#   scale_x_continuous(expand=c(0,0)) +
+#   scale_y_discrete(expand=c(0,0)) +
+#   coord_equal() +
+#   viridis::scale_fill_viridis(na.value = "white", option="H") +
+#   labs(x="Participants' age", y="Contacts' age ", fill="Counts") +
+#   facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+#   theme_bw() +
+#   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+#         strip.background = element_rect(color=NA, fill = "transparent"))
+# 
+# p4 <- ggplot(dt_intensity) +
+#   geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity_predict)) +
+#   scale_x_continuous(expand=c(0,0)) +
+#   scale_y_discrete(expand=c(0,0)) +
+#   coord_equal() +
+#   viridis::scale_fill_viridis(na.value = "white", option="H") +
+#   labs(x="Participants' age", y="Contacts' age ", fill="Estimated contact intensity") +
+#   facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+#   theme_bw() +
+#   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+#         strip.background = element_rect(color=NA, fill = "transparent"))
+# 
+# ggsave(file.path(export.fig.path, "empirical_cntct_intensity_individual.png"), plot = p3, height = 3, width = 7)
+# ggsave(file.path(export.fig.path, "estimated_cntct_intensity_individual.png"), plot = p4, height = 3, width = 7)
+# 
+# cat("\n DONE.\n")
 
 # save at the end
 
-cat(" Saving fitted model ...")
-args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
-cat(" DONE!\n")
+# cat(" Saving fitted model ...")
+# args$model.name <- paste(args$model.name, args$wave, sep="-")
+# fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
+# cat(" DONE!\n")
 

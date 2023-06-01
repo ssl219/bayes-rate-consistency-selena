@@ -2,7 +2,7 @@
 
 # flat GP
 cntct_sim_rates_flat <- function(){
-  di <- as.data.table(expand.grid(age = 0:84, alter_age = 0:84 ))
+  di <- as.data.table(expand.grid(age = 0:49, alter_age = 0:49 ))
   di[, cntct_rate := 1]
   return(di)
 }
@@ -10,13 +10,102 @@ cntct_sim_rates_flat <- function(){
 # boarding school 
 
 cntct_sim_rates_boarding_school <- function(){
-  di <- as.data.table(expand.grid(age = 0:84, alter_age = 0:84 ))
-  di[, cntct_rate := fcase(age %in% 0:10 & alter_age %in% 30:40, 1,
-                           age %in% 30:40 & alter_age %in% 0:10, 1,
-                           age %in% 10:20  & alter_age %in% 30:50, exp(-5),
-                           age %in% 30:50  & alter_age %in% 10:20, exp(-5),
-                           age %in% 30:50 & alter_age %in% 30:50, 1,
-                           default = exp(-20))]
+  di <- as.data.table(expand.grid(age = 0:49, alter_age = 0:49 ))
+  di[, diff_age := age - alter_age]
+  # di[, cntct_rate := fcase(age %in% 0:10 & alter_age %in% 30:40, 1,
+  #                          age %in% 30:40 & alter_age %in% 0:10, 1,
+  #                          age %in% 10:20  & alter_age %in% 30:50, exp(-5),
+  #                          age %in% 30:50  & alter_age %in% 10:20, exp(-5),
+  #                          age %in% 30:50 & alter_age %in% 30:50, 1,
+  #                          default = exp(-20))]
+  di[, cntct_rate := fcase(
+                                 age %in% 0:5  & diff_age %in% -5:5, pmax(0, 0.8 - 0.007 * abs(diff_age)),
+                                 age %in% 0:5  & diff_age %in% c(-11:-9,9:11), 0.003,
+                                 age %in% 0:5  & diff_age %in% c(-13:-12,12:13), 1e-3,
+                                 age %in% 0:5  & diff_age %in% c(-15:-14,14:15), 3*1e-4,
+                                 age %in% 0:5  & diff_age %in% -25:-23, pmax(0, 0.8 - 0.5 * abs(diff_age + 24)),
+                                 age %in% 0:5  & diff_age %in% c(-27:-26, -22:-21), 0.1,
+                                 age %in% 0:5  & diff_age %in% c(-29:-28, -20:-19), 0.01,
+                                 
+                                 # age %in% 6:10  & diff_age %in% -8:8, pmax(0, 0.08 - 0.007 * abs(diff_age)),
+                                 # age %in% 6:10  & diff_age %in% c(-11:-9,9:11), 0.003,
+                                 # age %in% 6:10  & diff_age %in% c(-13:-12,12:13), 1e-3,
+                                 # age %in% 6:10  & diff_age %in% c(-15:-14,14:15), 3*1e-4,
+                                 # age %in% 6:10  & diff_age %in% -25:-23, pmax(0, 0.8 - 0.5 * abs(diff_age + 24)),
+                                 # age %in% 6:10  & diff_age %in% c(-27:-26, -22:-21), 0.1,
+                                 # age %in% 0:5  & diff_age %in% c(-29:-28, -20:-19), 0.01,
+                                 
+                                 # remove participants 11 to 18 in boarding school scenario
+                                 # age %in% 11:18 & diff_age %in% -8:8, pmax(0, 0.4 - 0.035 * abs(diff_age)),
+                                 # age %in% 11:18 & diff_age %in% c(-11:-9,9:11), 0.015,
+                                 # age %in% 11:18 & diff_age %in% c(-13:-12,12:13), 5e-3,
+                                 # age %in% 11:18 & diff_age %in% c(-15:-14,14:15), 15*1e-4,
+                                 # age %in% 11:18  & diff_age %in% -25:-23, pmax(0, 0.8 - 0.5 * abs(diff_age + 24)),
+                                 # age %in% 11:18  & diff_age %in% c(-27:-26, -22:-21), 0.1,
+                                 # age %in% 11:18  & diff_age %in% c(-29:-28, -20:-19), 0.01,
+                                 
+                                 age %in% 19:29  & diff_age %in% -5:5, pmax(0, 1 - 0.06 * abs(diff_age)),
+                                 age %in% 19:29  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 age %in% 19:29  & diff_age %in% c(-13:-10,10:13), 0.008,
+                                 age %in% 19:29  & diff_age %in% c(-15:-14,14:15), 0.002,
+                                 age %in% 19:29  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
+                                 age %in% 19:29  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 age %in% 19:29  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 
+                                 age %in% 30:39  & diff_age %in% -5:5, pmax(0, 1 - 0.06 * abs(diff_age)),
+                                 age %in% 30:39  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 age %in% 30:39  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 age %in% 30:39  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # age %in% 30:39  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 30:39  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 30:39  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 age %in% 25:29  & diff_age %in% 21:22, 0.1,
+                                 age %in% 25:29  & diff_age %in% 19:20, 0.01,
+                                 # age %in% 29  & diff_age %in% 23, 0.6,
+                                 
+                                 age %in% 40:49  & diff_age %in% -5:5, pmax(0, 0.9 - 0.06 * abs(diff_age)),
+                                 age %in% 40:49  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 age %in% 40:49  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 age %in% 40:49  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # minimum age to have contact is 19
+                                 age %in% 43:49  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
+                                 age %in% 43:49  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 age %in% 43:49  & diff_age %in% c(19:20, 28:29), 0.01,
+
+                                 # age %in% 50:59  & diff_age %in% -5:5, pmax(0, 0.65 - 0.06 * abs(diff_age)),
+                                 # age %in% 50:59  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 # age %in% 50:59  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 # age %in% 50:59  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # age %in% 50:59  & diff_age %in% 23:25, pmax(0, 0.7 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 50:59  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 50:59  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 # 
+                                 # age %in% 60:69  & diff_age %in% -5:5, pmax(0, 0.6 - 0.06 * abs(diff_age)),
+                                 # age %in% 60:69  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 # age %in% 60:69  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 # age %in% 60:69  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # age %in% 60:69  & diff_age %in% 23:25, pmax(0, 0.7 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 60:69  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 60:69  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 # 
+                                 # age %in% 70:79  & diff_age %in% -5:5, pmax(0, 0.5 - 0.06 * abs(diff_age)),
+                                 # age %in% 70:79  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 # age %in% 70:79  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 # age %in% 70:79  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # age %in% 70:79  & diff_age %in% 23:25, pmax(0, 0.6 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 70:79  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 70:79  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 # 
+                                 # age %in% 80:85  & diff_age %in% -5:5, pmax(0, 0.4 - 0.06 * abs(diff_age)),
+                                 # age %in% 80:85  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 # age %in% 80:85  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 # age %in% 80:85  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 # age %in% 80:85  & diff_age %in% 23:25, pmax(0, 0.6 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 80:85  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 80:85  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 default = 0)]
+  set(di, NULL, 'diff_age', NULL)
+  
   return(di)
 }
 
@@ -143,7 +232,7 @@ cntcts_sim_intensities_precovid_diagonal <- function()
   # target respondents in age 6-49
   di <- as.data.table(expand.grid(age = 6:49, alter_age = 6:49 ))
   di[, diff_age := age - alter_age]
-  di[, cntct_intensity := fcase(
+  di[, cntct_rate := fcase(
                                 age %in% 6:18  & diff_age %in% -8:8, pmax(0, 2.5 - 0.2 * abs(diff_age)),
                                 age %in% 6:18  & diff_age %in% c(-11:-9,9:11), 0.1,
                                 age %in% 6:18  & diff_age %in% c(-13:-12,12:13), 0.03,

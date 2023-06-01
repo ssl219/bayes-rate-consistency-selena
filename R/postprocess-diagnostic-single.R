@@ -63,54 +63,56 @@ make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
 #'  fit <- readRDS("path/to/model.rds")
 #'  dt.po <- extract_posterior_predictions(fit, predict_type = "stratified")
 #' }
-extract_posterior_predictions <- function(fit, dt){
+extract_posterior_predictions <- function(fit, dt, baseline=TRUE, new_hh=FALSE, simulation=FALSE){
   ps <- c(0.5, 0.025, 0.975)
   p_labs <- c('M','CL','CU')
-
-  # Predicted contacts
-  po <- fit$draws("yhat", inc_warmup = FALSE, format = "draws_matrix")
-  dt.po <- as.data.table(reshape2::melt(po))
-
-  # Extract indices
-  .pattern <- "yhat\\[([0-9]+),([0-9]+),([0-9]+)\\]"
-
-  dt.po[, comb_idx := as.numeric(gsub(.pattern, "\\1", variable))]
-  dt.po[, age_idx := as.numeric(gsub(.pattern, "\\2", variable))]
-  dt.po[, alter_age_idx := as.numeric(gsub(.pattern, "\\3", variable))]
-
-  # Calculate quantiles
-  dt.po <- dt.po[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs),
-                 by=list(comb_idx, age_idx, alter_age_idx)]
-  dt.po <- as.data.table(
-    dcast(dt.po, comb_idx + age_idx + alter_age_idx ~ q_label,
-          value.var = "q")
-  )
-
-  # Recover gender and alter gender
-  dt.po[, gender := fcase(
-    comb_idx %in% c(1,3), "Male",
-    comb_idx %in% c(2,4), "Female",
-    default = NA)]
-
-  dt.po[, alter_gender := fcase(
-    comb_idx %in% c(1,4), "Male",
-    comb_idx %in% c(2,3), "Female",
-    default = NA)]
-
-  # Recover age
-  dt.po[, age := unique(dt$age)[age_idx]]
-  dt.po[, alter_age := unique(dt$alter_age)[alter_age_idx]]
-  dt <- merge(dt, dt.po[, list(age, alter_age, gender, alter_gender, CL, CU, M)],
-              by=c("age", "alter_age", "gender", "alter_gender"))
-
-  # Calculate contact intensities and rates
-  dt[, cntct_intensity_predict := M/part]
-  dt[, cntct_intensity_predict_CL := CL/part]
-  dt[, cntct_intensity_predict_CU := CU/part]
-
-  dt[, cntct_rate_predict := M/part/pop]
-  dt[, cntct_rate_predict_CL := CL/part/pop]
-  dt[, cntct_rate_predict_CU := CU/part/pop]
+  
+  if (simulation){
+    # Predicted contacts
+    po <- fit$draws("yhat_strata", inc_warmup = FALSE, format = "draws_matrix")
+    dt.po <- as.data.table(reshape2::melt(po))
+    
+    # Extract indices
+    .pattern <- "yhat_strata\\[([0-9]+),([0-9]+),([0-9]+)\\]"
+    
+    dt.po[, comb_idx := as.numeric(gsub(.pattern, "\\1", variable))]
+    dt.po[, age_idx := as.numeric(gsub(.pattern, "\\2", variable))]
+    dt.po[, alter_age_idx := as.numeric(gsub(.pattern, "\\3", variable))]
+    
+    # Calculate quantiles
+    dt.po <- dt.po[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs),
+                   by=list(comb_idx, age_idx, alter_age_idx)]
+    dt.po <- as.data.table(
+      dcast(dt.po, comb_idx + age_idx + alter_age_idx ~ q_label,
+            value.var = "q")
+    )
+    
+    # Recover gender and alter gender
+    dt.po[, gender := fcase(
+      comb_idx %in% c(1,3), "Male",
+      comb_idx %in% c(2,4), "Female",
+      default = NA)]
+    
+    dt.po[, alter_gender := fcase(
+      comb_idx %in% c(1,4), "Male",
+      comb_idx %in% c(2,3), "Female",
+      default = NA)]
+    
+    # Recover age
+    dt.po[, age := unique(dt$age)[age_idx]]
+    dt.po[, alter_age := unique(dt$alter_age)[alter_age_idx]]
+    dt <- merge(dt, dt.po[, list(age, alter_age, gender, alter_gender, CL, CU, M)],
+                by=c("age", "alter_age", "gender", "alter_gender"))
+    
+    # Calculate contact intensities and rates
+    dt[, cntct_intensity_predict := M/part]
+    dt[, cntct_intensity_predict_CL := CL/part]
+    dt[, cntct_intensity_predict_CU := CU/part]
+    
+    dt[, cntct_rate_predict := M/part/pop]
+    dt[, cntct_rate_predict_CL := CL/part/pop]
+    dt[, cntct_rate_predict_CU := CU/part/pop]
+  }
 
   return(dt)
 }
@@ -188,7 +190,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     .patternFF <- "yhat_strata_FF\\[([0-9]+)\\]"
     .patternMF <- "yhat_strata_MF\\[([0-9]+)\\]"
     .patternFM <- "yhat_strata_FM\\[([0-9]+)\\]"
-# 
+ 
 #     .patternMM_rmi <- "row_major_idx_MM\\[([0-9]+)\\]"
 #     .patternFF_rmi <- "row_major_idx_FF\\[([0-9]+)\\]"
 #     .patternMF_rmi <- "row_major_idx_MF\\[([0-9]+)\\]"
@@ -289,10 +291,17 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     if(!is.na(outdir)){
       saveRDS(dt, file.path(outdir, "ppc_dt.rds"))
       saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
+      
+      saveRDS(po_MM, file.path(outdir, "po_MM.rds"))
+      saveRDS(po_FF, file.path(outdir, "po_FF.rds"))
+      saveRDS(po_FM, file.path(outdir, "po_FM.rds"))
+      saveRDS(po_MF, file.path(outdir, "po_MF.rds"))
+      
       ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
+    return(dt)
   }
   
   else if (new_hh_all_strata){
@@ -391,12 +400,35 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     proportion_ppd <- mean(dt$inside.CI, na.rm=T)
     cat(" Proportion of points within posterior predictive 95% CI: ", proportion_ppd, "\n")
     
+    # plot ppd
+    # convert FALSE/TRUE to 0 and 1 to allow continuous scale
+    dt[, inside.CI := as.numeric(inside.CI)]
+    # stratify by age to age instead of individual to age
+    group_var <- c("age", "alter_age", "gender", "alter_gender")
+    dt.plot <- dt[, inside.CI := mean(inside.CI), by=group_var]
+    
+    p <- ggplot(dt.plot) +
+      geom_tile(aes(x = age, y = alter_age, fill = inside.CI)) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "PPC" ) +
+      facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+      coord_equal() +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_continuous(expand = c(0,0)) +
+      viridis::scale_fill_viridis(na.value="white", option="H") +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent")
+      )
+    
     if(!is.na(outdir)){
-      saveRDS(dt, file.path(outdir, "ppd_check.rds"))
-      saveRDS(proportion_ppd, file.path(outdir, "ppd_check_proportion.rds"))
+      saveRDS(dt, file.path(outdir, "ppc_dt.rds"))
+      saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
+    return(dt)
   }
   else {
     ps <- c(0.5, 0.025, 0.975)
@@ -439,15 +471,37 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     proportion_ppd <- mean(dt$inside.CI, na.rm=T)
     cat(" Proportion of points within posterior predictive 95% CI: ", proportion_ppd, "\n")
     
+    # plot ppd
+    # convert FALSE/TRUE to 0 and 1 to allow continuous scale
+    dt[, inside.CI := as.numeric(inside.CI)]
+    # stratify by age to age instead of individual to age
+    # group_var <- c("age", "alter_age", "gender", "alter_gender")
+    # dt.plot <- dt[, inside.CI := mean(inside.CI), by=group_var]
+    
+    p <- ggplot(dt) +
+      geom_tile(aes(x = age, y = alter_age_strata, fill = inside.CI)) +
+      labs(x = "Participants' age", y = "Contacts' age", fill = "PPC" ) +
+      facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+      coord_equal() +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_discrete(expand = c(0,0)) +
+      viridis::scale_fill_viridis(na.value="white", option="H") +
+      theme_bw() +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_rect(color=NA, fill = "transparent")
+      )
+    
     if(!is.na(outdir)){
-      saveRDS(dt, file.path(outdir, "ppd_check.rds"))
-      saveRDS(proportion_ppd, file.path(outdir, "ppd_check_proportion.rds"))
+      saveRDS(dt, file.path(outdir, "ppc_check_dt.rds"))
+      saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
-  }
 
   return(dt)
+  }
 }
 
 extract_posterior_rates <- function(po){
@@ -606,9 +660,29 @@ posterior_alpha <- function(fit, dt.po, stan_data, type="matrix", outdir=NA, gen
     dt.po <- merge(dt.po, id_age_alpha, by=c("part_idx"))
     
     dt.po <- dt.po[, .(value = sum(value)), by=c("draw", "age")]
-    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
-    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
-    dt.po <- dt.po[, .(value = sum(exp(value))), by=c("draw", "age")]
+    
+    dt.po <- dt.po[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
+    gc()
+    # recover gender combination
+    if (gender_comb=="MM"){
+    dt.po <- dt.po[, comb:="Male-Male"]
+    }
+    
+    if (gender_comb=="FF"){
+    dt.po <- dt.po[, comb:="Female-Female"]
+    }
+    
+    if (gender_comb=="MF"){
+    dt.po <- dt.po[, comb:="Male-Female"]
+    }
+    
+    if (gender_comb=="FM"){
+    dt.po <- dt.po[, comb:="Female-Male"]
+    }
+    
+    dt <- data.table::dcast(dt.po, age + comb ~ q_label, value.var = "q")
+    setnames(dt, c("M", "CL", "CU"), c("alpha_M", "alpha_CL", "alpha_CU"))
+    return (dt)
   }
   
 }  
@@ -785,22 +859,46 @@ make_posterior_predictive_check <- function(dt, outdir=NA){
 #'
 #' make_mse_table(dt.po)
 #' }
-make_error_table <- function(dt, outdir=NA){
+make_error_table <- function(dt, outdir=NA, rate=FALSE, count=FALSE){
   rmse <- function(y, y_pred) sqrt(mean( (y - y_pred)**2, na.rm=T ))
   sbias <- function(y, y_pred) mean( y - y_pred, na.rm=T )^2
   mae <- function(y, y_pred) mean( abs(y - y_pred), na.rm=T )
-
-  df <- data.frame(
-    metric = c("bias", "rmse", "mae"),
-    name = c("intensity", "intensity", "intensity"),
-    value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              # sbias(dt$cntct_rate, dt$cntct_rate_predict),
-              rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
-              # rmse(dt$cntct_rate, dt$cntct_rate_predict),
-              mae(dt$cntct_intensity ,dt$cntct_intensity_predict)
-              # mae(dt$cntct_rate, dt$cntct_rate_predict),
-              )
-  )
+  mse <- function(y, y_pred) mean( (y - y_pred)**2, na.rm=T )
+  if(rate){ df <- data.frame(metric = c("squared bias", "squared bias", "rmse", "rmse", "mae", "mae", "mse", "mse", "variance", "variance"),
+                     name = c("intensity", "rate", "intensity", "rate", "intensity", "rate", "intensity", "rate", "intensity", "rate"),
+          value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                    sbias(dt$cntct_rate, dt$cntct_rate_predict),
+                    rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                    rmse(dt$cntct_rate, dt$cntct_rate_predict),
+                    mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                    mae(dt$cntct_rate, dt$cntct_rate_predict),
+                    mse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                    mse(dt$cntct_rate, dt$cntct_rate_predict),
+                    mse(dt$cntct_intensity ,dt$cntct_intensity_predict)-sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                    mse(dt$cntct_rate ,dt$cntct_rate_predict)-sbias(dt$cntct_rate ,dt$cntct_rate_predict)))
+    }
+  if(count){ df <- data.frame(metric = c("squared bias", "squared bias", "rmse", "rmse", "mae", "mae", "mse", "mse", "variance", "variance"),
+                             name = c("intensity", "count", "intensity", "count", "intensity", "count", "intensity", "count", "intensity", "count"),
+                             value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                                       sbias(dt$cntct_count, dt$cntct_count_predict),
+                                       rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                                       rmse(dt$cntct_count, dt$cntct_count_predict),
+                                       mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                                       mae(dt$cntct_count, dt$cntct_count_predict),
+                                       mse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                                       mse(dt$cntct_count, dt$cntct_count_predict),
+                                       mse(dt$cntct_intensity ,dt$cntct_intensity_predict)-sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                                       mse(dt$cntct_count ,dt$cntct_count_predict)-sbias(dt$cntct_count ,dt$cntct_count_predict)))
+  }else{df <- data.frame(
+        metric = c("squared bias", "rmse", "mae", "mse", "variance"),
+        name = c("intensity", "intensity", "intensity", "intensity", "intensity"),
+        value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                  rmse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                  mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                  mse(dt$cntct_intensity ,dt$cntct_intensity_predict),
+                  mse(dt$cntct_intensity ,dt$cntct_intensity_predict)-sbias(dt$cntct_intensity ,dt$cntct_intensity_predict)))
+        }
+  
 
   if(!is.na(outdir)){
     saveRDS(df, file = file.path(outdir, "mae.rds"))

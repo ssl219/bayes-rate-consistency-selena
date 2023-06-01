@@ -11,6 +11,8 @@ library(ggpubr)
 library(viridis)
 library(pammtools)
 library(dplyr)
+library(stringr)
+library(patchwork)
 
 option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721, dest = "seed"),
@@ -35,6 +37,9 @@ option_list <- list(
   optparse::make_option("--scenario", type = "character", default = "flat",
                         help = "Scenario [default %default]",
                         dest = "scenario"),
+  optparse::make_option("--random", type = "logical", default = TRUE,
+                        help = "Random Hic_b [default %default]",
+                        dest = "random"),
   optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory",
                         dest = 'repo.path'),
@@ -48,9 +53,14 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 # args$repo.path <- "~/Imperial/covimod-gp"
 # args$strata <- "5yr"
 args$scenario = "flat"
-args$hhsize = 0
+args$hhsize = 4
 args$divide.Hicb = FALSE
-args$baseline = TRUE
+args$baseline = FALSE
+epsilon = 1e-13
+args$size = 450
+args$strata = "COVIMOD"
+N_random <- args$size
+args$random = TRUE
 
 ##### ---------- Error handling ---------- #####
 if(is.na(args$repo.path)){
@@ -92,12 +102,10 @@ dt <- stratify_alter_age(dt, args$strata)
 cat("\n Generating contact dataset ...")
 
 # Start with male participants
-args$size = 0
-args$strata = "COVIMOD-new-hh"
-N_random <- args$size
-N = (85 + N_random)
+# upper bound age 49 for simplicity first and computational efficiency
+N = (50 + N_random)
 # Generate new_id for all participants (all distinct)
-d.everything.M <- as.data.table(expand.grid(new_id = 1:N, alter_age = 0:84))
+d.everything.M <- as.data.table(expand.grid(new_id = 1:N, alter_age = 0:49))
 d.everything.M[, DUMMY:=1L]
 tmp <- data.table( DUMMY = 1L, alter_gender = c('Male','Female'))
 d.everything.M <- merge(d.everything.M, tmp, by = 'DUMMY', allow.cartesian = TRUE)
@@ -110,9 +118,9 @@ d.everything.M[, gender:="Male"]
 
 # Generate age of participants
 # set.seed(12002)
-# random_ages <- sample(0:84, N_random, replace=TRUE)
-# part_ages <- sort(c(random_ages, 0:84))
-part_ages <- sort(c(0:84))
+random_ages <- sample(0:49, N_random, replace=TRUE)
+# part_ages <- sort(c(0:49))
+part_ages <- sort(c( 0:49, random_ages))
 # create smaller dataset with new_id and part_ages
 id_ages <- data.table(new_id=1:N, age=part_ages)
 d.everything.M <- merge(d.everything.M, id_ages, by=c("new_id"), all=TRUE)
@@ -139,13 +147,48 @@ if (args$hhsize==0){
     d.everything.MM[, n_M:=1]
 }
 
+# have to use age categories of the strata given in COVIMOD
 if (args$hhsize==4){
   for (i in 1:N_MM){
     d.everything.MM[, n_M:=fcase(
-      new_id==i & age %in% 0:20 & alter_age %in% 0:20, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
-      new_id==i & age %in% 0:20 & alter_age %in% 35:44, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
-      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1, 2, 3), size=1, prob=c(0.5, 0.5, 0.5, 0.5))),
-      new_id==i & age %in% 35:44 & alter_age %in% 0:20, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.5, 0.5, 0.5))),
+      new_id==i & age %in% 0:9 & alter_age %in% 0:9, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 0:9 & alter_age %in% 30:39, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      
+      new_id==i & age %in% 10:19 & alter_age %in% 10:19, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 10:19 & alter_age %in% 40:49, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      
+      new_id==i & age %in% 20:29 & alter_age %in% 20:29, as.numeric(sample(c(0, 1, 2, 3), size=1, prob=c(0.25, 0.25, 0.25, 0.25))),
+      
+      new_id==i & age %in% 30:39 & alter_age %in% 0:9, as.numeric(sample(c(0, 1, 2), size=1, prob=c(1/3, 1/3, 1/3))),
+      new_id==i & age %in% 30:39 & alter_age %in% 30:39, as.numeric(sample(c(0, 1), size=1, prob=c(0.9, 0.1))),
+      
+      new_id==i & age %in% 40:49 & alter_age %in% 10:19, as.numeric(sample(c(0, 1, 2), size=1, prob=c(1/3, 1/3, 1/3))),
+      new_id==i & age %in% 40:49 & alter_age %in% 40:49, as.numeric(sample(c(0, 1), size=1, prob=c(0.9, 0.1))),
+      
+      new_id < i, as.numeric(n_M),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==2){
+  for (i in 1:N_MM){
+    d.everything.MM[, n_M:=fcase(
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id < i, as.numeric(n_M),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==8){
+  for (i in 1:N_MM){
+    d.everything.MM[, n_M:=fcase(
+      new_id==i & age %in% 0:19 & alter_age %in% 0:19, as.numeric(sample(c(0, 1, 2, 3, 4, 5), size=1, prob=c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6))),
+      new_id==i & age %in% 0:19 & alter_age %in% 35:44, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1, 2, 3, 4, 5, 6, 7), size=1, prob=c(1/8, 1/8, 1/8, 1/8, 1/8, 1/8, 1/8, 1/8))),
+      new_id==i & age %in% 35:44 & alter_age %in% 0:19, as.numeric(sample(c(0, 1, 2, 3, 4, 5), size=1, prob=c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6))),
       new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(sample(c(0, 1), size=1, prob=c(0.9, 0.1))),
       new_id < i, as.numeric(n_M),
       default = 0
@@ -174,31 +217,31 @@ d.everything.MF[, n_F:=1]
     alter_age_strata == "20-24", as.numeric(n_M/5),
     alter_age_strata == "25-34", as.numeric(n_M/10),
     alter_age_strata == "35-44", as.numeric(n_M/10),
-    alter_age_strata == "45-54", as.numeric(n_M/10),
-    alter_age_strata == "55-64", as.numeric(n_M/10),
-    alter_age_strata == "65-69", as.numeric(n_M/5),
-    alter_age_strata == "70-74", as.numeric(n_M/5),
-    alter_age_strata == "75-79", as.numeric(n_M/5),
-    alter_age_strata == "80-84", as.numeric(n_M/5),
-    alter_age_strata =="85+", as.numeric(n_M),
+    alter_age_strata == "45-49", as.numeric(n_M/5),
+    # alter_age_strata == "50-64", as.numeric(n_M/15),
+    # alter_age_strata == "65-69", as.numeric(n_M/5),
+    # alter_age_strata == "70-74", as.numeric(n_M/5),
+    # alter_age_strata == "75-79", as.numeric(n_M/5),
+    # alter_age_strata == "80-84", as.numeric(n_M/5),
+    # alter_age_strata =="85+", as.numeric(n_M),
     default = NA
   )]
   
   d.everything.MF[, Hic_b := fcase(
-    alter_age_strata == "0-4", as.numeric(n_F/5),
-    alter_age_strata == "5-9", as.numeric(n_F/5),
-    alter_age_strata == "10-14", as.numeric(n_F/5),
-    alter_age_strata == "15-19", as.numeric(n_F/5),
-    alter_age_strata == "20-24", as.numeric(n_F/5),
-    alter_age_strata == "25-34", as.numeric(n_F/10),
-    alter_age_strata == "35-44", as.numeric(n_F/10),
-    alter_age_strata == "45-54", as.numeric(n_F/10),
-    alter_age_strata == "55-64", as.numeric(n_F/10),
-    alter_age_strata == "65-69", as.numeric(n_F/5),
-    alter_age_strata == "70-74", as.numeric(n_F/5),
-    alter_age_strata == "75-79", as.numeric(n_F/5),
-    alter_age_strata == "80-84", as.numeric(n_F/5),
-    alter_age_strata =="85+", as.numeric(n_F),
+    alter_age_strata == "0-4", as.numeric(n_M/5),
+    alter_age_strata == "5-9", as.numeric(n_M/5),
+    alter_age_strata == "10-14", as.numeric(n_M/5),
+    alter_age_strata == "15-19", as.numeric(n_M/5),
+    alter_age_strata == "20-24", as.numeric(n_M/5),
+    alter_age_strata == "25-34", as.numeric(n_M/10),
+    alter_age_strata == "35-44", as.numeric(n_M/10),
+    alter_age_strata == "45-49", as.numeric(n_M/5),
+    # alter_age_strata == "50-64", as.numeric(n_M/15),
+    # alter_age_strata == "65-69", as.numeric(n_M/5),
+    # alter_age_strata == "70-74", as.numeric(n_M/5),
+    # alter_age_strata == "75-79", as.numeric(n_M/5),
+    # alter_age_strata == "80-84", as.numeric(n_M/5),
+    # alter_age_strata =="85+", as.numeric(n_M),
     default = NA
   )]
   }
@@ -212,36 +255,78 @@ else{
 if (args$hhsize==4){
 for (i in 1:N_MF){
   d.everything.MF[, n_F:=fcase(
-    new_id==i & age %in% 0:20 & alter_age %in% 0:20, as.numeric(1-n_M),
-    new_id==i & age %in% 0:20 & alter_age %in% 35:44, as.numeric(2-n_M),
-    new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(3-n_M),
-    new_id==i & age %in% 35:44 & alter_age %in% 0:20, as.numeric(2-n_M),
-    new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+    new_id==i & age %in% 0:9 & alter_age %in% 0:9, as.numeric(1-n_M),
+    new_id==i & age %in% 10:19 & alter_age %in% 10:19, as.numeric(1-n_M),
+    
+    new_id==i & age %in% 0:9 & alter_age %in% 30:39, as.numeric(2-n_M),
+    new_id==i & age %in% 10:19 & alter_age %in% 40:49, as.numeric(2-n_M),
+    
+    new_id==i & age %in% 20:29 & alter_age %in% 20:29, as.numeric(3-n_M),
+    
+    new_id==i & age %in% 30:39 & alter_age %in% 0:9, as.numeric(2-n_M),
+    new_id==i & age %in% 40:49 & alter_age %in% 10:19, as.numeric(2-n_M),
+    
+    new_id==i & age %in% 30:39 & alter_age %in% 30:39, as.numeric(1-n_M),
+    new_id==i & age %in% 40:49 & alter_age %in% 40:49, as.numeric(1-n_M),
     new_id < i, as.numeric(n_F),
     default = 0
   )]
 }  
+}
+
+if (args$hhsize==2){
+  for (i in 1:N_MF){
+    d.everything.MF[, n_F:=fcase(
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(1-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+      new_id < i, as.numeric(n_F),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==8){
+  for (i in 1:N_MF){
+    d.everything.MF[, n_F:=fcase(
+      new_id==i & age %in% 0:19 & alter_age %in% 0:19, as.numeric(5-n_M),
+      new_id==i & age %in% 0:19 & alter_age %in% 35:44, as.numeric(2-n_M),
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(7-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 0:19, as.numeric(5-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+      new_id < i, as.numeric(n_F),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize!=0 & args$hhsize!=4){
 
 # divide by size of interval to get Hic_b
 d.everything.MM[, Hic_b:=fcase(
-  age %in% 0:20 & alter_age %in% 0:20, as.numeric(n_M/21),
-  age %in% 0:20 & alter_age %in% 35:44, as.numeric(n_M/10),
+  age %in% 0:19 & alter_age %in% 0:19, as.numeric(n_M/20),
+  age %in% 0:19 & alter_age %in% 35:44, as.numeric(n_M/10),
   age %in% 20:34 & alter_age %in% 20:34, as.numeric(n_M/15),
-  age %in% 35:44 & alter_age %in% 0:20, as.numeric(n_M/21),
+  age %in% 35:44 & alter_age %in% 0:19, as.numeric(n_M/20),
   age %in% 35:44 & alter_age %in% 35:44, as.numeric(n_M/10),
   default = 0
 )]
 
 d.everything.MF[, Hic_b:=fcase(
-  age %in% 0:20 & alter_age %in% 0:20, as.numeric(n_F/21),
-  age %in% 0:20 & alter_age %in% 35:44, as.numeric(n_F/10),
+  age %in% 0:19 & alter_age %in% 0:19, as.numeric(n_F/20),
+  age %in% 0:19 & alter_age %in% 35:44, as.numeric(n_F/10),
   age %in% 20:34 & alter_age %in% 20:34, as.numeric(n_F/15),
-  age %in% 35:44 & alter_age %in% 0:20, as.numeric(n_F/21),
+  age %in% 35:44 & alter_age %in% 0:19, as.numeric(n_F/20),
   age %in% 35:44 & alter_age %in% 35:44, as.numeric(n_F/10),
   default = 0
 )]
 }
 
+if (args$hhsize==4){
+  # divide by size of interval to get Hic_b
+  d.everything.MM[, Hic_b:= n_M/10]
+  d.everything.MF[, Hic_b:= n_F/10]
+  
+}
 
 # remove unwanted columns
 set(d.everything.MM, NULL, c('DUMMY'), NULL)
@@ -251,18 +336,16 @@ setnames(d.everything.MM, c('n_M'), c('n') )
 setnames(d.everything.MF, c('n_F'), c('n') )
 
 d.everything.M.final <- rbind(d.everything.MM, d.everything.MF)
-d.everything.M.final <- d.everything.M.final[Hic_b!=0]
+# DO NOT TAKE OUT 0 HIC_B
+# d.everything.M.final <- d.everything.M.final[Hic_b!=0]
 # if N_random = 0, should get a dataset of dimension 85*85*2 = 14450
 #################################################################################################################################
 
 
 # do the same for female participants
-args$size = 0
-args$strata = "COVIMOD-new-hh"
-N_random <- args$size
-N = (85 + N_random)
+N = (50 + N_random)
 # Generate new_id for all participants (all distinct)
-d.everything.F <- as.data.table(expand.grid(new_id = (N+1):(2*N), alter_age = 0:84))
+d.everything.F <- as.data.table(expand.grid(new_id = (N+1):(2*N), alter_age = 0:49))
 d.everything.F[, DUMMY:=1L]
 tmp <- data.table( DUMMY = 1L, alter_gender = c('Male','Female'))
 d.everything.F <- merge(d.everything.F, tmp, by = 'DUMMY', allow.cartesian = TRUE)
@@ -275,9 +358,9 @@ d.everything.F[, gender:="Female"]
 
 # Generate age of participants
 set.seed(2002)
-# random_ages <- sample(0:84, N_random, replace=TRUE)
-# part_ages <- sort(c(random_ages, 0:84))
-part_ages <- sort(c(0:84))
+random_ages <- sample(0:49, N_random, replace=TRUE)
+part_ages <- sort(c( 0:49, random_ages))
+# part_ages <- sort(c(0:49))
 # create smaller dataset with new_id and part_ages
 id_ages <- data.table(new_id=(N+1):(2*N), age=part_ages)
 d.everything.F <- merge(d.everything.F, id_ages, by=c("new_id"), all=TRUE)
@@ -303,11 +386,45 @@ if (args$hhsize==4){
   # taking alter_age in multiples of strata present in COVIMOD
   for (i in N_FM_L:N_FM_U){
     d.everything.FM[, n_M:=fcase(
-      new_id==i & age %in% 0:20 & alter_age %in% 0:20, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
-      new_id==i & age %in% 0:20 & alter_age %in% 35:44, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
-      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1, 2, 3), size=1, prob=c(0.5, 0.5, 0.5, 0.5))),
-      new_id==i & age %in% 35:44 & alter_age %in% 0:20, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.5, 0.5, 0.5))),
-      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(sample(c(0, 1), size=1, prob=c(0.9, 0.1))),
+      new_id==i & age %in% 0:9 & alter_age %in% 0:9, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 0:9 & alter_age %in% 30:39, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      
+      new_id==i & age %in% 10:19 & alter_age %in% 10:19, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 10:19 & alter_age %in% 40:49, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      
+      new_id==i & age %in% 20:29 & alter_age %in% 20:29, as.numeric(sample(c(0, 1, 2, 3), size=1, prob=c(0.25, 0.25, 0.25, 0.25))),
+      
+      new_id==i & age %in% 30:39 & alter_age %in% 0:9, as.numeric(sample(c(0, 1, 2), size=1, prob=c(1/3, 1/3, 1/3))),
+      new_id==i & age %in% 30:39 & alter_age %in% 30:39, as.numeric(sample(c(0, 1), size=1, prob=c(0.1, 0.9))),
+      
+      new_id==i & age %in% 40:49 & alter_age %in% 10:19, as.numeric(sample(c(0, 1, 2), size=1, prob=c(1/3, 1/3, 1/3))),
+      new_id==i & age %in% 40:49 & alter_age %in% 40:49, as.numeric(sample(c(0, 1), size=1, prob=c(0.1, 0.9))),
+      
+      new_id < i, as.numeric(n_M),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==2){
+  for (i in N_FM_L:N_FM_U){
+    d.everything.FM[, n_M:=fcase(
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(sample(c(0, 1), size=1, prob=c(0.5, 0.5))),
+      new_id < i, as.numeric(n_M),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==8){
+  for (i in N_FM_L:N_FM_U){
+    d.everything.FM[, n_M:=fcase(
+      new_id==i & age %in% 0:19 & alter_age %in% 0:19, as.numeric(sample(c(0, 1, 2, 3, 4, 5), size=1, prob=c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6))),
+      new_id==i & age %in% 0:19 & alter_age %in% 35:44, as.numeric(sample(c(0, 1, 2), size=1, prob=c(0.05, 0.9, 0.05))),
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(sample(c(0, 1, 2, 3, 4, 5, 6, 7), size=1, prob=c(1/8, 1/8, 1/8, 1/8, 1/8, 1/8, 1/8, 1/8))),
+      new_id==i & age %in% 35:44 & alter_age %in% 0:19, as.numeric(sample(c(0, 1, 2, 3, 4, 5), size=1, prob=c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6))),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(sample(c(0, 1), size=1, prob=c(0.1, 0.9))),
       new_id < i, as.numeric(n_M),
       default = 0
     )]
@@ -343,31 +460,31 @@ if (args$hhsize==0){
       alter_age_strata == "20-24", as.numeric(n_M/5),
       alter_age_strata == "25-34", as.numeric(n_M/10),
       alter_age_strata == "35-44", as.numeric(n_M/10),
-      alter_age_strata == "45-54", as.numeric(n_M/10),
-      alter_age_strata == "55-64", as.numeric(n_M/10),
-      alter_age_strata == "65-69", as.numeric(n_M/5),
-      alter_age_strata == "70-74", as.numeric(n_M/5),
-      alter_age_strata == "75-79", as.numeric(n_M/5),
-      alter_age_strata == "80-84", as.numeric(n_M/5),
-      alter_age_strata =="85+", as.numeric(n_M),
+      alter_age_strata == "45-49", as.numeric(n_M/5),
+      # alter_age_strata == "50-64", as.numeric(n_M/15),
+      # alter_age_strata == "65-69", as.numeric(n_M/5),
+      # alter_age_strata == "70-74", as.numeric(n_M/5),
+      # alter_age_strata == "75-79", as.numeric(n_M/5),
+      # alter_age_strata == "80-84", as.numeric(n_M/5),
+      # alter_age_strata =="85+", as.numeric(n_M),
       default = NA
     )]
     
     d.everything.FF[, Hic_b:=fcase(
-      alter_age_strata == "0-4", as.numeric(n_F/5),
-      alter_age_strata == "5-9", as.numeric(n_F/5),
-      alter_age_strata == "10-14", as.numeric(n_F/5),
-      alter_age_strata == "15-19", as.numeric(n_F/5),
-      alter_age_strata == "20-24", as.numeric(n_F/5),
-      alter_age_strata == "25-34", as.numeric(n_F/10),
-      alter_age_strata == "35-44", as.numeric(n_F/10),
-      alter_age_strata == "45-54", as.numeric(n_F/10),
-      alter_age_strata == "55-64", as.numeric(n_F/10),
-      alter_age_strata == "65-69", as.numeric(n_F/5),
-      alter_age_strata == "70-74", as.numeric(n_F/5),
-      alter_age_strata == "75-79", as.numeric(n_F/5),
-      alter_age_strata == "80-84", as.numeric(n_F/5),
-      alter_age_strata =="85+", as.numeric(n_F),
+      alter_age_strata == "0-4", as.numeric(n_M/5),
+      alter_age_strata == "5-9", as.numeric(n_M/5),
+      alter_age_strata == "10-14", as.numeric(n_M/5),
+      alter_age_strata == "15-19", as.numeric(n_M/5),
+      alter_age_strata == "20-24", as.numeric(n_M/5),
+      alter_age_strata == "25-34", as.numeric(n_M/10),
+      alter_age_strata == "35-44", as.numeric(n_M/10),
+      alter_age_strata == "45-49", as.numeric(n_M/5),
+      # alter_age_strata == "50-64", as.numeric(n_M/15),
+      # alter_age_strata == "65-69", as.numeric(n_M/5),
+      # alter_age_strata == "70-74", as.numeric(n_M/5),
+      # alter_age_strata == "75-79", as.numeric(n_M/5),
+      # alter_age_strata == "80-84", as.numeric(n_M/5),
+      # alter_age_strata =="85+", as.numeric(n_M),
       default = NA
     )]
   }
@@ -379,40 +496,81 @@ if (args$hhsize==0){
 }
 
 if (args$hhsize==4){
-  
-
 for (i in N_FF_L:N_FF_U){
   d.everything.FF[, n_F:=fcase(
-    new_id==i & age %in% 0:20 & alter_age %in% 0:20, as.numeric(1-n_M),
-    new_id==i & age %in% 0:20 & alter_age %in% 35:44, as.numeric(2-n_M),
-    new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(3-n_M),
-    new_id==i & age %in% 35:44 & alter_age %in% 0:20, as.numeric(2-n_M),
-    new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+    new_id==i & age %in% 0:9 & alter_age %in% 0:9, as.numeric(1-n_M),
+    new_id==i & age %in% 10:19 & alter_age %in% 10:19, as.numeric(1-n_M),
+    
+    new_id==i & age %in% 0:9 & alter_age %in% 30:39, as.numeric(2-n_M),
+    new_id==i & age %in% 10:19 & alter_age %in% 40:49, as.numeric(2-n_M),
+    
+    new_id==i & age %in% 20:29 & alter_age %in% 20:29, as.numeric(3-n_M),
+    
+    new_id==i & age %in% 30:39 & alter_age %in% 0:9, as.numeric(2-n_M),
+    new_id==i & age %in% 40:49 & alter_age %in% 10:19, as.numeric(2-n_M),
+    
+    new_id==i & age %in% 30:39 & alter_age %in% 30:39, as.numeric(1-n_M),
+    new_id==i & age %in% 40:49 & alter_age %in% 40:49, as.numeric(1-n_M),
     new_id < i, as.numeric(n_F),
     default = 0
   )]
 }  
+}
 
+if (args$hhsize==2){
+  for (i in N_FF_L:N_FF_U){
+    d.everything.FF[, n_F:=fcase(
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(1-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+      new_id < i, as.numeric(n_F),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize==8){
+  for (i in  N_FF_L:N_FF_U){
+    d.everything.FF[, n_F:=fcase(
+      new_id==i & age %in% 0:19 & alter_age %in% 0:19, as.numeric(5-n_M),
+      new_id==i & age %in% 0:19 & alter_age %in% 35:44, as.numeric(2-n_M),
+      new_id==i & age %in% 20:34 & alter_age %in% 20:34, as.numeric(7-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 0:19, as.numeric(5-n_M),
+      new_id==i & age %in% 35:44 & alter_age %in% 35:44, as.numeric(1-n_M),
+      new_id < i, as.numeric(n_F),
+      default = 0
+    )]
+  }  
+}
+
+if (args$hhsize!=0 & args$hhsize!=4){
 # divide by size of interval to get Hic_b
 d.everything.FM[, Hic_b:=fcase(
-  age %in% 0:20 & alter_age %in% 0:20, as.numeric(n_M/21),
-  age %in% 0:20 & alter_age %in% 35:44, as.numeric(n_M/10),
+  age %in% 0:19 & alter_age %in% 0:19, as.numeric(n_M/20),
+  age %in% 0:19 & alter_age %in% 35:44, as.numeric(n_M/10),
   age %in% 20:34 & alter_age %in% 20:34, as.numeric(n_M/15),
-  age %in% 35:44 & alter_age %in% 0:20, as.numeric(n_M/21),
+  age %in% 35:44 & alter_age %in% 0:19, as.numeric(n_M/20),
   age %in% 35:44 & alter_age %in% 35:44, as.numeric(n_M/10),
   default = 0
 )]
 
 d.everything.FF[, Hic_b:=fcase(
-  age %in% 0:20 & alter_age %in% 0:20, as.numeric(n_F/21),
-  age %in% 0:20 & alter_age %in% 35:44, as.numeric(n_F/10),
+  age %in% 0:19 & alter_age %in% 0:19, as.numeric(n_F/20),
+  age %in% 0:19 & alter_age %in% 35:44, as.numeric(n_F/10),
   age %in% 20:34 & alter_age %in% 20:34, as.numeric(n_F/15),
-  age %in% 35:44 & alter_age %in% 0:20, as.numeric(n_F/21),
+  age %in% 35:44 & alter_age %in% 0:19, as.numeric(n_F/20),
   age %in% 35:44 & alter_age %in% 35:44, as.numeric(n_F/10),
   default = 0
 )]
+
 }
 
+
+if (args$hhsize==4){
+  # divide by size of interval to get Hic_b
+  d.everything.FM[, Hic_b:= n_M/10]
+  d.everything.FF[, Hic_b:= n_F/10]
+  
+}
 # remove unwanted columns
 set(d.everything.FM, NULL, c('DUMMY'), NULL)
 set(d.everything.FF, NULL, c('n_M', 'DUMMY'), NULL)
@@ -421,17 +579,83 @@ setnames(d.everything.FM, c('n_M'), c('n') )
 setnames(d.everything.FF, c('n_F'), c('n') )
 
 d.everything.F.final <- rbind(d.everything.FM, d.everything.FF)
-d.everything.F.final <- d.everything.F.final[Hic_b!=0]
-
+# DO NOT TAKE OUT ZERO HIC_B
+# d.everything.F.final <- d.everything.F.final[Hic_b!=0]
 
 # bind female and male participants
 d.everything.final <- rbind(d.everything.M.final, d.everything.F.final)
 
+# take random Hic_b instead of smoothing out
+
+# note that for the case hhsize=0, already have individual Hic_b
+if (args$random == TRUE & args$hhsize!=0){
+  d.everything.final[, hh_structure_strata := fcase(
+    alter_age %in% 0:9, "0-9",
+    alter_age %in% 10:19, "10-19",
+    alter_age %in% 20:29, "20-29",
+    alter_age %in% 30:39, "30-39",
+    alter_age %in% 40:49, "40-49",
+    default = NA
+  )]
+  hh_structure_strata_comb <- d.everything.final %>% distinct(new_id, hh_structure_strata, alter_gender,
+                                                              wave, .keep_all=TRUE)
+  hh_structure_strata_comb_list <- hh_structure_strata_comb$hh_structure_strata
+  extract_hh_structure_strata_comb <- str_extract_all(as.character(hh_structure_strata_comb_list), "[0-9]+")
+  set.seed(1702652)
+  hh_structure_strata_random = rep(0, length(hh_structure_strata_comb_list))
+  for (i in 1:length(hh_structure_strata_comb_list)){
+    hh_structure_strata_random[i] = sample(extract_hh_structure_strata_comb[[i]][1]:extract_hh_structure_strata_comb[[i]][2], size=1)
+    # print(alter_age_strata_random[i])
+  }
+  hh_structure_strata_comb[,alter_age:=hh_structure_strata_random]
+  # amend alter_age_strata (in case alter_age was chosen within hh_structure_strata but outside of alter_age_strata)
+  stratify_alter_age(hh_structure_strata_comb, args$strata)
+  
+  setnames(hh_structure_strata_comb,c('Hic_b'),c('hh_structure_strata_Hic_b'))
+  setnames(hh_structure_strata_comb, c("n"), c("Hic_b"))
+  setnames(d.everything.final, c("Hic_b"), c("hh_structure_strata_Hic_b"))
+  d.everything.final <- merge(d.everything.final, hh_structure_strata_comb, by = c("alter_age", "new_id", "alter_gender", "gender", "wave", "age", "alter_age_strata", "hh_structure_strata", "hh_structure_strata_Hic_b"), all.x=TRUE, all.y=TRUE)
+  d.everything.final[is.na(Hic_b), Hic_b:=0]
+  }
 
 # calculate means alpha
 d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
-d.everything.final[, alpha:=Hic_b*cntct_rate]
+d.everything.final[, alpha:=Hic_b*cntct_rate + epsilon]
 
+# plot HH structure
+d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
+d.everything.final[, gender_comb := fcase(
+  gender == "Male" & alter_gender == "Male", "Male to Male",
+  gender == "Male" & alter_gender == "Female", "Male to Female",
+  gender == "Female" & alter_gender == "Male", "Female to Male",
+  gender == "Female" & alter_gender == "Female", "Female to Female",
+  default = NA
+)]
+
+# order is FF, FM, MF, MM, do not omit for patchwork later
+alpha_hh_structure_plot <- function(){
+  ggplot(d.everything.final, aes(age, alter_age)) + 
+  geom_tile(aes(fill = alpha_hh_structure_plot)) + 
+  facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+  viridis::scale_fill_viridis(option='H') +
+  theme_bw() + 
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  labs(x = "", y = "Age of contacts", fill = "Average count") +
+  guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           # strip.text = element_blank(),
+           strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6, unit = "cm"),
+           plot.margin = margin())
+}
 # simulate contact counts
 d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.final$alpha)]
 # take out rows with no hh structure, i.e. Hic_b = 0
@@ -445,118 +669,268 @@ d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.fi
 
 # Stratify contact intensities and contact rates
 group_var_plot <- c("age", "gender", "alter_age_strata", "alter_gender")
-d_comb_no_dupl_plot <- d.everything.final
-d_comb_no_dupl_plot[, y_plot:= sum(y), by=group_var]
-d_comb_no_dupl_plot[, cntct_rate_strata := sum(cntct_rate), by=group_var_plot]
+group_var_indiv <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+d_comb_no_dupl_plot <- copy(d.everything.final)
+d_comb_no_dupl_plot[, y_plot_strata:= sum(y), by=group_var_plot]
+d_comb_no_dupl_plot[, y_plot:= mean(y), by=group_var_plot]
+d_comb_no_dupl_plot[, y_plot_indiv:= mean(y), by=group_var_indiv]
+
+# add empirical contact rates for household model
+# d_comb_no_dupl_plot[, emp_cntct_rates_indiv := y_plot / alpha_hh_structure_plot]
+d_comb_no_dupl_plot[, emp_cntct_rates_indiv := y_plot_indiv / Hic_b]
+d_comb_no_dupl_plot[is.nan(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_no_dupl_plot[is.infinite(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+# d_comb_no_dupl_plot[emp_cntct_rates_indiv > 50, emp_cntct_rates_indiv := 0]
+d_comb_no_dupl_plot[, mean_emp_cntct_rates_indiv := mean(emp_cntct_rates_indiv), by=c("age", "gender", "alter_age", "alter_gender")]
+# d_comb_no_dupl_plot[is.na(mean_emp_cntct_rates_indiv), mean_emp_cntct_rates_indiv := 0]
+
+# smooth out Hic_b to see effect 
+d_comb_strata_plot <- copy(d_comb_no_dupl_plot)
+d_comb_strata_plot[, strata_Hic_b_indiv:=mean(Hic_b), by=group_var_indiv]
+# d_comb_strata_plot[, strata_Hic_b:=mean(Hic_b), by=group_var_plot]
+d_comb_strata_plot[, emp_cntct_rates_indiv := y_plot_indiv / strata_Hic_b_indiv]
+d_comb_strata_plot[is.nan(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_strata_plot[is.infinite(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_strata_plot[, mean_emp_cntct_rates_indiv := mean(emp_cntct_rates_indiv), by=c("age", "gender", "alter_age", "alter_gender")]
+# d_comb_strata_plot[is.na(mean_emp_cntct_rates_indiv), mean_emp_cntct_rates_indiv := 0]
+
+# add empirical contacts for baseline model
+group_var_offset <- c("wave", "age", "gender")
+d_comb_no_dupl_plot[, n_baseline := sum(n), by=group_var_offset]
+d_comb_no_dupl_plot[, emp_cntct_int_baseline := y_plot / n_baseline]
+d_comb_no_dupl_plot[is.nan(emp_cntct_int_baseline), emp_cntct_int_baseline := 0]
+
+# merge with d_comb_no_dupl_plot
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
+dt.pop.plot <- covimod$pop
+setnames(dt.pop.plot, "age", "alter_age")
+d_comb_no_dupl_plot <- merge(d_comb_no_dupl_plot, dt.pop.plot, by = c("alter_age", "gender"), all.x=TRUE, all.y=FALSE)
+d_comb_no_dupl_plot[, emp_cntct_rates_baseline := emp_cntct_int_baseline /pop]
+
+saveRDS(d_comb_strata_plot, file=file.path(export.path, paste0("d_comb_strata_plot-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
+saveRDS(d_comb_no_dupl_plot, file=file.path(export.path, paste0("d_comb_no_dupl_plot-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
+
+# may have to change d_comb_no_dupl to d_comb_no_dupl_plot when we participants of same age and gender, eg when N_random > 0
+# simulated_counts <- ggplot(d_comb_no_dupl_plot, aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) + 
+#   geom_tile(aes(fill = y_plot_strata)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Count") + 
+#   theme(aspect.ratio = 1)
 
 
-if (!args$baseline){
+
+# simulated_counts_MM <- ggplot(d_comb_no_dupl[gender=="Male" & alter_gender=="Male"], aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) + 
+#   geom_tile(aes(fill = y)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
+#   theme(aspect.ratio = 1)
+# 
+# simulated_counts_FF <- ggplot(d_comb_no_dupl[gender=="Female" & alter_gender=="Female"], aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) + 
+#   geom_tile(aes(fill = y)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts FF") + 
+#   theme(aspect.ratio = 1)
+# 
+# simulated_counts_MF <- ggplot(d_comb_no_dupl[gender=="Male" & alter_gender=="Female"], aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) + 
+#   geom_tile(aes(fill = y)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MF") + 
+#   theme(aspect.ratio = 1)
+# 
+# 
+# simulated_counts_FM <- ggplot(d_comb_no_dupl[gender=="Female" & alter_gender=="Male"], aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) + 
+#   geom_tile(aes(fill = y)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts FM") + 
+#   theme(aspect.ratio = 1)
+
+simulated_counts_per_gender <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) +
+    geom_tile(aes(fill = y_plot_strata)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(begin=0.3, option = "rocket") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_discrete(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Count") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.9, unit = "cm"),
+           plot.margin = margin())
+}
+
+empirical_rates_new_hh <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = mean_emp_cntct_rates_indiv)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.7, unit = "cm"),
+           plot.margin = margin())
+}
+
+empirical_rates_new_hh_smooth_offset <- function(){
+  ggplot(d_comb_strata_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = mean_emp_cntct_rates_indiv)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.7, unit = "cm"),
+           plot.margin = margin())
+}
+
+
+empirical_rates_baseline <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = emp_cntct_rates_baseline)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_text(size = 8),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.5, unit = "cm"),
+           plot.margin = margin())
+  
+}
+
+if (!args$divide.Hicb){
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize, "-nodivide-simulated-counts-amended.pdf")), plot = simulated_counts, width = 10, height = 6)
+  alpha_hh_structure_plot() / simulated_counts_per_gender() / empirical_rates_new_hh() / empirical_rates_new_hh_smooth_offset() / empirical_rates_baseline() + plot_layout(nrow = 5)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-", args$scenario, "-", args$size, "-full.pdf")), width = 20, height = 16, units = "cm")
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MM-amended.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FF-amended.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MF-amended.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FM-amended.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize, "-nodivide-household-structure.png")), plot = alpha_hh_structure_plot)
+}else{
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize, "-simulated-counts.pdf")), plot = simulated_counts, width = 10, height = 6)
+  alpha_hh_structure_plot() / simulated_counts_per_gender() / empirical_rates_new_hh() / empirical_rates_new_hh_smooth_offset() / empirical_rates_baseline() + plot_layout(nrow = 5)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-", args$scenario, "-", args$size, "-full.pdf")), width = 20, height = 16, units = "cm")
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-MM.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-FF.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-MF.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-FM.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
+  # ggsave(file.path(export.path, paste0("hh", args$hhsize, "-household-structure.png")), plot = alpha_hh_structure_plot)
+}
+
+
+# new-hh model
   group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
-  d_comb_no_dupl <- d.everything.final
+  d_comb_no_dupl <- copy(d.everything.final)
   d_comb_no_dupl[, y_strata := sum(y), by=group_var]
   d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
   d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
   # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
   # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
   setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
-}
 
-if (args$baseline){
-  group_var <- c("age", "gender", "alter_age_strata", "alter_gender")
-  d_comb_no_dupl <- d.everything.final
-  d_comb_no_dupl[, y_strata := sum(y), by=group_var]
-  d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+# baseline model
+  group_var_baseline <- c("age", "gender", "alter_age_strata", "alter_gender")
+  d_comb_no_dupl_baseline <- copy(d.everything.final)
+  d_comb_no_dupl_baseline[, y_strata := sum(y), by=group_var_baseline]
+  d_comb_no_dupl_baseline[, cntct_rate_strata := sum(cntct_rate), by=group_var_baseline]
   # add u for row major indexing
-  d_comb_no_dupl[, u:=1L]
+  d_comb_no_dupl_baseline[, u:=1L]
   
-  d_comb_no_dupl <- d_comb_no_dupl %>% distinct(wave, age, alter_age_strata, gender, alter_gender, .keep_all=TRUE)
+  d_comb_no_dupl_baseline <- d_comb_no_dupl_baseline %>% distinct(wave, age, alter_age_strata, gender, alter_gender, .keep_all=TRUE)
   # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
   # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
-  setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+  setnames(d_comb_no_dupl_baseline, c("y", "y_strata"), c("y_age", "y"))
   
   # aggregate offsets by age and gender
-  group_var_offset <- c("wave", "age", "gender")
-  d.everything.final[, n := sum(n), by=group_var_offset]
-  d.everything.final[, zeta := 1L]
-  d.everything.final <- d.everything.final %>% distinct(wave, age, gender, .keep_all=TRUE)
+  group_var_offset_baseline <- c("wave", "age", "gender")
+  d.everything.final_baseline <- copy(d.everything.final)
+  d.everything.final_baseline[, n := sum(n), by=group_var_offset_baseline]
+  d.everything.final_baseline[, zeta := 1L]
+  d.everything.final_baseline <- d.everything.final_baseline %>% distinct(wave, age, gender, .keep_all=TRUE)
   # N and zeta to the offsets dataset
-  setnames(d.everything.final, c("n"), c("N"))
-}
+  setnames(d.everything.final_baseline, c("n"), c("N"))
 
-# get population dt
-covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
-dt.pop <- covimod$pop
+
 
 
 
 # order alter_age strata for plots
-covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
-# d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+covimod_like_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-49")
+# d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_like_strata_levels ))]
 # d_comb_no_dupl <- d_comb_no_dupl[order(age, new_id, alter_age_strata_idx_simplot, gender, alter_gender)]
 
-simulated_fine_counts_MM <- ggplot(d.everything.final[gender=="Male" & alter_gender=="Male"], aes(age, factor(alter_age))) + 
-  geom_tile(aes(fill = y_age)) + 
-  scale_fill_viridis(option = "F") + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_discrete(expand = c(0,0)) + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
-  theme(aspect.ratio = 1)
-
-# may have to change d_comb_no_dupl to d_comb_no_dupl_plot when we participants of same age and gender, eg when N_random > 0
-simulated_counts <- ggplot(d_comb_no_dupl, aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
-       geom_tile(aes(fill = y)) + 
-       scale_fill_viridis(option = "F") + 
-       scale_x_continuous(expand = c(0,0)) + 
-       scale_y_discrete(expand = c(0,0)) + 
-       labs(x = "Age of participants", y = "Age of contacts", fill = "Counts") + 
-       theme(aspect.ratio = 1)
-
-simulated_counts_MM <- ggplot(d_comb_no_dupl[gender=="Male" & alter_gender=="Female"], aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
-  geom_tile(aes(fill = y)) + 
-  scale_fill_viridis(option = "F") + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_discrete(expand = c(0,0)) + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
-  theme(aspect.ratio = 1)
-
-simulated_counts_FF <- ggplot(d_comb_no_dupl[gender=="Female" & alter_gender=="Female"], aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
-  geom_tile(aes(fill = y)) + 
-  scale_fill_viridis(option = "F") + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_discrete(expand = c(0,0)) + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts FF") + 
-  theme(aspect.ratio = 1)
-
-simulated_counts_MF <- ggplot(d_comb_no_dupl[gender=="Male" & alter_gender=="Female"], aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
-  geom_tile(aes(fill = y)) + 
-  scale_fill_viridis(option = "F") + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_discrete(expand = c(0,0)) + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MF") + 
-  theme(aspect.ratio = 1)
+# simulated_fine_counts_MM <- ggplot(d.everything.final[gender=="Male" & alter_gender=="Male"], aes(age, factor(alter_age))) + 
+#   geom_tile(aes(fill = y_age)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
+#   theme(aspect.ratio = 1)
 
 
-simulated_counts_FM <- ggplot(d_comb_no_dupl[gender=="Female" & alter_gender=="Male"], aes(age, factor(alter_age_strata, levels=covimod_strata_levels))) + 
-  geom_tile(aes(fill = y)) + 
-  scale_fill_viridis(option = "F") + 
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_discrete(expand = c(0,0)) + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Counts FM") + 
-  theme(aspect.ratio = 1)
+# d_comb_no_dupl_plot[, cntct_rate_strata_plot := sum(cntct_rate), by=group_var_plot]
 
-if (!args$divide.Hicb){
-  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-nodivide-simulated-counts-amended.pdf")), plot = simulated_counts, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MM-amended.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FF-amended.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-MF-amended.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-nodivide-simulated-counts-FM-amended.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
-  }else{
-  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-simulated-counts.pdf")), plot = simulated_counts, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-MM.pdf")), plot = simulated_counts_MM, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-FF.pdf")), plot = simulated_counts_FF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-MF.pdf")), plot = simulated_counts_MF, width = 10, height = 6)
-  ggsave(file.path(export.path, paste0("hh", args$hhsize,"-simulated-counts-FM.pdf")), plot = simulated_counts_FM, width = 10, height = 6)
-  }
+
+
+
+# get population dt
+dt.pop <- covimod$pop
+
 
 covimod.single.new.hh.sim <- list(
   contacts = d_comb_no_dupl,
@@ -564,47 +938,26 @@ covimod.single.new.hh.sim <- list(
   pop = dt.pop
 )
 
-if (!args$baseline){
+covimod.single.new.hh.sim.baseline <- list(
+  contacts = d_comb_no_dupl_baseline,
+  offsets = d.everything.final_baseline,
+  pop = dt.pop
+)
+
   if (args$hhsize == 0){
     if (!args$divide.Hicb){
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("nodivide-data-hh0-amended-baseline.rds")))
     }
     else{
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh0-amended-baseline.rds")))
     }
     
   }
-  
-  if (args$hhsize == 4){
-    if (!args$divide.Hicb){
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended.rds")))
-    }
-    else{
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended.rds")))
-    }
+  if (args$hhsize > 0){
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
+    saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline.rds")))
   }
-}
-
-if(args$baseline) {
-  if (args$hhsize == 0){
-    if (!args$divide.Hicb){
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended-baseline.rds")))
-    }
-    else{
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended-baseline.rds")))
-    }
-    
-  }
-  
-  if (args$hhsize == 4){
-    if (!args$divide.Hicb){
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh4-amended-baseline.rds")))
-    }
-    else{
-      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("-nodivide-data-hh4-amended-baseline.rds")))
-    }
-  }
-}
-
 
 cat("\n DONE. \n")

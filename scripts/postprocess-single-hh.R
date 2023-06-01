@@ -113,10 +113,21 @@ if(args$ppc){
   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
 
   cat(" Making posterior predictive checks\n")
-  make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
 
   cat("\n DONE.\n")
 }
+
+##### ---------- Error Table ---------- #####
+
+dt.ppc[, cntct_count_predict := M]
+dt.ppc[, cntct_count := y]
+dt.ppc[, cntct_intensity_predict := M/N]
+dt.ppc[, cntct_intensity := y/N]
+error_table <- make_error_table(dt.ppc, count=TRUE)
+saveRDS(dt.ppc, file.path(outdir=export.path, "error_dt.rds"))
+saveRDS(error_table, file.path(outdir=export.path, "error_table.rds"))
+cat("\n DONE.\n")
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){

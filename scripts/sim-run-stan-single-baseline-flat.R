@@ -22,7 +22,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-no-symmetry",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
@@ -48,7 +48,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended-baseline.rds"))
+covimod <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended-baseline.rds"))
 # covimod <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single.rds"))
 
 dt.cnt <- covimod$contacts[wave == args$wave]
@@ -122,7 +122,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-everyone-baseline.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-baseline-450.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

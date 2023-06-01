@@ -21,7 +21,7 @@ MIXING=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh-flat.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
+Rscript $REPO_PATH/scripts/sim-run-stan-single-baseline-flat.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
-MODEL=${MODEL}-${WAVE}-"sim-flat-new-hh"-${SAMPLE_SIZE}
-Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh-flat.R --model $MODEL --mixing $MIXING
+MODEL=${MODEL}-${WAVE}-"sim-flat-baseline"-${SAMPLE_SIZE}
+Rscript $REPO_PATH/scripts/sim-postprocess-single-baseline-flat.R --model $MODEL --mixing $MIXING

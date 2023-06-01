@@ -280,9 +280,41 @@ plot_marginal_intensities <- function(dt, outdir=NA, new_hh=FALSE, rate=FALSE){
   if (new_hh){
     if (rate){
       
+      p <- ggplot(dt, aes(age, rate_M)) +
+        geom_stepribbon(aes(ymin = rate_CL, ymax = rate_CU, fill = comb), alpha=0.3) +
+        geom_step(aes(color = comb)) +
+        scale_y_continuous(limits = c(0, NA)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        scale_color_brewer(palette = "Set1") +
+        scale_fill_brewer(palette = "Set1") +
+        labs(y="Marginal contact rate", x="Age of contacting individual",
+             color="Gender combination", fill="Gender combination") +
+        theme_bw() +
+        theme(
+          legend.position = "right",
+          plot.background = element_rect(fill='transparent', color=NA),
+          strip.background = element_rect(color=NA, fill = "transparent"),
+          legend.background = element_rect(fill="transparent", color=NA)
+        )
+      
     }
     else{
-      
+      p <- ggplot(dt, aes(age, alpha_M)) +
+        geom_stepribbon(aes(ymin = alpha_CL, ymax = alpha_CU, fill = comb), alpha=0.3) +
+        geom_step(aes(color = comb)) +
+        scale_y_continuous(limits = c(0, NA)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        scale_color_brewer(palette = "Set1") +
+        scale_fill_brewer(palette = "Set1") +
+        labs(y="Marginal contact intensity", x="Age of contacting individual",
+             color="Gender combination", fill="Gender combination") +
+        theme_bw() +
+        theme(
+          legend.position = "right",
+          plot.background = element_rect(fill='transparent', color=NA),
+          strip.background = element_rect(color=NA, fill = "transparent"),
+          legend.background = element_rect(fill="transparent", color=NA)
+        )
     }
     
   }else{
