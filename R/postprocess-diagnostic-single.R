@@ -157,6 +157,7 @@ add_row_major_idx_postproc <- function(dt.survey){
 }
 make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA, new_hh=FALSE, new_hh_all_strata=FALSE){
   if (new_hh){
+    cat("\n new hh choice")
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
     
@@ -303,6 +304,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     }
     return(dt)
   } else if (new_hh_all_strata){
+    cat("\n hh strata")
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
     
@@ -429,6 +431,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     return(dt)
   }
   else {
+    cat("\n baseline option")
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
     
@@ -437,7 +440,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     dt.po <- as.data.table(reshape2::melt(po))
     
     # Extract indices
-    .pattern <- "yhat_strata\\[([0-9]+),([0-9]+), ([0-9]+)\\]"
+    .pattern <- "yhat_strata\\[([0-9]+),([0-9]+),([0-9]+)\\]"
     
     dt.po[, comb_idx := as.numeric(gsub(.pattern, "\\1", variable))]
     dt.po[, age_idx := as.numeric(gsub(.pattern, "\\2", variable))]
