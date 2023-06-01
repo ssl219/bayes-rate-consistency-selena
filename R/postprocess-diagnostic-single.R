@@ -302,9 +302,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       warning("\n outdir is not specified. Results were not saved.")
     }
     return(dt)
-  }
-  
-  else if (new_hh_all_strata){
+  } else if (new_hh_all_strata){
     ps <- c(0.5, 0.025, 0.975)
     p_labs <- c('M','CL','CU')
     
