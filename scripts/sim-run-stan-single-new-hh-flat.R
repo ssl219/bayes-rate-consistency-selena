@@ -50,6 +50,8 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
@@ -75,7 +77,7 @@ if (!file.exists(export.path)) {
 cat(" Configuring Stan data ...")
 
 # Initialize
-stan_data <- init_stan_data()
+stan_data <- init_stan_data(A=50, C=13)
 
 # Add contact counts
 stan_data <- add_contact_vector(stan_data, dt.cnt, survey="COVIMOD", single = TRUE, new_hh = TRUE)

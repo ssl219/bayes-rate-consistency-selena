@@ -272,19 +272,20 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     # convert FALSE/TRUE to 0 and 1 to allow continuous scale
     dt[, inside.CI := as.numeric(inside.CI)]
     # stratify by age to age instead of individual to age
-    group_var <- c("age", "alter_age", "gender", "alter_gender")
+    group_var <- c("age", "alter_age_strata", "gender", "alter_gender")
     dt.plot <- dt[, inside.CI := mean(inside.CI), by=group_var]
    
     p <- ggplot(dt.plot) +
-      geom_tile(aes(x = age, y = alter_age, fill = inside.CI)) +
+      geom_tile(aes(x = age, y = alter_age_strata, fill = inside.CI)) +
       labs(x = "Participants' age", y = "Contacts' age", fill = "PPC" ) +
       facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
       coord_equal() +
       scale_x_continuous(expand = c(0,0)) +
-      scale_y_continuous(expand = c(0,0)) +
+      scale_y_discrete(expand = c(0,0)) +
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
+        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )
@@ -298,7 +299,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       saveRDS(po_FM, file.path(outdir, "po_FM.rds"))
       saveRDS(po_MF, file.path(outdir, "po_MF.rds"))
       
-      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p, height = 3, width = 7)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
@@ -403,20 +404,21 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     # plot ppd
     # convert FALSE/TRUE to 0 and 1 to allow continuous scale
     dt[, inside.CI := as.numeric(inside.CI)]
-    # stratify by age to age instead of individual to age
-    group_var <- c("age", "alter_age", "gender", "alter_gender")
+    # stratify by age to strata age instead of individual to age
+    group_var <- c("age", "alter_age_strata", "gender", "alter_gender")
     dt.plot <- dt[, inside.CI := mean(inside.CI), by=group_var]
     
     p <- ggplot(dt.plot) +
-      geom_tile(aes(x = age, y = alter_age, fill = inside.CI)) +
+      geom_tile(aes(x = age, y = alter_age_strata, fill = inside.CI)) +
       labs(x = "Participants' age", y = "Contacts' age", fill = "PPC" ) +
       facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
       coord_equal() +
       scale_x_continuous(expand = c(0,0)) +
-      scale_y_continuous(expand = c(0,0)) +
+      scale_y_discrete(expand = c(0,0)) +
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
+        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )
@@ -424,7 +426,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     if(!is.na(outdir)){
       saveRDS(dt, file.path(outdir, "ppc_dt.rds"))
       saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
-      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p, height = 3, width = 7)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
@@ -489,6 +491,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
+        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )
@@ -496,7 +499,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
     if(!is.na(outdir)){
       saveRDS(dt, file.path(outdir, "ppc_check_dt.rds"))
       saveRDS(proportion_ppd, file.path(outdir, "ppc_proportion.rds"))
-      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p)
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p, height = 3, width = 7)
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
