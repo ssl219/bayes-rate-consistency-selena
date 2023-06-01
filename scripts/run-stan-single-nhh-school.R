@@ -13,13 +13,13 @@ option_list <- list(
   optparse::make_option("--seed", type = "integer", default = 0721,
                         help = "Random number seed [default %default]",
                         dest = "seed"),
-  optparse::make_option("--iter_warmup", type = "integer", default = 500,
+  optparse::make_option("--iter_warmup", type = "integer", default = 1,
                         help = "HMC warmup iterations [default %default]",
                         dest = 'iter.warmup'),
-  optparse::make_option("--iter_sampling", type = "integer", default = 1000,
+  optparse::make_option("--iter_sampling", type = "integer", default = 1,
                         help = "HMC of sampling iterations iterations [default %default]",
                         dest = 'iter.sampling'),
-  optparse::make_option("--chains", type = "integer", default = 8,
+  optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
   optparse::make_option("--model", type = "character", default = "hsgp-eq-rd",
@@ -43,8 +43,8 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-# args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
-# args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
