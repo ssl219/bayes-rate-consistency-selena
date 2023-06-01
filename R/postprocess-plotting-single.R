@@ -171,7 +171,7 @@ plot_predicted_rates <- function(dt, outdir=NA){
 }
 
 plot_alpha <- function(dt, outdir=NA){
-  p <- ggplot(dt.matrix.alpha) +
+  p <- ggplot(dt) +
     geom_tile(aes(x = age, y = alter_age, fill = alpha_agg)) +
     labs(x = "Participants' age", y = "Contacts' age", fill = "Alpha" ) +
     facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
@@ -275,27 +275,77 @@ plot_sliced_intensities <- function(dt, age.cut = c(20, 40, 60), outdir=NA, new_
   }
 }
 
-plot_marginal_intensities <- function(dt, outdir=NA){
-
-  p <- ggplot(dt, aes(age, intensity_M)) +
-    geom_stepribbon(aes(ymin = intensity_CL, ymax = intensity_CU, fill = gender), alpha=0.3) +
-    geom_step(aes(color = gender)) +
-    scale_y_continuous(limits = c(0, NA)) +
-    scale_x_continuous(expand = c(0, 0)) +
-    scale_color_brewer(palette = "Set1") +
-    scale_fill_brewer(palette = "Set1") +
-    labs(y="Marginal contact intensity", x="Age of contacting individual",
-         color="Gender", fill="Gender") +
-    theme_bw() +
-    theme(
-      legend.position = "right",
-      plot.background = element_rect(fill='transparent', color=NA),
-      strip.background = element_rect(color=NA, fill = "transparent"),
-      legend.background = element_rect(fill="transparent", color=NA)
-    )
+plot_marginal_intensities <- function(dt, outdir=NA, new_hh=FALSE, rate=FALSE){
+  
+  if (new_hh){
+    if (rate){
+      
+      p <- ggplot(dt, aes(age, rate_M)) +
+        geom_stepribbon(aes(ymin = rate_CL, ymax = rate_CU, fill = comb), alpha=0.3) +
+        geom_step(aes(color = comb)) +
+        scale_y_continuous(limits = c(0, NA)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        scale_color_brewer(palette = "Set1") +
+        scale_fill_brewer(palette = "Set1") +
+        labs(y="Marginal contact rate", x="Age of contacting individual",
+             color="Gender combination", fill="Gender combination") +
+        theme_bw() +
+        theme(
+          legend.position = "right",
+          plot.background = element_rect(fill='transparent', color=NA),
+          strip.background = element_rect(color=NA, fill = "transparent"),
+          legend.background = element_rect(fill="transparent", color=NA)
+        )
+      
+    }
+    else{
+      p <- ggplot(dt, aes(age, alpha_M)) +
+        geom_stepribbon(aes(ymin = alpha_CL, ymax = alpha_CU, fill = comb), alpha=0.3) +
+        geom_step(aes(color = comb)) +
+        scale_y_continuous(limits = c(0, NA)) +
+        scale_x_continuous(expand = c(0, 0)) +
+        scale_color_brewer(palette = "Set1") +
+        scale_fill_brewer(palette = "Set1") +
+        labs(y="Marginal contact intensity", x="Age of contacting individual",
+             color="Gender combination", fill="Gender combination") +
+        theme_bw() +
+        theme(
+          legend.position = "right",
+          plot.background = element_rect(fill='transparent', color=NA),
+          strip.background = element_rect(color=NA, fill = "transparent"),
+          legend.background = element_rect(fill="transparent", color=NA)
+        )
+    }
+    
+  }else{
+    p <- ggplot(dt, aes(age, intensity_M)) +
+      geom_stepribbon(aes(ymin = intensity_CL, ymax = intensity_CU, fill = comb), alpha=0.3) +
+      geom_step(aes(color = comb)) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(expand = c(0, 0)) +
+      scale_color_brewer(palette = "Set1") +
+      scale_fill_brewer(palette = "Set1") +
+      labs(y="Marginal contact intensity", x="Age of contacting individual",
+           color="Gender combination", fill="Gender combination") +
+      theme_bw() +
+      theme(
+        legend.position = "right",
+        plot.background = element_rect(fill='transparent', color=NA),
+        strip.background = element_rect(color=NA, fill = "transparent"),
+        legend.background = element_rect(fill="transparent", color=NA)
+      )
+  }
 
   if(!is.na(outdir)){
-    ggsave(file.path(outdir, "figures", "marginal_intensities.png"), plot = p, height = 3, width = 7)
+    if (new_hh){
+      if (rate){
+        ggsave(file.path(outdir, "figures", "marginal_rates.png"), plot = p, height = 3, width = 7)
+      }else{
+        ggsave(file.path(outdir, "figures", "marginal_alphas.png"), plot = p, height = 3, width = 7)
+      }
+    }else{
+      ggsave(file.path(outdir, "figures", "marginal_intensities.png"), plot = p, height = 3, width = 7)
+    }
   }
 
   return(p)

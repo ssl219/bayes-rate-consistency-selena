@@ -240,7 +240,19 @@ d_comb_no_dupl
 ```{r}
 d.everything
 ```
+```{r}
+d.everything[y > 1]
 
+```
+```{r}
+d.everything.hhsize.plot <- copy(d.everything[wave ==1])
+d.everything.hhsize.plot[, mean_n := mean(n), by = c("household_size", "new_id", "alter_age", "alter_gender","wave")]
+plot(d.everything.hhsize.plot$household_size, d.everything.hhsize.plot$mean_n)
+```
+
+```{r}
+d.everything
+```
 
 ## Export data
 ```{r}

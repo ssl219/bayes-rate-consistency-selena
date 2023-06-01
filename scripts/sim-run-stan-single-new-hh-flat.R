@@ -26,18 +26,18 @@ option_list <- list(
   optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson",
                         help = "Name of Stan model",
                         dest = 'model.name'),
-  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                        dest = 'repo.path'),
-  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path'),
-  # optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
   #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-  #                       dest = "repo.path"),
-  # optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+  #                       dest = 'repo.path'),
+  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
   #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
   #                       dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
+                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                        dest = "repo.path"),
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
+                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                        dest = 'data.path'),
   optparse::make_option("--hsgp_c", type = "double", default = 1.5,
                         help = "The boundary inflation of the HSGP prior in any dimension [default \"%default\"]",
                         dest = "hsgp_c"),
@@ -55,7 +55,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -131,7 +131,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-everyone-ppd.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-new-hh-450.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

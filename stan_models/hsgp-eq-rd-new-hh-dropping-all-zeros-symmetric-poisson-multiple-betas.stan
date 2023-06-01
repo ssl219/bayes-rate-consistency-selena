@@ -465,10 +465,10 @@ transformed parameters
                        z[(2*M1+1):3*M1,], NN_IDX);
                        
                        
-  alpha_MM = rep_matrix(epsilon, P_MM, A); // initialize alpha_strata to close to zeros
-  alpha_FF = rep_matrix(epsilon, P_FF, A);
-  alpha_MF = rep_matrix(epsilon, P_MF, A);
-  alpha_FM = rep_matrix(epsilon, P_FM, A);
+  alpha_MM = rep_matrix(0, P_MM, A); // initialize alpha_strata to zeros
+  alpha_FF = rep_matrix(0, P_FF, A);
+  alpha_MF = rep_matrix(0, P_MF, A);
+  alpha_FM = rep_matrix(0, P_FM, A);
 
 
 // have to add +1 to B_MM[j], cannot take index 0 for contact age 0, same thing for map_indiv_to_age_MM[i]
