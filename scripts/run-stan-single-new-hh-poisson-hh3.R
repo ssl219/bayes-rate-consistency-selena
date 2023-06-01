@@ -68,7 +68,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-3.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh3.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
