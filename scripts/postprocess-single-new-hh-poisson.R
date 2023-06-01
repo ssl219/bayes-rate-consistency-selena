@@ -31,8 +31,7 @@ option_list <- list(
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-everyone-ppd",
-                          #"hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1",
                         help = "Name of the model",
                         dest = "model.name"),
   optparse::make_option("--mixing", type = "logical", default = TRUE,
@@ -56,8 +55,8 @@ cat("\n model name:", args$model.name)
 cat("\n after args")
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-# data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/nodivide-data-hh0-amended.rds")
+data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds")
+
 
 # Error handling
 if(!file.exists(model.path)) {
