@@ -20,7 +20,7 @@ MIXING=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/run-stan-single-new-hh-poisson-hh4.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
+Rscript $REPO_PATH/scripts/run-stan-single-new-hh-poisson-hhgreater5.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
-MODEL=${MODEL}-${WAVE}-"hh4"
-Rscript $REPO_PATH/scripts/postprocess-single-new-hh-poisson-hh4.R --model $MODEL --mixing $MIXING
+MODEL=${MODEL}-${WAVE}-"hhgreater5"
+Rscript $REPO_PATH/scripts/postprocess-single-new-hh-poisson-hhgreater5.R --model $MODEL --mixing $MIXING

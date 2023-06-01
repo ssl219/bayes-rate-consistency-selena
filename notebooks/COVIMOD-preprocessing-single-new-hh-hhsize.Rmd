@@ -251,11 +251,15 @@ plot(d.everything.hhsize.plot$household_size, d.everything.hhsize.plot$mean_n)
 ```
 
 ```{r}
-d.everything
+d.everything[d.everything$household_size==2,]
+```
+```{r}
+d_comb_no_dupl[household_size==2]
 ```
 
 ## Export data
 ```{r}
+
 covimod.single.new.hh <- list(
   contacts = d_comb_no_dupl,
   offsets = d.everything,
@@ -264,5 +268,68 @@ covimod.single.new.hh <- list(
 
 data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 saveRDS(covimod.single.new.hh, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh.rds"))
+```
+
+```{r}
+# hh 2
+covimod.single.new.hh.2 <- list(
+  contacts = d_comb_no_dupl[household_size==2],
+  offsets = d.everything[d.everything$household_size==2,],
+  pop = covimod$pop
+)
+
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh.2, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hh2.rds"))
+```
+
+```{r}
+# hh 3
+covimod.single.new.hh.3 <- list(
+  contacts = d_comb_no_dupl[household_size==3],
+  offsets = d.everything[d.everything$household_size==3,],
+  pop = covimod$pop
+)
+
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh.3, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hh3.rds"))
+```
+
+
+
+```{r}
+# hh 2-3
+covimod.single.new.hh.23 <- list(
+  contacts = d_comb_no_dupl[household_size<=3],
+  offsets = d.everything[d.everything$household_size<=3,],
+  pop = covimod$pop
+)
+
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh.23, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hhless4.rds"))
+```
+
+```{r}
+# hh 4
+covimod.single.new.hh.4 <- list(
+  contacts = d_comb_no_dupl[household_size==4],
+  offsets = d.everything[d.everything$household_size==4,],
+  pop = covimod$pop
+)
+
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh.4, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hh4.rds"))
+```
+
+
+```{r}
+# hh 4
+covimod.single.new.hh.greater5 <- list(
+  contacts = d_comb_no_dupl[household_size>=5],
+  offsets = d.everything[d.everything$household_size>=5,],
+  pop = covimod$pop
+)
+
+data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+saveRDS(covimod.single.new.hh.greater5, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hhgreater5.rds"))
 ```
 

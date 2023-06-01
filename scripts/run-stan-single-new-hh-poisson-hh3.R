@@ -68,7 +68,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-hh4.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single-new-hh-3.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -146,6 +146,6 @@ cat("\n Run Stan ALL DONE.\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-hh4.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-hh3.rds")))
 cat(" DONE!\n")
 
