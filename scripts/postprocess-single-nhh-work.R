@@ -85,25 +85,25 @@ source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 ##### ---------- Assess convergence and mixing ---------- #####
 if(args$mixing){
   cat(" Assess convergence and mixing\n")
-
+  
   # Make convergence diagnostic tables
   fit_summary <- make_convergence_diagnostic_stats(fit, outdir=export.path)
-
+  
   # Make trace plots
   cat("\n Making trace plots")
   bayesplot::color_scheme_set(scheme = "mix-blue-pink")
-
+  
   pars <- c('nu', 'gp_alpha', 'gp_rho_1', 'gp_rho_2')
-
+  
   pars_po <- fit$draws(pars)
   p <- bayesplot::mcmc_trace(pars_po)
   ggsave(file = file.path(export.fig.path, 'mcmc_trace_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
+  
   # Make pairs plots
   cat(" Making pairs plots\n")
   p <- bayesplot::mcmc_pairs(pars_po, off_diag_args=list(size=0.3, alpha=0.3))
   ggsave(file = file.path(export.fig.path, 'mcmc_pairs_parameters.png'), plot = p, h = 20, w = 20, limitsize = F)
-
+  
   cat("\n DONE!\n")
 }
 
@@ -111,12 +111,23 @@ if(args$mixing){
 if(args$ppc){
   cat(" Extracting posterior\n")
   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
-
+  
   cat(" Making posterior predictive checks\n")
-  make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
-
+  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+  
   cat("\n DONE.\n")
 }
+
+##### ---------- Error Table ---------- #####
+
+dt.ppc[, cntct_count_predict := M]
+dt.ppc[, cntct_count := y]
+dt.ppc[, cntct_intensity_predict := M/N]
+dt.ppc[, cntct_intensity := y/N]
+error_table <- make_error_table(dt.ppc, count=TRUE)
+saveRDS(dt.ppc, file.path(outdir=export.path, "error_dt.rds"))
+saveRDS(error_table, file.path(outdir=export.path, "error_table.rds"))
+cat("\n DONE.\n")
 
 ##### ---------- Plotting ---------- #####
 if(args$plot){
@@ -124,15 +135,15 @@ if(args$plot){
   dt.po <- extract_posterior_rates(po)
   dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path)
   dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path)
-
+  
   rm(dt.po); suppressMessages(gc()); # Ease memory
-
+  
   cat(" Making figures\n")
-
+  
   p <- plot_posterior_intensities(dt.matrix, outdir=export.path)
   p <- plot_sliced_intensities(dt.matrix, outdir=export.path)
   p <- plot_marginal_intensities(dt.margin, outdir=export.path)
-
+  
   cat("\n DONE.\n")
 }
 
