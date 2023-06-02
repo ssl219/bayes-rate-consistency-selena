@@ -705,13 +705,13 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
     dt.po[, CU := exp(CU)]
 
     # Recover age
-    if(simulation){ # If simulation data
-      dt.po[, age := age_idx + 5]
-      dt.po[, alter_age := alter_age_idx + 5]
-    } else { # If COVIMOD data
+    # if(simulation){ # If simulation data
+      #dt.po[, age := age_idx + 5]
+      #dt.po[, alter_age := alter_age_idx + 5]
+    #} else { # If COVIMOD data
       dt.po[, age := age_idx - 1]
       dt.po[, alter_age := alter_age_idx - 1]
-    }
+    #}
 
     # Recover gender and alter gender
     dt.po[, gender := fcase(comb_idx %in% c(1,3), "Male",
@@ -747,13 +747,13 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
   } else { # Marginal contact intensity by combination type
     
     # Recover age
-    if(simulation){ # If simulation data
-      dt.po[, age := age_idx + 5]
-      dt.po[, alter_age := alter_age_idx + 5]
-    } else { # If COVIMOD data
+    # if(simulation){ # If simulation data
+    #   dt.po[, age := age_idx + 5]
+    #   dt.po[, alter_age := alter_age_idx + 5]
+    # } else { # If COVIMOD data
       dt.po[, age := age_idx - 1]
       dt.po[, alter_age := alter_age_idx - 1]
-    }
+    # }
 
     dtmm <- dt.po[comb_idx == 1]
     dtff <- dt.po[comb_idx == 2]

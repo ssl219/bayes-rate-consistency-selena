@@ -23,7 +23,7 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
@@ -57,7 +57,7 @@ args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh2-flat-55-amended-drop-zero-Hicb.rds"))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -77,7 +77,7 @@ if (!file.exists(export.path)) {
 cat(" Configuring Stan data ...")
 
 # Initialize
-stan_data <- init_stan_data(A=50, C=13)
+stan_data <- init_stan_data(A=55, C=8)
 
 # Add contact counts
 stan_data <- add_contact_vector(stan_data, dt.cnt, survey="COVIMOD", single = TRUE, new_hh = TRUE)
@@ -92,13 +92,13 @@ stan_data <- add_N(stan_data, dt.cnt, survey = "COVIMOD", new_hh=TRUE)
 stan_data <- add_ages_contacts(stan_data, dt.offsets)
 
 # Add row major index
-stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
+stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="simulation")
 
 # Add household offsets
 stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=FALSE)
 
 # Map age to age strata
-stan_data <- add_map_age_to_strata(stan_data)
+stan_data <- add_map_age_to_strata(stan_data, survey="simulation")
 
 # Map individual to age for each gender combination
 stan_data <- add_map_indiv_to_age(stan_data, dt.cnt, dt.offsets)
@@ -133,7 +133,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-new-hh-450.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-new-hh-hh2-55.rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

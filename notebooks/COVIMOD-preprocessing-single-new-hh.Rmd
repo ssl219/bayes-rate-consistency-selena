@@ -257,7 +257,7 @@ length(unique(d_order_test_MM$new_id))
 
 
 ```{r}
-d.everything
+d.everything[d.everything$wave==1, ]
 ```
 
 ```{r}

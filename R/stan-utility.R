@@ -300,6 +300,49 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     stan_data$ROW_MAJOR_IDX_MF <- d[gender == "Male" & alter_gender == "Female"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_FM <- d[gender == "Female" & alter_gender == "Male"]$row_major_idx
   }
+  
+  if (survey == "simulation"){
+    # this is assuming we have a single wave
+    simulation_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54")
+    C <- stan_data$C
+    d <- contacts
+    # making sure order of factors in alter_age_strata is ascending instead of decreasing
+    # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+    d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+    d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    # d <- contacts[order(age, new_id, alter_age_strata, gender, alter_gender)]
+    
+    d_MM <-  d[gender == "Male" & alter_gender == "Male"]
+    d_FF <-  d[gender == "Female" & alter_gender == "Female"]
+    d_MF <-  d[gender == "Male" & alter_gender == "Female"]
+    d_FM <-  d[gender == "Female" & alter_gender == "Male"]
+    
+    d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    
+    d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+    d_MM[, row_major_idx := (new_id_idx -1)*C + age_strata_idx]
+    
+    d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+    d_FF[, row_major_idx := (new_id_idx -1)*C + age_strata_idx]
+    
+    d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    d_MF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+    d_MF[, row_major_idx := (new_id_idx -1)*C + age_strata_idx]
+    
+    d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+    d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+    d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
+    d_FM[, row_major_idx := (new_id_idx -1)*C + age_strata_idx]
+    
+    stan_data$ROW_MAJOR_IDX_MM <- d_MM$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FF <- d_FF$row_major_idx
+    stan_data$ROW_MAJOR_IDX_MF <- d_MF$row_major_idx
+    stan_data$ROW_MAJOR_IDX_FM <- d_FM$row_major_idx
+  }
     
   if (survey == "POLYMOD_2"){
     if (household_cnt){
@@ -696,7 +739,7 @@ add_map_indiv_to_age <- function(stan_data, contact, everything, sim=FALSE){
   # tmp <- tmp[order(age, alter_age_strata, gender, alter_gender)]
   tmp[, age_idx := age + 1]
   tmp[, age_strata_idx := as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
-  tmp[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+  tmp[, row_major_idx := (age_idx-1)*stan_data$C + age_strata_idx]
   tmp[, gender_comb_idx := fcase(
     gender == "Male" & alter_gender == "Male", 1,
     gender == "Female" & alter_gender == "Female", 2,
@@ -752,6 +795,32 @@ add_map_age_to_strata <- function(stan_data, survey = "COVIMOD"){
 
     stan_data$map_age_to_strata <- map_age_to_strata
 
+    return(stan_data)
+  }
+  
+  if (survey == "simulation"){
+    age_strata <- c("0-4","5-9","10-14","15-19","20-24","25-34","35-44",
+                    "45-54")
+    
+    alter_age_min <- as.numeric(str_extract(as.character(age_strata), "^[0-9]{1,2}"))
+    
+    strata_min <- unique(alter_age_min)
+    strata_min_idx <- strata_min - min(strata_min) + 1
+    
+    A <- stan_data$A
+    C <- stan_data$C
+    
+    map_age_to_strata <- matrix(0, nrow=A, ncol=C)
+    for (c in 1:C) {
+      if (c == C) {
+        map_age_to_strata[strata_min_idx[c]:A, c] <- 1
+      } else {
+        map_age_to_strata[strata_min_idx[c]:(strata_min_idx[c+1]-1), c] <- 1
+      }
+    }
+    
+    stan_data$map_age_to_strata <- map_age_to_strata
+    
     return(stan_data)
   }
 

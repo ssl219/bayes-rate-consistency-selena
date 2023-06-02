@@ -50,8 +50,12 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 cat("\n after args")
 
+args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-new-hh-hh2-55"
+
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh2-flat-55-amended-drop-zero-Hicb.rds")
 
 
 # Error handling
@@ -97,7 +101,7 @@ source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
 cat(" Configuring Stan data ...")
 
 # Initialize
-stan_data <- init_stan_data()
+stan_data <- init_stan_data(A=55, C=8)
 
 # Add contact counts
 stan_data <- add_contact_vector(stan_data, dt.cnt, survey="COVIMOD", single = TRUE, new_hh = TRUE)
@@ -112,13 +116,13 @@ stan_data <- add_N(stan_data, dt.cnt, survey = "COVIMOD", new_hh=TRUE)
 stan_data <- add_ages_contacts(stan_data, dt.offsets)
 
 # Add row major index
-stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="POLYMOD_2")
+stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="simulation")
 
 # Add household offsets
-stan_data <- add_household_offsets(stan_data, dt.offsets)
+stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=FALSE)
 
 # Map age to age strata
-stan_data <- add_map_age_to_strata(stan_data)
+stan_data <- add_map_age_to_strata(stan_data, survey="simulation")
 
 # Map individual to age for each gender combination
 stan_data <- add_map_indiv_to_age(stan_data, dt.cnt, dt.offsets)
@@ -132,7 +136,6 @@ stan_data <- add_std_age_idx(stan_data)
 # Add HSGP parameters
 stan_data <- add_hsgp_parms(stan_data, args$hsgp_c, args$hsgp_m , args$hsgp_m)
 cat(" DONE!\n")
-
 
 #### ---------- Assess convergence and mixing ---------- #####
 if(args$mixing){
