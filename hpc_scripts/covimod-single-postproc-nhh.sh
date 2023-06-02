@@ -15,5 +15,5 @@ PLOT=TRUE
 module load anaconda3/personal
 source activate Renv
 
-MODEL=${MODEL}-${WAVE}-"nhh-friends-family"
-Rscript $REPO_PATH/scripts/postprocess-single-nhh-friends-family.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
+MODEL=${MODEL}-${WAVE}-"nhh-other"
+Rscript $REPO_PATH/scripts/postprocess-single-nhh-other.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
