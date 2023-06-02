@@ -110,6 +110,7 @@ dt.amb <- merge(dt.amb, dt.part, by=c("new_id", "u"), all.x = TRUE)
 dt.nhh <- dt.nhh[!(is.na(alter_age_strata) | is.na(alter_gender))]
 ```
 
+
 ### Group contacts
 ```{r}
 if (type_nhh == "work"){
@@ -140,6 +141,11 @@ if (type_nhh != "friends and nhh family"){
 dt.grp <- dt.part[, .(y = sum(y_grp)), by=.(wave, imp_age, gender)]
 setnames(dt.grp, "imp_age", "age")
 ```
+
+```{r}
+dt.grp[wave==1 & y!=0]
+```
+
 
 ## Combine household and non-household data
 ```{r}

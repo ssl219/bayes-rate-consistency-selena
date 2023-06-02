@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 #PBS -l walltime=72:00:00
@@ -14,7 +13,7 @@ HHSIZE=4
 SCENARIO="flat"
 
 # HMC Sampler params
-CHAINS=8
+CHAINS=4
 WARMUP=500
 SAMPLING=1000
 
@@ -26,5 +25,5 @@ source activate Renv
 
 Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --wave $WAVE --model $MODEL --hsgp_c $HSGP_C --hsgp_m $HSGP_M --chains $CHAINS --size $SIZE --hhsize $HHSIZE --scenario $SCENARIO --iter_warmup $WARMUP --iter_sampling $SAMPLING
 
-MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${SIZE}-"amended-drop-zero-Hicb.rds"
+MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${SIZE}
 Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --size $SIZE --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING

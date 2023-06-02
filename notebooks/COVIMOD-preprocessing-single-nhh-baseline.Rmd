@@ -103,7 +103,7 @@ setnames(dt.grp, "imp_age", "age")
 ```
 
 ```{r}
-dt.grp
+dt.grp[wave==1 & y!=0]
 # dt.hh
 # dt.hh[(is.na(alter_age_strata) | is.na(alter_gender))]
 # dt.nhh
