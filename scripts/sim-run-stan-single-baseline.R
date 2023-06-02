@@ -54,7 +54,10 @@ option_list <- list(
                         dest = "hhsize"),
   optparse::make_option("--sample_size", type = "integer", default = 55,
                         help = "Number of participants with random age in the survey [default \"%default\"]",
-                        dest = 'sample_size')
+                        dest = 'sample_size'),
+  optparse::make_option("--scenario", type = "character", default = "flat",
+                        help = "Scenario [default %default]",
+                        dest = "scenario")
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
