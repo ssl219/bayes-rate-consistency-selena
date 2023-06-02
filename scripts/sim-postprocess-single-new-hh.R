@@ -21,9 +21,9 @@ option_list <- list(
   optparse::make_option("--hhsize", type = "integer", default = 4,
                         help = "Household size [default %default]",
                         dest = "hhsize"),
-  optparse::make_option("--size", type = "integer", default = 55,
+  optparse::make_option("--sample_size", type = "integer", default = 55,
                         help = "Number of participants with random age in the survey [default \"%default\"]",
-                        dest = 'size'),
+                        dest = 'sample_size'),
   optparse::make_option("--scenario", type = "character", default = "flat",
                         help = "Scenario [default %default]",
                         dest = "scenario"),
@@ -64,7 +64,7 @@ cat("\n after args")
 # args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-new-hh-hh2-55"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds"))
+data.path <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-drop-zero-Hicb.rds"))
 
 
 # Error handling

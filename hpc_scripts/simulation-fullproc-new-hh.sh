@@ -9,7 +9,7 @@ WAVE=1
 MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
-SIZE=55
+N=55
 HHSIZE=4
 SCENARIO="flat"
 
@@ -24,7 +24,7 @@ MIXING=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --iter_warmup $WARMUP --iter_sampling $SAMPLING --chains $CHAINS --hhsize $HHSIZE --size $SIZE --scenario $SCENARIO --model $MODEL --repo_path $REPO_PATH --data_path $DATA_PATH --hsgp_c $HSGP_C --hsgp_m $HSGP_M --wave $WAVE
+Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --iter_warmup $WARMUP --iter_sampling $SAMPLING --chains $CHAINS --hhsize $HHSIZE --sample_size $N --scenario $SCENARIO --model $MODEL --repo_path $REPO_PATH --data_path $DATA_PATH --hsgp_c $HSGP_C --hsgp_m $HSGP_M --wave $WAVE
 
-MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${SIZE}
+MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${N}
 Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --size $SIZE --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING

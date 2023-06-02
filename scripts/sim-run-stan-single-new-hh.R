@@ -26,9 +26,9 @@ option_list <- list(
   optparse::make_option("--hhsize", type = "integer", default = 4,
                         help = "Household size [default %default]",
                         dest = "hhsize"),
-  optparse::make_option("--size", type = "integer", default = 55,
+  optparse::make_option("--sample_size", type = "integer", default = 55,
                         help = "Number of participants with random age in the survey [default \"%default\"]",
-                        dest = 'size'),
+                        dest = 'sample_size'),
   optparse::make_option("--scenario", type = "character", default = "flat",
                         help = "Scenario [default %default]",
                         dest = "scenario"),
@@ -60,7 +60,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-data.path.test <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds"))
+data.path.test <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-drop-zero-Hicb.rds"))
 cat ("\n DATA PATH RUN", data.path.test)
 covimod.single.new.hh <- readRDS(data.path.test)
 
@@ -138,7 +138,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")
