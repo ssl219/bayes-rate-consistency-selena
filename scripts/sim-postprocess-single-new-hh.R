@@ -18,6 +18,15 @@ option_list <- list(
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                        dest = "repo.path"),
+  optparse::make_option("--hhsize", type = "integer", default = 4,
+                        help = "Household size [default %default]",
+                        dest = "hhsize"),
+  optparse::make_option("--size", type = "integer", default = 55,
+                        help = "Number of participants with random age in the survey [default \"%default\"]",
+                        dest = 'size'),
+  optparse::make_option("--scenario", type = "character", default = "flat",
+                        help = "Scenario [default %default]",
+                        dest = "scenario"),
   optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
                        dest = 'data.path'),
@@ -50,12 +59,12 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 cat("\n after args")
 
-args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
-args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
-args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-new-hh-hh2-55"
+# args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-new-hh-hh2-55"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh2-flat-55-amended-drop-zero-Hicb.rds")
+data.path <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds"))
 
 
 # Error handling

@@ -23,6 +23,15 @@ option_list <- list(
   optparse::make_option("--chains", type = "integer", default = 1,
                         help = "Number of MCMC chains",
                         dest = 'chains'),
+  optparse::make_option("--hhsize", type = "integer", default = 4,
+                        help = "Household size [default %default]",
+                        dest = "hhsize"),
+  optparse::make_option("--size", type = "integer", default = 55,
+                        help = "Number of participants with random age in the survey [default \"%default\"]",
+                        dest = 'size'),
+  optparse::make_option("--scenario", type = "character", default = "flat",
+                        help = "Scenario [default %default]",
+                        dest = "scenario"),
   optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
                         help = "Name of Stan model",
                         dest = 'model.name'),
@@ -50,14 +59,14 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
-args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# args$repo.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh2-flat-55-amended-drop-zero-Hicb.rds"))
+covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds")))
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
@@ -133,7 +142,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-new-hh-hh2-55.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

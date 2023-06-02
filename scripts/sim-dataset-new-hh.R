@@ -53,11 +53,11 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 # args$repo.path <- "~/Imperial/covimod-gp"
 # args$strata <- "5yr"
 args$scenario = "flat"
-args$hhsize = 2
+args$hhsize = 4
 args$divide.Hicb = FALSE
 args$baseline = FALSE
 epsilon = 1e-13
-args$size = 55
+args$size = 500
 args$strata = "COVIMOD"
 N_random <- args$size - 55
 args$random = TRUE
