@@ -285,7 +285,6 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
-        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )
@@ -418,7 +417,6 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
-        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )
@@ -491,7 +489,6 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       viridis::scale_fill_viridis(na.value="white", option="H") +
       theme_bw() +
       theme(
-        aspect.ratio = 1,
         legend.position = "bottom",
         strip.background = element_rect(color=NA, fill = "transparent")
       )

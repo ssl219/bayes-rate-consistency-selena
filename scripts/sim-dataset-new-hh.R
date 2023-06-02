@@ -53,7 +53,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 # args$repo.path <- "~/Imperial/covimod-gp"
 # args$strata <- "5yr"
 args$scenario = "flat"
-args$hhsize = 4
+args$hhsize = 6
 args$divide.Hicb = FALSE
 args$baseline = FALSE
 epsilon = 1e-13
@@ -108,7 +108,7 @@ cat("\n Generating contact dataset ...")
 
 # Start with male participants
 # upper bound age 54 for simplicity first and computational efficiency
-N = (50 + N_random)
+N = (55 + N_random)
 # Generate new_id for all participants (all distinct)
 d.everything.M <- as.data.table(expand.grid(new_id = 1:N, alter_age = 0:54))
 d.everything.M[, DUMMY:=1L]
@@ -348,7 +348,7 @@ d.everything.M.final <- rbind(d.everything.MM, d.everything.MF)
 
 
 # do the same for female participants
-N = (50 + N_random)
+N = (55 + N_random)
 # Generate new_id for all participants (all distinct)
 d.everything.F <- as.data.table(expand.grid(new_id = (N+1):(2*N), alter_age = 0:54))
 d.everything.F[, DUMMY:=1L]

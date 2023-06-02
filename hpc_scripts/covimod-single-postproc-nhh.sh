@@ -15,5 +15,5 @@ PLOT=TRUE
 module load anaconda3/personal
 source activate Renv
 
-MODEL=${MODEL}-${WAVE}-"nhh-school"
-Rscript $REPO_PATH/scripts/postprocess-single-nhh-school.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
+MODEL=${MODEL}-${WAVE}-"hh"
+Rscript $REPO_PATH/scripts/postprocess-single-hh.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
