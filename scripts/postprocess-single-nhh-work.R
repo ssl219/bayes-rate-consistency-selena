@@ -113,7 +113,7 @@ if(args$ppc){
   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   
   cat(" Making posterior predictive checks\n")
-  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path, fig.outdir = export.fig.path)
   
   cat("\n DONE.\n")
 }
