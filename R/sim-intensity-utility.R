@@ -2,7 +2,7 @@
 
 # flat GP
 cntct_sim_rates_flat <- function(){
-  di <- as.data.table(expand.grid(age = 0:49, alter_age = 0:49 ))
+  di <- as.data.table(expand.grid(age = 0:54, alter_age = 0:54 ))
   di[, cntct_rate := 1]
   return(di)
 }
@@ -10,7 +10,7 @@ cntct_sim_rates_flat <- function(){
 # boarding school 
 
 cntct_sim_rates_boarding_school <- function(){
-  di <- as.data.table(expand.grid(age = 0:49, alter_age = 0:49 ))
+  di <- as.data.table(expand.grid(age = 0:54, alter_age = 0:54 ))
   di[, diff_age := age - alter_age]
   # di[, cntct_rate := fcase(age %in% 0:10 & alter_age %in% 30:40, 1,
   #                          age %in% 30:40 & alter_age %in% 0:10, 1,
@@ -63,14 +63,14 @@ cntct_sim_rates_boarding_school <- function(){
                                  age %in% 25:29  & diff_age %in% 19:20, 0.01,
                                  # age %in% 29  & diff_age %in% 23, 0.6,
                                  
-                                 age %in% 40:49  & diff_age %in% -5:5, pmax(0, 0.9 - 0.06 * abs(diff_age)),
-                                 age %in% 40:49  & diff_age %in% c(-9:-6,6:9), 0.16,
-                                 age %in% 40:49  & diff_age %in% c(-13:-10,10:13), 0.0075,
-                                 age %in% 40:49  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 age %in% 40:54  & diff_age %in% -5:5, pmax(0, 0.9 - 0.06 * abs(diff_age)),
+                                 age %in% 40:54  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 age %in% 40:54  & diff_age %in% c(-13:-10,10:13), 0.0075,
+                                 age %in% 40:54  & diff_age %in% c(-15:-14,14:15), 0.0025,
                                  # minimum age to have contact is 19
-                                 age %in% 43:49  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
-                                 age %in% 43:49  & diff_age %in% c(21:22, 26:27), 0.1,
-                                 age %in% 43:49  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 age %in% 43:54  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
+                                 age %in% 43:54  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 age %in% 43:54  & diff_age %in% c(19:20, 28:29), 0.01,
 
                                  # age %in% 50:59  & diff_age %in% -5:5, pmax(0, 0.65 - 0.06 * abs(diff_age)),
                                  # age %in% 50:59  & diff_age %in% c(-9:-6,6:9), 0.16,

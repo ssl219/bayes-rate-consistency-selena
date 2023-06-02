@@ -33,13 +33,13 @@ stratify_alter_age <- function(dt, strata.scheme = "5yr"){
       alter_age %in% 20:24, "20-24",
       alter_age %in% 25:34, "25-34",
       alter_age %in% 35:44, "35-44",
-      alter_age %in% 45:49, "45-49",
+      alter_age %in% 45:54, "45-54",
       default = NA
     )]
 
     dt$alter_age_strata <- factor(
       dt$alter_age_strata,
-      levels=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-49")
+      levels=c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54")
     )
   } 
   

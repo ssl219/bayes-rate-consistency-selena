@@ -39,9 +39,9 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
-args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
-args$model.name <- "hsgp-eq-rd-1-nhh-school"
+# args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# args$model.name <- "hsgp-eq-rd-1-nhh-school"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
 full.data.path <- file.path(args$data.path, "data/COVIMOD/COVIMOD-single-nhh-school.rds")

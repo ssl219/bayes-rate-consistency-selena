@@ -109,7 +109,7 @@ cntct_sim_rates_by_age <- function(dsim)
 # set.seed(args$seed)
 # 
 # cat("\n Define population sizes to determine contacts intensities and rates ... ")
-# dpop <- as.data.table(expand.grid(gender = c("Male", "Female"), age = 6:49))
+# dpop <- as.data.table(expand.grid(gender = c("Male", "Female"), age = 6:54))
 # tmp <- as.data.table(read.csv(file.path(args$repo.path, "data/germany-population-2011.csv")))
 # dpop <- merge(dpop, tmp, by = c("gender", "age"))
 

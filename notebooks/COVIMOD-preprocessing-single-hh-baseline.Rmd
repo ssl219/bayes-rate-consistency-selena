@@ -254,7 +254,7 @@ tmp <- d[, m := y/N]
 
 
 ```{r}
-p1 <- ggplot(tmp, aes(age, alter_age_strata)) + 
+p1 <- ggplot(tmp[wave==1, ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = m)) + 
   facet_grid(gender ~ alter_gender) + 
   viridis::scale_fill_viridis(option='H') +
@@ -263,9 +263,9 @@ p1 <- ggplot(tmp, aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=5))
 
 p1
-ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh.png")), plot = p1)
+ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-wave1.png")), plot = p1)
 
-p2 <- ggplot(tmp, aes(age, alter_age_strata)) + 
+p2 <- ggplot(tmp[wave==1, ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = log(y))) + 
   facet_grid(gender ~ alter_gender) + 
   viridis::scale_fill_viridis(option='H') +
@@ -274,7 +274,7 @@ p2 <- ggplot(tmp, aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size=5))
 
 p2
-ggsave(file.path(fig.path, paste0("log-contact-counts-hh.png")), plot = p2)
+ggsave(file.path(fig.path, paste0("log-contact-counts-hh-wave1.png")), plot = p2)
 ```
 ```{r}
 d
@@ -307,7 +307,7 @@ d
 
 
 ```{r}
-p3 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+p3 <- ggplot(d[complete.cases(d)  & wave==1, ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = m)) + 
   facet_grid(hhsize_plot~gender_comb) + 
   viridis::scale_fill_viridis(option='H') +
@@ -318,9 +318,9 @@ p3 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
 
 p3
-ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-per-hhsize.png")), plot = p3)
+ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-per-hhsize-wave1.png")), plot = p3)
 
-p4 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+p4 <- ggplot(d[complete.cases(d) & wave==1, ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = log(y))) + 
   facet_grid(hhsize_plot~gender_comb) + 
   viridis::scale_fill_viridis(option='H') +
@@ -331,10 +331,10 @@ p4 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
 
 p4
-ggsave(file.path(fig.path, paste0("log-contact-counts-hh-per-hhsize.png")), plot = p4)
+ggsave(file.path(fig.path, paste0("log-contact-counts-hh-per-hhsize-wave1.png")), plot = p4)
 ```
 ```{r}
-p5 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
+p5 <- ggplot(d[complete.cases(d) & wave == 1, ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = y)) + 
   facet_grid(hhsize_plot~gender_comb) + 
   viridis::scale_fill_viridis(option='H') +
@@ -345,7 +345,7 @@ p5 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
 
 p5
-ggsave(file.path(fig.path, paste0("contact-counts-hh-per-hhsize.png")), plot = p5)
+ggsave(file.path(fig.path, paste0("contact-counts-hh-per-hhsize-wave1.png")), plot = p5)
 ```
 
 
