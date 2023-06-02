@@ -15,8 +15,8 @@ SCENARIO="flat"
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=500
-SAMPLING=1000
+WARMUP=5
+SAMPLING=10
 
 # Post-processing
 MIXING=TRUE
