@@ -60,7 +60,9 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod.single.new.hh <- readRDS(file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds")))
+data.path.test <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds"))
+cat ("\n DATA PATH RUN", data.path.test)
+covimod.single.new.hh <- readRDS(data.path.test)
 
 dt.cnt <- covimod.single.new.hh$contacts[wave == args$wave]
 dt.offsets <- covimod.single.new.hh$offsets[wave == args$wave]
