@@ -27,4 +27,4 @@ source activate Renv
 Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --iter_warmup $WARMUP --iter_sampling $SAMPLING --chains $CHAINS --hhsize $HHSIZE --sample_size $N --scenario $SCENARIO --model $MODEL --repo_path $REPO_PATH --data_path $DATA_PATH --hsgp_c $HSGP_C --hsgp_m $HSGP_M --wave $WAVE
 
 MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${N}
-Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --size $SIZE --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING
+Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --sample_size $N --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING

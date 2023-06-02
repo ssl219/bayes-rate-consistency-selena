@@ -303,6 +303,7 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
   
   if (survey == "simulation"){
     # this is assuming we have a single wave
+    covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
     simulation_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54")
     C <- stan_data$C
     d <- contacts
