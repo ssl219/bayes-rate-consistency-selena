@@ -16,8 +16,8 @@ SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=5
-SAMPLING=10
+WARMUP=500
+SAMPLING=1000
 
 # Post-processing
 MIXING=TRUE

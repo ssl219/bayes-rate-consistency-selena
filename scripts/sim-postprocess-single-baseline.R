@@ -38,7 +38,13 @@ option_list <- list(
                         dest = "plot"),
   optparse::make_option("--sim.no", type = "integer", default = 1,
                         help = "Simulated Dataset Number [default %default]",
-                        dest = "sim.no")
+                        dest = "sim.no"),
+  optparse::make_option("--hhsize", type = "integer", default = 4,
+                        help = "Household size [default %default]",
+                        dest = "hhsize"),
+  optparse::make_option("--sample_size", type = "integer", default = 55,
+                        help = "Number of participants with random age in the survey [default \"%default\"]",
+                        dest = 'sample_size')
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
