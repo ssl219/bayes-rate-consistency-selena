@@ -16,17 +16,11 @@ library(pammtools)
 ##### ---------- I/O ---------- #####
 option_list <- list(
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
-                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-                       dest = "repo.path"),
+                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+                        dest = "repo.path"),
   optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
-                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                       dest = 'data.path'),
-  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
-  #                        help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
-  #                        dest = "repo.path"),
-  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
-  #                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-  #                        dest = 'data.path'),
+                        help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+                        dest = 'data.path'),
   optparse::make_option("--wave", type="integer", default = 1,
                         help = "COVIMOD wave",
                         dest = "wave"),
@@ -41,27 +35,26 @@ option_list <- list(
                         dest = "ppc"),
   optparse::make_option("--plot", type = "logical", default = TRUE,
                         help = "Whether to plot posterior distributions",
-                        dest = "plot")
+                        dest = "plot"),
+  optparse::make_option("--sim.no", type = "integer", default = 1,
+                        help = "Simulated Dataset Number [default %default]",
+                        dest = "sim.no")
 )
 
-cat("\n before args")
-
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-# args$model.name = "hsgp-eq-cd-new-hh-dropping-all-zeros-symmetric-poisson-1"
-
-cat("\n after args")
+# args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# args$model.name <- "hsgp-eq-cd-1-nhh"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended-baseline.rds")
-
-
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-baseline-drop-zero-Hicb.rds"))
 # Error handling
 if(!file.exists(model.path)) {
   cat("\n Model: ", model.path)
   stop("The specified model does not exist!")
 }
-if(!file.exists(data.path)) {
-  stop("The specified dataset does not exist!")
+if(!file.exists(full.data.path)) {
+  stop("The specified dataset does not exists!")
 }
 
 # Output directories
@@ -122,7 +115,7 @@ if(args$ppc){
   po <- fit$draws(c("yhat_strata", "log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   
   cat(" Making posterior predictive checks\n")
-  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path)
+  dt.ppc <- make_ppd_check_covimod(po, dt.cnt, outdir=export.path, fig.outdir = export.fig.path)
   
   cat("\n DONE.\n")
 }

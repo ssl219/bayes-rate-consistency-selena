@@ -28,6 +28,9 @@ option_list <- list(
   optparse::make_option("--hhsize", type = "integer", default = 4,
                         help = "Household size [default %default]",
                         dest = "hhsize"),
+  optparse::make_option("--sim.no", type = "integer", default = 1,
+                        help = "Simulated Dataset Number [default %default]",
+                        dest = "sim.no"),
   optparse::make_option("--divide.Hicb", type = "logical", default = TRUE,
                         help = "Divide Hic_b [default %default]",
                         dest = "divide.Hicb"),
@@ -45,10 +48,19 @@ option_list <- list(
                         dest = 'repo.path'),
   optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
-                        dest = 'data.path')
+                        dest = 'data.path'),
+  optparse::make_option("--extract_boarding_school", type = "logical", default = TRUE,
+                        help = "Random Hic_b [default %default]",
+                        dest = "random")
 )
+
+
 # "/rds/general/user/ssl219/home/bayes-rate-consistency-selena"
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+
+for (sim_data in 1:10){
+  
+args$sim.no <- sim_data
 
 # args$repo.path <- "~/Imperial/covimod-gp"
 # args$strata <- "5yr"
@@ -62,6 +74,7 @@ args$strata = "COVIMOD"
 N_random <- args$size - 55
 args$random = TRUE
 args$drop_zero_Hicb = TRUE
+extract_boarding_school = TRUE
 
 ##### ---------- Error handling ---------- #####
 if(is.na(args$repo.path)){
@@ -88,8 +101,18 @@ if (args$scenario == "boarding_school"){
 
 
 ##### ---------- Data export ---------- #####
-dir.name <- paste("new-hh", args$scenario, sep="-")
-export.path <- file.path(args$data.path, "data/simulations/datasets", dir.name)
+if (extract_boarding_school){
+  dir.name <- "new-hh-both"
+}else{
+  dir.name <- paste("new-hh", args$scenario, sep="-")
+}
+
+folder.path <- file.path(args$data.path, "data/simulations/datasets", dir.name, paste0("hh", args$hhsize, "-", args$size))
+if(!dir.exists(folder.path)){
+  cat(paste("\n Making folder directory:", folder.path))
+  dir.create(folder.path)
+}                     
+export.path <- file.path(args$data.path, "data/simulations/datasets", dir.name, paste0("hh", args$hhsize, "-", args$size), paste0("dataset", args$sim.no))
 if(!dir.exists(export.path)){
   cat(paste("\n Making export directory:", export.path))
   dir.create(export.path)
@@ -637,7 +660,11 @@ if (args$random == TRUE & args$hhsize!=0){
   setnames(d.everything.final, c("Hic_b"), c("hh_structure_strata_Hic_b"))
   d.everything.final <- merge(d.everything.final, hh_structure_strata_comb, by = c("alter_age", "new_id", "alter_gender", "gender", "wave", "age", "alter_age_strata", "hh_structure_strata", "hh_structure_strata_Hic_b"), all.x=TRUE, all.y=TRUE)
   d.everything.final[is.na(Hic_b), Hic_b:=0]
-  }
+}
+
+if (extract_boarding_school){
+  d.everything.final.boarding.school <- copy(d.everything.final)
+}
 
 # calculate means alpha
 d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
@@ -947,5 +974,299 @@ covimod.single.new.hh.sim.baseline <- list(
       saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline-drop-zero-Hicb.rds")))
     }
   }
+cat("\n ########################## Extracting boarding school counts for same hh structure ##################")
+
+dt <- as.data.table(readRDS( file.path(args$data.path, "data/simulations/intensity/new-hh/boarding-data.rds") ))
+dt <- stratify_alter_age(dt, args$strata)
+args$scenario = "boarding_school"
+d.everything.final <- d.everything.final.boarding.school
+
+# calculate means alpha
+d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
+d.everything.final[, alpha:=Hic_b*cntct_rate + epsilon]
+
+# plot HH structure
+d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
+d.everything.final[, gender_comb := fcase(
+  gender == "Male" & alter_gender == "Male", "Male to Male",
+  gender == "Male" & alter_gender == "Female", "Male to Female",
+  gender == "Female" & alter_gender == "Male", "Female to Male",
+  gender == "Female" & alter_gender == "Female", "Female to Female",
+  default = NA
+)]
+
+# simulate contact counts
+d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.final$alpha)]
+# take out rows with no hh structure, i.e. Hic_b = 0
+# # fill in Hic_b
+# for (i in 1:N_FM){
+#   if (d.everything.FM$age[1, d.everything.FM$new_id==i] %in% 0:20){
+#     d.everything.FM$Hic_b[d.everything.FM[, d.everything.FM$new_id==i & d.everything.FM$alter_age %in% 0:20]] <-  sample(c(0, 1), size=1, replace=FALSE, prob=c(0.5, 0.5)),
+#   }
+#   
+# }
+
+# Stratify contact intensities and contact rates
+group_var_plot <- c("age", "gender", "alter_age_strata", "alter_gender")
+group_var_indiv <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+d_comb_no_dupl_plot <- copy(d.everything.final)
+d_comb_no_dupl_plot[, y_plot_strata:= sum(y), by=group_var_plot]
+d_comb_no_dupl_plot[, y_plot:= mean(y), by=group_var_plot]
+d_comb_no_dupl_plot[, y_plot_indiv:= mean(y), by=group_var_indiv]
+
+# add empirical contact rates for household model
+# d_comb_no_dupl_plot[, emp_cntct_rates_indiv := y_plot / alpha_hh_structure_plot]
+d_comb_no_dupl_plot[, emp_cntct_rates_indiv := y_plot_indiv / Hic_b]
+d_comb_no_dupl_plot[is.nan(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_no_dupl_plot[is.infinite(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+# d_comb_no_dupl_plot[emp_cntct_rates_indiv > 50, emp_cntct_rates_indiv := 0]
+d_comb_no_dupl_plot[, mean_emp_cntct_rates_indiv := mean(emp_cntct_rates_indiv), by=c("age", "gender", "alter_age", "alter_gender")]
+# d_comb_no_dupl_plot[is.na(mean_emp_cntct_rates_indiv), mean_emp_cntct_rates_indiv := 0]
+
+# smooth out Hic_b to see effect 
+d_comb_strata_plot <- copy(d_comb_no_dupl_plot)
+d_comb_strata_plot[, strata_Hic_b_indiv:=mean(Hic_b), by=group_var_indiv]
+# d_comb_strata_plot[, strata_Hic_b:=mean(Hic_b), by=group_var_plot]
+d_comb_strata_plot[, emp_cntct_rates_indiv := y_plot_indiv / strata_Hic_b_indiv]
+d_comb_strata_plot[is.nan(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_strata_plot[is.infinite(emp_cntct_rates_indiv), emp_cntct_rates_indiv := 0]
+d_comb_strata_plot[, mean_emp_cntct_rates_indiv := mean(emp_cntct_rates_indiv), by=c("age", "gender", "alter_age", "alter_gender")]
+# d_comb_strata_plot[is.na(mean_emp_cntct_rates_indiv), mean_emp_cntct_rates_indiv := 0]
+
+# add empirical contacts for baseline model
+group_var_offset <- c("wave", "age", "gender")
+d_comb_no_dupl_plot[, n_baseline := sum(n), by=group_var_offset]
+d_comb_no_dupl_plot[, emp_cntct_int_baseline := y_plot / n_baseline]
+d_comb_no_dupl_plot[is.nan(emp_cntct_int_baseline), emp_cntct_int_baseline := 0]
+
+# merge with d_comb_no_dupl_plot
+covimod <- load_covimod_data("/Users/mac/Documents/M4R/code")
+dt.pop.plot <- covimod$pop
+setnames(dt.pop.plot, "age", "alter_age")
+d_comb_no_dupl_plot <- merge(d_comb_no_dupl_plot, dt.pop.plot, by = c("alter_age", "gender"), all.x=TRUE, all.y=FALSE)
+d_comb_no_dupl_plot[, emp_cntct_rates_baseline := emp_cntct_int_baseline /pop]
+
+saveRDS(d_comb_strata_plot, file=file.path(export.path, paste0("d_comb_strata_plot-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
+saveRDS(d_comb_no_dupl_plot, file=file.path(export.path, paste0("d_comb_no_dupl_plot-hh", args$hhsize, "-", args$scenario, "-", args$size, ".rds")))
+
+
+
+simulated_counts_per_gender <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) +
+    geom_tile(aes(fill = y_plot_strata)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(begin=0.3, option = "rocket") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_discrete(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Count") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.9, unit = "cm"),
+           plot.margin = margin())
+}
+
+empirical_rates_new_hh <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = mean_emp_cntct_rates_indiv)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.7, unit = "cm"),
+           plot.margin = margin())
+}
+
+empirical_rates_new_hh_smooth_offset <- function(){
+  ggplot(d_comb_strata_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = mean_emp_cntct_rates_indiv)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_blank(),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.7, unit = "cm"),
+           plot.margin = margin())
+}
+
+
+empirical_rates_baseline <- function(){
+  ggplot(d_comb_no_dupl_plot, aes(age, alter_age)) +
+    geom_tile(aes(fill = emp_cntct_rates_baseline)) +
+    facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+    scale_fill_viridis(option = "H") +
+    scale_x_continuous(expand = c(0,0)) +
+    scale_y_continuous(expand = c(0,0)) +
+    labs(x = "Age of participants", y = "Age of contacts", fill = "Intensity") +
+    theme_bw() + 
+    guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+    theme( aspect.ratio = 1,
+           axis.text.x = element_text(size = 7),
+           axis.text.y = element_text(size = 7),
+           axis.title.x = element_text(size = 8),
+           axis.title.y = element_text(size = 8),
+           strip.background = element_blank(),
+           strip.text = element_blank(),
+           # strip.text = element_text(size = 8),
+           legend.text = element_text(size = 8),
+           legend.title = element_text(size = 8),
+           legend.margin = margin(l = -6.5, unit = "cm"),
+           plot.margin = margin())
+  
+}
+
+if (!args$divide.Hicb){
+  
+  alpha_hh_structure_plot() / simulated_counts_per_gender() / empirical_rates_new_hh() / empirical_rates_new_hh_smooth_offset() / empirical_rates_baseline() + plot_layout(nrow = 5)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-", args$scenario, "-", args$size, "-full.pdf")), width = 20, height = 16, units = "cm")
+}else{
+  
+  alpha_hh_structure_plot() / simulated_counts_per_gender() / empirical_rates_new_hh() / empirical_rates_new_hh_smooth_offset() / empirical_rates_baseline() + plot_layout(nrow = 5)
+  ggsave(file.path(export.path, paste0("hh", args$hhsize, "-", args$scenario, "-", args$size, "-full.pdf")), width = 20, height = 16, units = "cm")
+  
+}
+
+# baseline model
+group_var_baseline <- c("age", "gender", "alter_age_strata", "alter_gender")
+d_comb_no_dupl_baseline <- copy(d.everything.final)
+d_comb_no_dupl_baseline[, y_strata := sum(y), by=group_var_baseline]
+d_comb_no_dupl_baseline[, cntct_rate_strata := sum(cntct_rate), by=group_var_baseline]
+# add u for row major indexing
+d_comb_no_dupl_baseline[, u:=1L]
+
+d_comb_no_dupl_baseline <- d_comb_no_dupl_baseline %>% distinct(wave, age, alter_age_strata, gender, alter_gender, .keep_all=TRUE)
+# if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+# 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+setnames(d_comb_no_dupl_baseline, c("y", "y_strata"), c("y_age", "y"))
+
+# aggregate offsets by age and gender
+group_var_offset_baseline <- c("wave", "age", "gender")
+d.everything.final_baseline <- copy(d.everything.final)
+d.everything.final_baseline[, n := sum(n), by=group_var_offset_baseline]
+d.everything.final_baseline[, zeta := 1L]
+d.everything.final_baseline <- d.everything.final_baseline %>% distinct(wave, age, gender, .keep_all=TRUE)
+# N and zeta to the offsets dataset
+setnames(d.everything.final_baseline, c("n"), c("N"))
+
+if (args$drop_zero_Hicb){
+  # omit Hic_b = 0 to be comparable with new-hh model
+  d.everything.final <- d.everything.final[Hic_b !=0, ]
+}
+
+# new-hh model
+group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+d_comb_no_dupl <- copy(d.everything.final)
+d_comb_no_dupl[, y_strata := sum(y), by=group_var]
+d_comb_no_dupl[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+d_comb_no_dupl <- d_comb_no_dupl %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+# omit Hic_b = 0
+# if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+# 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+
+
+
+
+
+
+# d_comb_no_dupl[, alter_age_strata_idx_simplot:=as.numeric(factor(alter_age_strata, levels=covimod_like_strata_levels ))]
+# d_comb_no_dupl <- d_comb_no_dupl[order(age, new_id, alter_age_strata_idx_simplot, gender, alter_gender)]
+
+# simulated_fine_counts_MM <- ggplot(d.everything.final[gender=="Male" & alter_gender=="Male"], aes(age, factor(alter_age))) + 
+#   geom_tile(aes(fill = y_age)) + 
+#   scale_fill_viridis(option = "F") + 
+#   scale_x_continuous(expand = c(0,0)) + 
+#   scale_y_discrete(expand = c(0,0)) + 
+#   labs(x = "Age of participants", y = "Age of contacts", fill = "Counts MM") + 
+#   theme(aspect.ratio = 1)
+
+
+# d_comb_no_dupl_plot[, cntct_rate_strata_plot := sum(cntct_rate), by=group_var_plot]
+
+
+
+
+# get population dt
+dt.pop <- covimod$pop
+
+
+covimod.single.new.hh.sim <- list(
+  contacts = d_comb_no_dupl,
+  offsets = d.everything.final,
+  pop = dt.pop
+)
+
+covimod.single.new.hh.sim.baseline <- list(
+  contacts = d_comb_no_dupl_baseline,
+  offsets = d.everything.final_baseline,
+  pop = dt.pop
+)
+
+if (args$hhsize == 0){
+  if (!args$divide.Hicb){
+    if (!args$drop_zero_Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("nodivide-data-hh0-amended-baseline.rds")))
+    }else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("nodivide-data-hh0-amended-drop-zero-Hicb.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("nodivide-data-hh0-amended-baseline-drop-zero-Hicb.rds")))
+    }
+  }
+  else{
+    if (!args$drop_zero_Hicb){
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh0-amended-baseline-drop-zero-Hicb.rds")))
+    }else{
+      saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh0-amended.rds")))
+      saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh0-amended-baseline-drop-zero-Hicb.rds")))
+    }
+  }
+}
+if (args$hhsize > 0){
+  if (!args$drop_zero_Hicb){
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
+    saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline.rds")))
+  }else{
+    saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds")))
+    saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline-drop-zero-Hicb.rds")))
+  }
+}
 
 cat("\n DONE. \n")
+}
+
+cat("\n ALL DONE. \n")

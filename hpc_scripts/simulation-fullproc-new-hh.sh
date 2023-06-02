@@ -12,6 +12,7 @@ HSGP_M=20
 N=55
 HHSIZE=4
 SCENARIO="flat"
+SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
@@ -24,7 +25,7 @@ MIXING=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --iter_warmup $WARMUP --iter_sampling $SAMPLING --chains $CHAINS --hhsize $HHSIZE --sample_size $N --scenario $SCENARIO --model $MODEL --repo_path $REPO_PATH --data_path $DATA_PATH --hsgp_c $HSGP_C --hsgp_m $HSGP_M --wave $WAVE
+Rscript $REPO_PATH/scripts/sim-run-stan-single-new-hh.R --sim.no $SIM_NO --iter_warmup $WARMUP --iter_sampling $SAMPLING --chains $CHAINS --hhsize $HHSIZE --sample_size $N --scenario $SCENARIO --model $MODEL --repo_path $REPO_PATH --data_path $DATA_PATH --hsgp_c $HSGP_C --hsgp_m $HSGP_M --wave $WAVE
 
-MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${N}
-Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --sample_size $N --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING
+MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${N}-${SIM_NO}
+Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --sample_size $N --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING --sim.no $SIM_NO

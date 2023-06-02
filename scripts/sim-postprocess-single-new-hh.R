@@ -50,7 +50,10 @@ option_list <- list(
                         dest = "ppc"),
   optparse::make_option("--plot", type = "logical", default = TRUE,
                         help = "Whether to plot posterior distributions",
-                        dest = "plot")
+                        dest = "plot"),
+  optparse::make_option("--sim.no", type = "integer", default = 1,
+                        help = "Simulated Dataset Number [default %default]",
+                        dest = "sim.no")
 )
 
 cat("\n before args")
@@ -287,3 +290,90 @@ if(args$plot){
   
   cat("\n DONE.\n")
 }
+
+cat("\n ########## Second Error Table ############")
+
+group_var_0 <- c("part_idx", "age", "gender", "alter_gender", "alter_age_strata")
+dt.matrix.alpha[, alter_age_strata := fcase(
+  alter_age <= 4,  "0-4",
+  alter_age <= 9,  "5-9",
+  alter_age <= 14, "10-14",
+  alter_age <= 19, "15-19",
+  alter_age <= 24, "20-24",
+  alter_age <= 34, "25-34",
+  alter_age <= 44, "35-44",
+  alter_age <= 54, "45-54",
+  alter_age <= 64, "55-64",
+  alter_age <= 69, "65-69",
+  alter_age <= 74, "70-74",
+  alter_age <= 79, "75-79",
+  alter_age <= 84, "80-84",
+  alter_age > 84, "85+",
+  default = NA
+)]
+
+
+  dt.matrix.alpha[, cntct_intensity_predict := sum(M), by=c("part_idx", "age", "gender", "alter_gender", "alter_age_strata")]
+  
+  # ordering dt.cnt like in model
+  covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+  # making sure order of factors in alter_age_strata is ascending instead of decreasing
+  # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+  dt.cnt[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+  dt.cnt<- dt.cnt[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+  # check dt.cnt[n==0,]
+  dt_intensity_MM <- dt.cnt[gender=="Male"& alter_gender=="Male"]
+  dt_intensity_FF <- dt.cnt[gender=="Female"& alter_gender=="Female"]
+  dt_intensity_MF <- dt.cnt[gender=="Male"& alter_gender=="Female"]
+  dt_intensity_FM <- dt.cnt[gender=="Female"& alter_gender=="Male"]
+  
+  # adding a part_idx
+  dt_intensity_MM[ , part_idx := .GRP, by = new_id]      
+  dt_intensity_FF[ , part_idx := .GRP, by = new_id]      
+  dt_intensity_MF[ , part_idx := .GRP, by = new_id]  
+  dt_intensity_FM[ , part_idx := .GRP, by = new_id]      
+  
+  # check max(dt.matrix.alpha[gender=="Male" & alter_gender=="Male"]$part_idx) == max(dt_intensity_MM$part_idx)
+  
+  # bind everything
+  dt_intensity <- rbind(dt_intensity_MM, dt_intensity_FF, dt_intensity_MF, dt_intensity_FM)
+  setnames(dt_intensity, c("y"), c("cntct_intensity"))
+  dt_intensity <- merge(dt_intensity, dt.matrix.alpha, by=c("part_idx", "age", "gender", "alter_age_strata", "alter_gender"), all.x = TRUE)
+  dt_intensity <- unique(dt_intensity, by = group_var_0)
+  
+
+
+error_table_2 <- make_error_table(dt_intensity)
+
+saveRDS(dt_intensity, file.path(outdir=export.path, "dt_intensity_2.rds"))
+saveRDS(error_table_2, file.path(outdir=export.path, "error_table_2.rds"))
+
+p5 <- ggplot(dt_intensity) +
+  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_discrete(expand=c(0,0)) +
+  coord_equal() +
+  viridis::scale_fill_viridis(na.value = "white", option="H") +
+  labs(x="Participants' age", y="Contacts' age ", fill="Counts") +
+  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+        strip.background = element_rect(color=NA, fill = "transparent"))
+
+p6 <- ggplot(dt_intensity) +
+  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_intensity_predict)) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_discrete(expand=c(0,0)) +
+  coord_equal() +
+  viridis::scale_fill_viridis(na.value = "white", option="H") +
+  labs(x="Participants' age", y="Contacts' age ", fill="Estimated contact intensity") +
+  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+        strip.background = element_rect(color=NA, fill = "transparent"))
+
+
+ggsave(file.path(export.fig.path, "empirical_cntct_intensity_2.png"), plot = p5, height = 3, width = 7)
+ggsave(file.path(export.fig.path, "estimated_cntct_intensity_2.png"), plot = p6, height = 3, width = 7)
+
+cat("\n DONE.\n")

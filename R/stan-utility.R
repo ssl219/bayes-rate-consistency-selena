@@ -270,7 +270,7 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     
     d[, age_idx := age + 1]
     d[, age_strata_idx := as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
-    d[, row_major_idx := (age_idx-1)*13 + age_strata_idx]
+    d[, row_major_idx := (age_idx-1)*stan_data$C + age_strata_idx]
     
     stan_data$ROW_MAJOR_IDX_M <- d[gender == "Male" & alter_gender == "Male"]$row_major_idx
     stan_data$ROW_MAJOR_IDX_F <- d[gender == "Female" & alter_gender == "Female"]$row_major_idx
@@ -281,10 +281,10 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     
     m = stan_data$ROW_MAJOR_IDX_M - 1
     f = stan_data$ROW_MAJOR_IDX_F - 1
-    stan_data$ROW_MAJOR_IDX_M_AGE <- 1 + (m - m%%13)/13
-    stan_data$ROW_MAJOR_IDX_F_AGE <- 1 + (f - f%%13)/13
-    stan_data$ROW_MAJOR_IDX_M_STRATA <- 1 + m %% 13
-    stan_data$ROW_MAJOR_IDX_F_STRATA <- 1 + f %% 13    
+    stan_data$ROW_MAJOR_IDX_M_AGE <- 1 + (m - m%%stan_data$C)/stan_data$C
+    stan_data$ROW_MAJOR_IDX_F_AGE <- 1 + (f - f%%stan_data$C)/stan_data$C
+    stan_data$ROW_MAJOR_IDX_M_STRATA <- 1 + m %% stan_data$C
+    stan_data$ROW_MAJOR_IDX_F_STRATA <- 1 + f %% stan_data$C    
     return(stan_data)
   }
 
@@ -383,22 +383,22 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
     
     d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_MM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
-    d_MM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+    d_MM[, row_major_idx := (new_id_idx -1)*stan_data$C + age_strata_idx]
     
     d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_FF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
-    d_FF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+    d_FF[, row_major_idx := (new_id_idx -1)*stan_data$C + age_strata_idx]
     
     d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_MF[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
-    d_MF[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+    d_MF[, row_major_idx := (new_id_idx -1)*stan_data$C + age_strata_idx]
     
     d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
     d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
     d_FM[, age_strata_idx := as.numeric(factor(alter_age_strata, levels= covimod_strata_levels))]
-    d_FM[, row_major_idx := (new_id_idx -1)*13 + age_strata_idx]
+    d_FM[, row_major_idx := (new_id_idx -1)*stan_data$C + age_strata_idx]
     
     stan_data$ROW_MAJOR_IDX_MM <- d_MM$row_major_idx
     stan_data$ROW_MAJOR_IDX_FF <- d_FF$row_major_idx
@@ -576,8 +576,9 @@ add_part_offsets <- function(stan_data, contacts, offsets = NULL, survey = "COVI
     }
     else{
       # need the complete() function as we are missing age 83
-      d1 <- complete(offsets[gender == "Male"], age = 0:84, fill = list(N = 1, zeta = 1))
-      d2 <- complete(offsets[gender == "Female"], age = 0:84, fill = list(N = 1, zeta = 1))
+      max_age <- stan_data$A - 1
+      d1 <- complete(offsets[gender == "Male"], age = 0:max_age, fill = list(N = 1, zeta = 1))
+      d2 <- complete(offsets[gender == "Female"], age = 0:max_age, fill = list(N = 1, zeta = 1))
       
       stan_data$log_N_M <- log( d1$N )
       stan_data$log_N_F <- log( d2$N )

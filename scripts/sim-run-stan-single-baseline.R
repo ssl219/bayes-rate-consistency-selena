@@ -31,15 +31,24 @@ option_list <- list(
   optparse::make_option("--hsgp_m", type = "integer", default = 20,
                         help = "The number of the HSGP basis functions in any dimension [default \"%default\"]",
                         dest = "hsgp_m"),
-  optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+  # optparse::make_option("--repo_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena",
+  #                       help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
+  #                       dest = 'repo.path'),
+  # optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+  #                       help = "Absolute file path to data directory, used as long we don t build an R package [default]",
+  #                       dest = 'data.path'),
+  optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",
                         help = "Absolute file path to repository directory, used as long we don t build an R package [default]",
                         dest = 'repo.path'),
-  optparse::make_option("--data_path", type = "character", default = "/Users/mac/Documents/M4R/code/bayes_consistency_rate",
+  optparse::make_option("--data_path", type = "character", default = "/rds/general/user/ssl219/home",
                         help = "Absolute file path to data directory, used as long we don t build an R package [default]",
                         dest = 'data.path'),
   optparse::make_option("--wave", type = "integer", default = 1,
                         help = "COVIMOD wave",
-                        dest = "wave")
+                        dest = "wave"),
+  optparse::make_option("--sim.no", type = "integer", default = 1,
+                        help = "Simulated Dataset Number [default %default]",
+                        dest = "sim.no")
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -48,8 +57,9 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-covimod <- readRDS(file.path(args$data.path, "data/simulations/datasets/new-hh-flat/data-hh4-flat-450-amended-baseline.rds"))
-# covimod <- readRDS(file.path(args$data.path, "data/COVIMOD/COVIMOD-single.rds"))
+data.path.test <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-baseline-drop-zero-Hicb.rds"))
+cat ("\n DATA PATH RUN", data.path.test)
+covimod <- readRDS(data.path.test)
 
 dt.cnt <- covimod$contacts[wave == args$wave]
 dt.offsets <- covimod$offsets[wave == args$wave]
@@ -69,7 +79,7 @@ if (!file.exists(export.path)) {
 cat(" Configuring Stan data ...")
 
 # Initialize
-stan_data <- init_stan_data()
+stan_data <- init_stan_data(A=55, C=8)
 
 # Add contact counts
 stan_data <- add_contact_vector(stan_data, dt.cnt, single = TRUE)
@@ -90,7 +100,7 @@ stan_data <- add_part_offsets(stan_data, dt.cnt, dt.offsets, survey = 'POLYMOD')
 stan_data <- add_pop_offsets(stan_data, dt.pop, survey = 'POLYMOD')
 
 # Map age to age strata
-stan_data <- add_map_age_to_strata(stan_data)
+stan_data <- add_map_age_to_strata(stan_data, survey = "simulation")
 
 # Add Non-nuisance index
 stan_data <- add_nn_idx(stan_data)
@@ -122,7 +132,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-flat-baseline-450.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-", args$sim.no, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

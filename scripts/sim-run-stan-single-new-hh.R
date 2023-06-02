@@ -49,7 +49,10 @@ option_list <- list(
                         dest = "hsgp_m"),
   optparse::make_option("--wave", type = "integer", default = 1,
                         help = "COVIMOD wave",
-                        dest = "wave")
+                        dest = "wave"),
+  optparse::make_option("--sim.no", type = "integer", default = 1,
+                        help = "Simulated Dataset Number [default %default]",
+                        dest = "sim.no")
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
@@ -60,7 +63,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 
 # Load data
-data.path.test <- file.path(args$data.path, "data/simulations/datasets", paste0("new-hh-", args$scenario), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-drop-zero-Hicb.rds"))
+data.path.test <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-drop-zero-Hicb.rds"))
 cat ("\n DATA PATH RUN", data.path.test)
 covimod.single.new.hh <- readRDS(data.path.test)
 
@@ -138,7 +141,7 @@ cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, ".rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-sim-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-", args$sim.no, ".rds")))
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

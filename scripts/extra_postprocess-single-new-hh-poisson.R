@@ -220,69 +220,69 @@ p4 <- ggplot(dt_intensity) +
 # extract empirical rate and mean from original dataset
 
 
-group_var_1 <- c("age", "alter_age_strata", "gender", "alter_gender")
-rate_matrix[, cntct_rate_predict := sum(M), by=group_var_1]
-rate_matrix <- unique(rate_matrix, by = group_var_1)
-dt_rate <- subset(dt.cnt, select=c("new_id", "alter_gender", "alter_age_strata", "age", "gender", "y", "n", "household_size"))
-
-# divide Hic_h by strata size
-dt_rate[, divide_n := fcase(
-  alter_age_strata == "0-4", as.numeric(n/5),
-  alter_age_strata == "5-9", as.numeric(n/5),
-  alter_age_strata == "10-14", as.numeric(n/5),
-  alter_age_strata == "15-19", as.numeric(n/5),
-  alter_age_strata == "20-24", as.numeric(n/5),
-  alter_age_strata == "25-34", as.numeric(n/10),
-  alter_age_strata == "35-44", as.numeric(n/10),
-  alter_age_strata == "45-54", as.numeric(n/10),
-  alter_age_strata == "55-64", as.numeric(n/10),
-  alter_age_strata == "65-69", as.numeric(n/5),
-  alter_age_strata == "70-74", as.numeric(n/5),
-  alter_age_strata == "75-79", as.numeric(n/5),
-  alter_age_strata == "80-84", as.numeric(n/5),
-  alter_age_strata =="85+", as.numeric(n),
-  default = NA
-)]
-
-# find empirical sum of rates (summing rates over strata)
-dt_rate[, cntct_rate:=y/divide_n]
-# just checking everything is unique
-# unique(dt_rate, by=c("new_id", "alter_gender", "alter_age_strata", "age", "gender", "y", "n", "household_size"))
-# unique(dt_rate, by=c("new_id", "alter_gender", "alter_age_strata", "age", "gender"))
-# unique(dt_rate, by=c("alter_gender", "alter_age_strata", "age", "gender")) --> loss of uniqueness
-
-
-# dt_rate <- dt_rate[, cntct_rate := y/n]
-
-# remove values that are nan or infinity in case (should not remove anything as we initially omit n=0 in dt.cnt)
-dt_rate <- dt_rate[!is.nan(cntct_rate) & !is.infinite(cntct_rate)]
-
-dt_rate <- merge(dt_rate, rate_matrix, by=group_var_1, all.x = TRUE)
-# dt_rate <- unique(dt_rate, by = group_var_1) --> don't do unique, keep at individual level
-
-p1 <- ggplot(dt_rate) +
-  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_rate)) +
-  scale_x_continuous(expand=c(0,0)) +
-  scale_y_discrete(expand=c(0,0)) +
-  coord_equal() +
-  viridis::scale_fill_viridis(na.value = "white", option="H") +
-  labs(x="Participants' age", y="Contacts' age ", fill="Empirical contact rate") +
-  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
-  theme_bw() +
-  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
-        strip.background = element_rect(color=NA, fill = "transparent"))
-
-p2 <- ggplot(dt_rate) +
-  geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_rate_predict)) +
-  scale_x_continuous(expand=c(0,0)) +
-  scale_y_discrete(expand=c(0,0)) +
-  coord_equal() +
-  viridis::scale_fill_viridis(na.value = "white", option="H") +
-  labs(x="Participants' age", y="Contacts' age ", fill="Estimated contact rate") +
-  facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
-  theme_bw() +
-  theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
-              strip.background = element_rect(color=NA, fill = "transparent"))
-
-
-make_error_table(dt_rate, rate=TRUE)
+# group_var_1 <- c("age", "alter_age_strata", "gender", "alter_gender")
+# rate_matrix[, cntct_rate_predict := sum(M), by=group_var_1]
+# rate_matrix <- unique(rate_matrix, by = group_var_1)
+# dt_rate <- subset(dt.cnt, select=c("new_id", "alter_gender", "alter_age_strata", "age", "gender", "y", "n", "household_size"))
+# 
+# # divide Hic_h by strata size
+# dt_rate[, divide_n := fcase(
+#   alter_age_strata == "0-4", as.numeric(n/5),
+#   alter_age_strata == "5-9", as.numeric(n/5),
+#   alter_age_strata == "10-14", as.numeric(n/5),
+#   alter_age_strata == "15-19", as.numeric(n/5),
+#   alter_age_strata == "20-24", as.numeric(n/5),
+#   alter_age_strata == "25-34", as.numeric(n/10),
+#   alter_age_strata == "35-44", as.numeric(n/10),
+#   alter_age_strata == "45-54", as.numeric(n/10),
+#   alter_age_strata == "55-64", as.numeric(n/10),
+#   alter_age_strata == "65-69", as.numeric(n/5),
+#   alter_age_strata == "70-74", as.numeric(n/5),
+#   alter_age_strata == "75-79", as.numeric(n/5),
+#   alter_age_strata == "80-84", as.numeric(n/5),
+#   alter_age_strata =="85+", as.numeric(n),
+#   default = NA
+# )]
+# 
+# # find empirical sum of rates (summing rates over strata)
+# dt_rate[, cntct_rate:=y/divide_n]
+# # just checking everything is unique
+# # unique(dt_rate, by=c("new_id", "alter_gender", "alter_age_strata", "age", "gender", "y", "n", "household_size"))
+# # unique(dt_rate, by=c("new_id", "alter_gender", "alter_age_strata", "age", "gender"))
+# # unique(dt_rate, by=c("alter_gender", "alter_age_strata", "age", "gender")) --> loss of uniqueness
+# 
+# 
+# # dt_rate <- dt_rate[, cntct_rate := y/n]
+# 
+# # remove values that are nan or infinity in case (should not remove anything as we initially omit n=0 in dt.cnt)
+# dt_rate <- dt_rate[!is.nan(cntct_rate) & !is.infinite(cntct_rate)]
+# 
+# dt_rate <- merge(dt_rate, rate_matrix, by=group_var_1, all.x = TRUE)
+# # dt_rate <- unique(dt_rate, by = group_var_1) --> don't do unique, keep at individual level
+# 
+# p1 <- ggplot(dt_rate) +
+#   geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_rate)) +
+#   scale_x_continuous(expand=c(0,0)) +
+#   scale_y_discrete(expand=c(0,0)) +
+#   coord_equal() +
+#   viridis::scale_fill_viridis(na.value = "white", option="H") +
+#   labs(x="Participants' age", y="Contacts' age ", fill="Empirical contact rate") +
+#   facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+#   theme_bw() +
+#   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+#         strip.background = element_rect(color=NA, fill = "transparent"))
+# 
+# p2 <- ggplot(dt_rate) +
+#   geom_tile(aes(x=age, y=alter_age_strata, fill = cntct_rate_predict)) +
+#   scale_x_continuous(expand=c(0,0)) +
+#   scale_y_discrete(expand=c(0,0)) +
+#   coord_equal() +
+#   viridis::scale_fill_viridis(na.value = "white", option="H") +
+#   labs(x="Participants' age", y="Contacts' age ", fill="Estimated contact rate") +
+#   facet_grid( paste(alter_gender, "(Contacts)") ~ paste(gender, "(Participants)") ) +
+#   theme_bw() +
+#   theme(aspect.ratio = 1, legend.position = "bottom", text = element_text(size = 5),
+#               strip.background = element_rect(color=NA, fill = "transparent"))
+# 
+# 
+# make_error_table(dt_rate, rate=TRUE)
