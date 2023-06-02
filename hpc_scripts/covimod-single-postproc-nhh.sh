@@ -8,12 +8,12 @@ WAVE=1
 MODEL="hsgp-eq-rd"
 
 # Post-processing
-MIXING=TRUE
+MIXING=FALSE
 PPC=TRUE
 PLOT=TRUE
 
 module load anaconda3/personal
 source activate Renv
 
-MODEL=${MODEL}-${WAVE}-"hh"
+MODEL=${MODEL}-${WAVE}-"nhh"
 Rscript $REPO_PATH/scripts/postprocess-single-hh.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
