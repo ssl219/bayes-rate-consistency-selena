@@ -61,8 +61,8 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
-args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
-args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
+# args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+# args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
