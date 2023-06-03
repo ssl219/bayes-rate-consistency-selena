@@ -987,7 +987,7 @@ for (sim_data in 1:10){
   d_part[, N:=1L]
   d_part[, N:=sum(N), by=group_N]
   d_part <- unique(d_part, by=c("age", "gender", "wave"))
-  d_comb_no_dupl_baseline <- merge(d_comb_no_dupl_baseline, d_part[, c("age", "gender", "wave")], by =c("age", "gender", "wave"))
+  d_comb_no_dupl_baseline <- merge(d_comb_no_dupl_baseline, d_part[, c("age", "gender", "wave", "N")], by =c("age", "gender", "wave"))
   
   d_comb_no_dupl_baseline[, y_strata := sum(y), by=group_var_baseline]
   d_comb_no_dupl_baseline[, cntct_rate_strata := sum(cntct_rate), by=group_var_baseline]
@@ -1272,7 +1272,7 @@ for (sim_data in 1:10){
   d_part[, N:=1L]
   d_part[, N:=sum(N), by=group_N]
   d_part <- unique(d_part, by=c("age", "gender", "wave"))
-  d_comb_no_dupl_baseline <- merge(d_comb_no_dupl_baseline, d_part[, c("age", "gender", "wave")], by =c("age", "gender", "wave"))
+  d_comb_no_dupl_baseline <- merge(d_comb_no_dupl_baseline, d_part[, c("age", "gender", "wave", "N")], by =c("age", "gender", "wave"))
   
   d_comb_no_dupl_baseline[, y_strata := sum(y), by=group_var_baseline]
   d_comb_no_dupl_baseline[, cntct_rate_strata := sum(cntct_rate), by=group_var_baseline]
