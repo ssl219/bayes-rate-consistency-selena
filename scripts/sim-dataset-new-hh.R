@@ -67,7 +67,7 @@ for (sim_data in 1:10){
   args$divide.Hicb = FALSE
   args$baseline = FALSE
   epsilon = 1e-13
-  args$size = 700
+  args$size = 250
   args$strata = "COVIMOD"
   N_random <- args$size - 55
   args$random = TRUE
