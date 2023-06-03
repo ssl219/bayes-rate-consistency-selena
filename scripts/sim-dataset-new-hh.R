@@ -69,7 +69,7 @@ args$hhsize = 4
 args$divide.Hicb = FALSE
 args$baseline = FALSE
 epsilon = 1e-13
-args$size = 500
+args$size = 1000
 args$strata = "COVIMOD"
 N_random <- args$size - 55
 args$random = TRUE
