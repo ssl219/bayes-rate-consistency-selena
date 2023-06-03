@@ -61,6 +61,8 @@ option_list <- list(
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
+args$repo.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate/bayes-rate-consistency-selena"
+args$data.path <- "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
 
 # Load helpers
 source(file.path(args$repo.path, "R/stan-utility.R"))
@@ -73,6 +75,8 @@ covimod <- readRDS(data.path.test)
 dt.cnt <- covimod$contacts[wave == args$wave]
 dt.offsets <- covimod$offsets[wave == args$wave]
 dt.pop <- covimod$pop
+
+dt.pop[, age:= alter_age]
 
 # Path to model
 model.path <- paste0(file.path(args$repo.path, "stan_models", args$model.name), ".stan")
