@@ -87,6 +87,7 @@ data <- readRDS(full.data.path)
 dt.cnt <- data$contacts[wave == args$wave]
 dt.offsets <- data$offsets[wave == args$wave]
 dt.pop <- data$pop
+setnames(dt.pop, "alter_age", "age")
 
 source(file.path(args$repo.path, "R/covimod-utility.R"))
 source(file.path(args$repo.path, "R/stan-utility.R"))

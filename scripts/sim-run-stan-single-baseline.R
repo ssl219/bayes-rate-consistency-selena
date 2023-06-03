@@ -76,7 +76,7 @@ dt.cnt <- covimod$contacts[wave == args$wave]
 dt.offsets <- covimod$offsets[wave == args$wave]
 dt.pop <- covimod$pop
 
-dt.pop[, age:= alter_age]
+setnames(dt.pop, "alter_age", "age")
 
 # Path to model
 model.path <- paste0(file.path(args$repo.path, "stan_models", args$model.name), ".stan")
