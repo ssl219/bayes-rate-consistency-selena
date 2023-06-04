@@ -11,13 +11,13 @@ HSGP_C=1.5
 HSGP_M=20
 N=60
 HHSIZE=4
-SCENARIO="boarding_school"
+SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=500
-SAMPLING=1000
+WARMUP=5
+SAMPLING=10
 
 # Post-processing
 MIXING=TRUE
