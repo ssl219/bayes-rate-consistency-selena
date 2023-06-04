@@ -6,18 +6,18 @@
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 DATA_PATH=/rds/general/user/ssl219/home
 WAVE=1
-MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
+MODEL="hsgp-eq-rd-new-hh-2-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
-N=100
+N=60
 HHSIZE=4
-SCENARIO="boarding_school"
+SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=500
-SAMPLING=1000
+WARMUP=5
+SAMPLING=10
 
 # Post-processing
 MIXING=TRUE

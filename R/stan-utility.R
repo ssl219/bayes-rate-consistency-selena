@@ -409,15 +409,61 @@ add_row_major_idx <- function(stan_data, contacts, survey = "COVIMOD", household
   return(stan_data)
 }
 
-create_household_matrix <- function(d, P, A){
+create_household_matrix <- function(d, P, A, log=FALSE){
+  if (log){
+    H = matrix(0, nrow=P, ncol=A)
+    for(i in 1:length(d$y)){
+      H[d$new_id_idx[i], d$alter_age[i] + 1] = log(d$Hic_b[i])
+    }
+    return(H)
+  }
+  else{
   H = matrix(0, nrow=P, ncol=A)
   for(i in 1:length(d$y)){
     H[d$new_id_idx[i], d$alter_age[i] + 1] = d$Hic_b[i]
   }
   return(H)
+  }
 }
 
 add_household_offsets <- function(stan_data, everything, no_log=FALSE){
+  if(genius){
+      d <- everything
+      covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+      # making sure order of factors in alter_age_strata is ascending instead of decreasing
+      # note alter_age_strata_idx and age_strata_idx are the same, but they serve different purposes
+      d[, alter_age_strata_idx:=as.numeric(factor(alter_age_strata, levels=covimod_strata_levels))]
+      d<- d[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      
+      # d <- everything[order(age, new_id, alter_age_strata, gender, alter_gender)]
+      
+      d_MM <-  d[gender == "Male" & alter_gender == "Male"]
+      d_FF <-  d[gender == "Female" & alter_gender == "Female"]
+      d_MF <-  d[gender == "Male" & alter_gender == "Female"]
+      d_FM <-  d[gender == "Female" & alter_gender == "Male"]
+      
+      covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
+      
+      d_MM <- d_MM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      d_MM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+      
+      d_FF <- d_FF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      d_FF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+      
+      d_MF <- d_MF[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      d_MF[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+      
+      d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
+      d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
+      
+      stan_data$H_MM <- create_household_matrix(d_MM, stan_data$P_MM, stan_data$A, log=TRUE)
+      stan_data$H_FF <- create_household_matrix(d_FF, stan_data$P_FF, stan_data$A, log=TRUE)
+      stan_data$H_MF <- create_household_matrix(d_MF, stan_data$P_MF, stan_data$A, log=TRUE)
+      stan_data$H_FM <- create_household_matrix(d_FM, stan_data$P_FM, stan_data$A, log=TRUE)
+      
+      return(stan_data)
+    
+  }
   
   if(no_log){
     d <- everything
@@ -456,7 +502,6 @@ add_household_offsets <- function(stan_data, everything, no_log=FALSE){
     return(stan_data)
     
   }
-  
   else{
     d_everything <- everything[order(age, new_id, alter_age, gender, alter_gender)]
     d_everything_MM <- d_everything[gender=="Male" & alter_gender=="Male"]

@@ -67,7 +67,7 @@ for (sim_data in 1:10){
   args$divide.Hicb = FALSE
   args$baseline = FALSE
   epsilon = 1e-13
-  args$size = 100
+  args$size = 500
   args$strata = "COVIMOD"
   N_random <- args$size - 55
   args$random = TRUE
@@ -927,7 +927,7 @@ for (sim_data in 1:10){
   
   # calculate means alpha
   d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
-  d.everything.final[, alpha:=cntct_rate*Hic_b + epsilon]
+  d.everything.final[, alpha:=cntct_rate*Hic_b]
   
   # plot HH structure
   d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
@@ -1122,7 +1122,7 @@ for (sim_data in 1:10){
              # strip.text = element_text(size = 8),
              legend.text = element_text(size = 8),
              legend.title = element_text(size = 8),
-             legend.margin = margin(l = -6.5, unit = "cm"),
+             legend.margin = margin(l = -6.2, unit = "cm"),
              plot.margin = margin())
     
   }
@@ -1240,7 +1240,7 @@ for (sim_data in 1:10){
   
   # calculate means alpha
   d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
-  d.everything.final[, alpha:=cntct_rate*Hic_b + epsilon]
+  d.everything.final[, alpha:=cntct_rate*Hic_b]
   
   # plot HH structure
   d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
@@ -1437,7 +1437,7 @@ for (sim_data in 1:10){
              # strip.text = element_text(size = 8),
              legend.text = element_text(size = 8),
              legend.title = element_text(size = 8),
-             legend.margin = margin(l = -6.5, unit = "cm"),
+             legend.margin = margin(l = -6.2, unit = "cm"),
              plot.margin = margin())
     
   }
