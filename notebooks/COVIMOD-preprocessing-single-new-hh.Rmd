@@ -171,6 +171,9 @@ d_comb_no_dupl <- d_comb %>% distinct(new_id, wave, alter_age_strata, alter_gend
 
 d_comb_no_dupl  %>% filter(n>1)
 ```
+```{r}
+unique(d_comb_no_dupl[wave==1 & household_size==2], by="new_id")
+```
 
 
 ```{r}
@@ -236,7 +239,7 @@ d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 
 
 ```{r}
-d_comb_no_dupl
+d_comb_no_dupl[wave==1]
 ```
 
 ```{r}

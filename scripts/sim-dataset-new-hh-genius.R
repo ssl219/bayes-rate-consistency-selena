@@ -67,11 +67,11 @@ for (sim_data in 1:10){
   args$divide.Hicb = FALSE
   args$baseline = FALSE
   epsilon = 1e-13
-  args$size = 1000
+  args$size = 100
   args$strata = "COVIMOD"
   N_random <- args$size - 55
   args$random = TRUE
-  args$drop_zero_Hicb = TRUE
+  args$drop_zero_Hicb = FALSE
   extract_boarding_school = TRUE
   
   ##### ---------- Error handling ---------- #####
@@ -1141,6 +1141,15 @@ for (sim_data in 1:10){
   if (args$drop_zero_Hicb){
     # omit Hic_b = 0 to be comparable with new-hh model
     d.everything.final <- d.everything.final[Hic_b !=0, ]
+  }else{
+    d.everything.final.genius <- copy(d.everything.final)
+    d.everything.final.genius <- d.everything.final.genius[, Hic_b :=fcase(
+      Hic_b == 0, 1000,
+      Hic_b > 0, Hic_b,
+      default = NA
+    ) ]
+    d.everything.final.genius <- d.everything.final.genius[!is.na(Hic_b), ]
+    d.everything.final <- d.everything.final[Hic_b !=0, ]
   }
   
   # new-hh model
@@ -1153,6 +1162,18 @@ for (sim_data in 1:10){
   # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
   # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
   setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+  
+  
+  # new-hh model
+  group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+  d_comb_no_dupl_genius <- copy(d.everything.final.genius)
+  d_comb_no_dupl_genius[, y_strata := sum(y), by=group_var]
+  d_comb_no_dupl_genius[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+  d_comb_no_dupl_genius <- d_comb_no_dupl_genius %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+  # omit Hic_b = 0
+  # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+  # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+  setnames(d_comb_no_dupl_genius, c("y", "y_strata"), c("y_age", "y"))
   
   
   # get population dt
@@ -1168,6 +1189,12 @@ for (sim_data in 1:10){
   covimod.single.new.hh.sim.baseline <- list(
     contacts = d_comb_no_dupl_baseline,
     offsets = d.everything.final_baseline,
+    pop = dt.pop
+  )
+  
+  covimod.single.new.hh.sim.genius <- list(
+    contacts = d_comb_no_dupl_genius,
+    offsets = d.everything.final.genius,
     pop = dt.pop
   )
   
@@ -1195,6 +1222,7 @@ for (sim_data in 1:10){
     if (!args$drop_zero_Hicb){
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
       saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline.rds")))
+      saveRDS(covimod.single.new.hh.sim.genius, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-genius.rds")))
     }else{
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds")))
       saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline-drop-zero-Hicb.rds")))
@@ -1428,6 +1456,15 @@ for (sim_data in 1:10){
   if (args$drop_zero_Hicb){
     # omit Hic_b = 0 to be comparable with new-hh model
     d.everything.final <- d.everything.final[Hic_b !=0, ]
+  }else{
+    d.everything.final.genius <- copy(d.everything.final)
+    d.everything.final.genius <- d.everything.final.genius[, Hic_b :=fcase(
+      Hic_b == 0, 1000,
+      Hic_b > 0, Hic_b,
+      default = NA
+    ) ]
+    d.everything.final.genius <- d.everything.final.genius[!is.na(Hic_b), ]
+    d.everything.final <- d.everything.final[Hic_b !=0, ]
   }
   
   # new-hh model
@@ -1440,6 +1477,20 @@ for (sim_data in 1:10){
   # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
   # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
   setnames(d_comb_no_dupl, c("y", "y_strata"), c("y_age", "y"))
+  
+  
+  # new-hh model
+  group_var <- c("new_id", "age", "gender", "alter_age_strata", "alter_gender")
+  d_comb_no_dupl_genius <- copy(d.everything.final.genius)
+  d_comb_no_dupl_genius[, y_strata := sum(y), by=group_var]
+  d_comb_no_dupl_genius[, cntct_rate_strata := sum(cntct_rate), by=group_var]
+  d_comb_no_dupl_genius <- d_comb_no_dupl_genius %>% distinct(new_id, wave, alter_age_strata, alter_gender, .keep_all=TRUE)
+  # omit Hic_b = 0
+  # if N_random = 0, should get dataset of dimension 85*2*13*2 = 4420, 
+  # 85* because 85 participants/ages, *2* because of 2 alter_genders, *13* because of strata, last *2 is for male/female participants, 
+  setnames(d_comb_no_dupl_genius, c("y", "y_strata"), c("y_age", "y"))
+  
+  
   
   
   # get population dt
@@ -1455,6 +1506,12 @@ for (sim_data in 1:10){
   covimod.single.new.hh.sim.baseline <- list(
     contacts = d_comb_no_dupl_baseline,
     offsets = d.everything.final_baseline,
+    pop = dt.pop
+  )
+  
+  covimod.single.new.hh.sim.genius <- list(
+    contacts = d_comb_no_dupl_genius,
+    offsets = d.everything.final.genius,
     pop = dt.pop
   )
   
@@ -1482,6 +1539,7 @@ for (sim_data in 1:10){
     if (!args$drop_zero_Hicb){
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
       saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline.rds")))
+      saveRDS(covimod.single.new.hh.sim.genius, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-genius.rds")))
     }else{
       saveRDS(covimod.single.new.hh.sim, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-drop-zero-Hicb.rds")))
       saveRDS(covimod.single.new.hh.sim.baseline, file=file.path(export.path, paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended-baseline-drop-zero-Hicb.rds")))
