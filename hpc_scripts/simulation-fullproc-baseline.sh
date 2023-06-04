@@ -6,12 +6,12 @@
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 DATA_PATH=/rds/general/user/ssl219/home
 WAVE=1
-MODEL="boarding_school"
+MODEL="hsgp-eq-rd"
 HSGP_C=1.5
 HSGP_M=20
-N=500
+N=100
 HHSIZE=4
-SCENARIO="flat"
+SCENARIO="boarding_school"
 SIM_NO=1
 
 # HMC Sampler params
