@@ -67,7 +67,7 @@ cat("\n after args")
 # args$model.name = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-sim-flat-new-hh-hh2-55"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-drop-zero-Hicb.rds"))
+data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended.rds"))
 
 
 # Error handling

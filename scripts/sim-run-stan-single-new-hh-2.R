@@ -103,7 +103,7 @@ stan_data <- add_ages_contacts(stan_data, dt.offsets)
 stan_data <- add_row_major_idx(stan_data, dt.cnt, survey="simulation")
 
 # Add household offsets
-stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=FALSE)
+stan_data <- add_household_offsets(stan_data, dt.offsets, no_log=FALSE, genius=TRUE)
 
 # Map age to age strata
 stan_data <- add_map_age_to_strata(stan_data, survey="simulation")
