@@ -56,7 +56,7 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 # args$model.name <- "hsgp-eq-cd-1-nhh"
 
 model.path <- file.path(args$repo.path, "stan_fits", paste0(args$model.name, ".rds"))
-full.data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-baseline-drop-zero-Hicb.rds"))
+full.data.path <- file.path(args$data.path, "data/simulations/datasets/new-hh-both", paste0("hh", args$hhsize, "-", args$sample_size), paste0("dataset", args$sim.no), paste0("data-hh", args$hhsize, "-", args$scenario, "-", args$sample_size, "-amended-baseline.rds"))
 # Error handling
 if(!file.exists(model.path)) {
   cat("\n Model: ", model.path)
