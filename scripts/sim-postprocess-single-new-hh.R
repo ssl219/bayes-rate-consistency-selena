@@ -105,6 +105,18 @@ source(file.path(args$repo.path, "R/covimod-utility.R"))
 source(file.path(args$repo.path, "R/stan-utility.R"))
 source(file.path(args$repo.path, "R/postprocess-diagnostic-single.R"))
 source(file.path(args$repo.path, "R/postprocess-plotting-single.R"))
+source(file.path(args$repo.path, "R", "sim-dataset-utility.R"))
+
+#### ------------------- True contact rates --------------------- #####
+
+if (args$scenario == "flat"){
+  dt.sim.true.cntct <- as.data.table(readRDS( file.path(args$data.path, "data/simulations/intensity/new-hh/flat-data.rds") ))
+}
+
+if (args$scenario == "boarding_school"){
+  dt.sim.true.cntct <- as.data.table(readRDS( file.path(args$data.path, "data/simulations/intensity/new-hh/boarding-data.rds") ))
+}
+
 
 
 #### ------------------- Stan data --------------------- #####
@@ -232,7 +244,7 @@ if(args$plot){
   cat(" Extracting posterior contact intensities\n")
   po <- fit$draws(c("log_cnt_rate"), inc_warmup = FALSE, format="draws_matrix")
   dt.po <- extract_posterior_rates(po)
-  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, type="matrix", outdir=export.path, new_hh=TRUE)
+  dt.matrix <- posterior_contact_intensity(dt.po, dt.pop, dt.sim.true.cntct=dt.sim.true.cntct, type="matrix", outdir=export.path, new_hh=TRUE, sim=TRUE)
   dt.margin <- posterior_contact_intensity(dt.po, dt.pop, type="marginal", outdir=export.path, new_hh=TRUE)
   
   rm(dt.po); suppressMessages(gc()); # Ease memory

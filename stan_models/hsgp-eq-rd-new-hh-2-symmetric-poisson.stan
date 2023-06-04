@@ -481,10 +481,10 @@ transformed parameters
   // print("part_f_FM =", part_f_FM)
   // print("part_f_MF =", part_f_MF)
 
-  alpha_MM = exp((beta_0[MM] + part_f_MM).* log_H_MM);
-  alpha_MF = exp((beta_0[MF] + part_f_MF).* log_H_MF);
-  alpha_FM = exp((beta_0[FM] + part_f_FM).* log_H_FM);
-  alpha_FF = exp((beta_0[FF] + part_f_FF).* log_H_FF);
+  alpha_MM = exp((beta_0[MM] + part_f_MM) + log_H_MM);
+  alpha_MF = exp((beta_0[MF] + part_f_MF) + log_H_MF);
+  alpha_FM = exp((beta_0[FM] + part_f_FM) + log_H_FM);
+  alpha_FF = exp((beta_0[FF] + part_f_FF) + log_H_FF);
   
   // will have to change this to a double for loop checking when Hib_c = 0, otherwise values of exp(log_m_MM) are too small!!
   alpha_strata_MM = alpha_MM * map_age_to_strata + epsilon;

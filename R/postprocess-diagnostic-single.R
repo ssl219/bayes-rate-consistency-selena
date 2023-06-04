@@ -4,6 +4,10 @@
 #' @param outdir Directory to save outputs
 #'
 #' @return A summary table of estimates and diagnostics
+#' 
+#' 
+
+
 make_convergence_diagnostic_stats <- function(fit, outdir = NA) {
 
   # Rhat and effective sample size
@@ -690,7 +694,7 @@ posterior_alpha <- function(fit, dt.po, stan_data, type="matrix", outdir=NA, gen
 }  
 
 
-posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation=FALSE, outdir=NA, new_hh=FALSE){
+posterior_contact_intensity <- function(dt.po, dt.pop, dt.sim.true.cntct=NA, sim=FALSE, type="matrix", simulation=FALSE, outdir=NA, new_hh=FALSE){
   ps <- c(0.5, 0.025, 0.975)
   p_labs <- c('M','CL','CU')
 
@@ -723,6 +727,12 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
     if (new_hh){
       if(!is.na(outdir)){
         saveRDS(dt.po, file.path(outdir, "rate_matrix.rds"))
+        if (sim){
+          dt.po <- merge(intensity_matrix, dt.sim.true.cntct, by=c("alter_age", "age", "gender", "alter_gender"), all.x = TRUE)
+          dt.po[, cntct_rate_predict:=M]
+          acc_table <- make_error_table(dt.po, only_rate=TRUE)
+          saveRDS(acc_table, file.path(outdir, "rate_error_table.rds"))
+        }
       } else {
         warning("\n outdir is not specified. Results were not saved.")
       }
@@ -736,8 +746,15 @@ posterior_contact_intensity <- function(dt.po, dt.pop, type="matrix", simulation
       dt.po[, intensity_CL := CL * pop]
       dt.po[, intensity_CU := CU * pop]
       
+
       if(!is.na(outdir)){
         saveRDS(dt.po, file.path(outdir, "intensity_matrix.rds"))
+        if (sim){
+          dt.po <- merge(intensity_matrix, dt.sim.true.cntct, by=c("alter_age", "age", "gender", "alter_gender"), all.x = TRUE)
+          dt.po[, cntct_rate_predict:=M]
+          acc_table <- make_error_table(dt.po, only_rate=TRUE)
+          saveRDS(acc_table, file.path(outdir, "rate_error_table.rds"))
+        }
       } 
       else {
         warning("\n outdir is not specified. Results were not saved.")
@@ -861,7 +878,7 @@ make_posterior_predictive_check <- function(dt, outdir=NA){
 #'
 #' make_mse_table(dt.po)
 #' }
-make_error_table <- function(dt, outdir=NA, rate=FALSE, count=FALSE){
+make_error_table <- function(dt, outdir=NA, rate=FALSE, count=FALSE, only_rate=FALSE){
   rmse <- function(y, y_pred) sqrt(mean( (y - y_pred)**2, na.rm=T ))
   sbias <- function(y, y_pred) mean( y - y_pred, na.rm=T )^2
   mae <- function(y, y_pred) mean( abs(y - y_pred), na.rm=T )
@@ -878,7 +895,20 @@ make_error_table <- function(dt, outdir=NA, rate=FALSE, count=FALSE){
                     mse(dt$cntct_rate, dt$cntct_rate_predict),
                     mse(dt$cntct_intensity ,dt$cntct_intensity_predict)-sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
                     mse(dt$cntct_rate ,dt$cntct_rate_predict)-sbias(dt$cntct_rate ,dt$cntct_rate_predict)))
-    }
+  }
+  else if(only_rate){ df <- data.frame(metric = c("squared bias", "rmse", "mae", "mse", "variance"),
+                             name = c("rate", "rate", "rate","rate", "rate"),
+                             value = c(
+                                       sbias(dt$cntct_rate, dt$cntct_rate_predict),
+                                       
+                                       rmse(dt$cntct_rate, dt$cntct_rate_predict),
+                                       
+                                       mae(dt$cntct_rate, dt$cntct_rate_predict),
+                                      
+                                       mse(dt$cntct_rate, dt$cntct_rate_predict),
+                                       
+                                       mse(dt$cntct_rate ,dt$cntct_rate_predict)-sbias(dt$cntct_rate ,dt$cntct_rate_predict)))
+  }else{
   if(count){ df <- data.frame(metric = c("squared bias", "squared bias", "rmse", "rmse", "mae", "mae", "mse", "mse", "variance", "variance"),
                              name = c("intensity", "count", "intensity", "count", "intensity", "count", "intensity", "count", "intensity", "count"),
                              value = c(sbias(dt$cntct_intensity ,dt$cntct_intensity_predict),
@@ -899,7 +929,8 @@ make_error_table <- function(dt, outdir=NA, rate=FALSE, count=FALSE){
                   mae(dt$cntct_intensity ,dt$cntct_intensity_predict),
                   mse(dt$cntct_intensity ,dt$cntct_intensity_predict),
                   mse(dt$cntct_intensity ,dt$cntct_intensity_predict)-sbias(dt$cntct_intensity ,dt$cntct_intensity_predict)))
-        }
+  }
+  }
   
 
   if(!is.na(outdir)){
