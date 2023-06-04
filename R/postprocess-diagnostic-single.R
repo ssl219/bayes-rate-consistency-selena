@@ -750,7 +750,7 @@ posterior_contact_intensity <- function(dt.po, dt.pop, dt.sim.true.cntct=NA, sim
       if(!is.na(outdir)){
         saveRDS(dt.po, file.path(outdir, "intensity_matrix.rds"))
         if (sim){
-          dt.po <- merge(intensity_matrix, dt.sim.true.cntct, by=c("alter_age", "age", "gender", "alter_gender"), all.x = TRUE)
+          dt.po <- merge(dt.po, dt.sim.true.cntct, by=c("alter_age", "age", "gender", "alter_gender"), all.x = TRUE)
           dt.po[, cntct_rate_predict:=M]
           acc_table <- make_error_table(dt.po, only_rate=TRUE)
           saveRDS(acc_table, file.path(outdir, "rate_error_table.rds"))
