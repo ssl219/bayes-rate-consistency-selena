@@ -32,7 +32,7 @@ option_list <- list(
   optparse::make_option("--scenario", type = "character", default = "flat",
                         help = "Scenario [default %default]",
                         dest = "scenario"),
-  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson",
+  optparse::make_option("--model", type = "character", default = "hsgp-eq-rd-new-hh-2-symmetric-poisson",
                         help = "Name of Stan model",
                         dest = 'model.name'),
   optparse::make_option("--repo_path", type = "character", default = "/rds/general/user/ssl219/home/bayes-rate-consistency-selena",

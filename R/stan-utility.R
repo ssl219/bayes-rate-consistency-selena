@@ -426,7 +426,7 @@ create_household_matrix <- function(d, P, A, log=FALSE){
   }
 }
 
-add_household_offsets <- function(stan_data, everything, no_log=FALSE){
+add_household_offsets <- function(stan_data, everything, no_log=FALSE, genius=FALSE){
   if(genius){
       d <- everything
       covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
