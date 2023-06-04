@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #PBS -l walltime=8:00:00
-#PBS -l select=1:ncpus=8:ompthreads=1:mem=100gb
+#PBS -l select=1:ncpus=8:ompthreads=1:mem=50gb
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 DATA_PATH=/rds/general/user/ssl219/home
@@ -9,15 +9,15 @@ WAVE=1
 MODEL="hsgp-eq-rd"
 HSGP_C=1.5
 HSGP_M=20
-N=60
+N=100
 HHSIZE=4
 SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=5
-SAMPLING=10
+WARMUP=500
+SAMPLING=1000
 
 # Post-processing
 MIXING=TRUE
