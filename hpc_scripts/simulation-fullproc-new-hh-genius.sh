@@ -9,15 +9,15 @@ WAVE=1
 MODEL="hsgp-eq-rd-new-hh-2-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
-N=60
+N=100
 HHSIZE=4
 SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
 CHAINS=4
-WARMUP=5
-SAMPLING=10
+WARMUP=500
+SAMPLING=1000
 
 # Post-processing
 MIXING=TRUE
