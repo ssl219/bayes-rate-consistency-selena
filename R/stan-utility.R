@@ -456,10 +456,10 @@ add_household_offsets <- function(stan_data, everything, no_log=FALSE, genius=FA
       d_FM <- d_FM[order(age, new_id, alter_age_strata_idx, gender, alter_gender)]
       d_FM[, new_id_idx:=as.numeric(factor(new_id, levels=unique(new_id)))]
       
-      stan_data$H_MM <- create_household_matrix(d_MM, stan_data$P_MM, stan_data$A, log=TRUE)
-      stan_data$H_FF <- create_household_matrix(d_FF, stan_data$P_FF, stan_data$A, log=TRUE)
-      stan_data$H_MF <- create_household_matrix(d_MF, stan_data$P_MF, stan_data$A, log=TRUE)
-      stan_data$H_FM <- create_household_matrix(d_FM, stan_data$P_FM, stan_data$A, log=TRUE)
+      stan_data$log_H_MM <- create_household_matrix(d_MM, stan_data$P_MM, stan_data$A, log=TRUE)
+      stan_data$log_H_FF <- create_household_matrix(d_FF, stan_data$P_FF, stan_data$A, log=TRUE)
+      stan_data$log_H_MF <- create_household_matrix(d_MF, stan_data$P_MF, stan_data$A, log=TRUE)
+      stan_data$log_H_FM <- create_household_matrix(d_FM, stan_data$P_FM, stan_data$A, log=TRUE)
       
       return(stan_data)
     
