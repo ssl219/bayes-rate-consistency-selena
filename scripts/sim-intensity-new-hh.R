@@ -149,7 +149,39 @@ p_flat <- ggplot(di_flat) +
     strip.background = element_rect(color = NA, fill = "transparent")
   )
 
+# Contact rates
+p_flat <- ggplot(di_flat) +
+  geom_tile(aes(x = age, y = alter_age, fill = cntct_rate)) +
+  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate, flat" ) +
+  coord_equal() +
+  facet_grid(alter_gender ~ gender) +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  viridis::scale_fill_viridis(na.value = "white", option="H", limits=c(NA,1.3)) +
+  guides(fill = guide_colorbar(title.position = "top", barwidth = 10)) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(color = NA, fill = "transparent")
+  )
+
+
+p_flat_2 <- ggplot(di_flat) +
+  geom_tile(aes(x = age, y = alter_age, fill = cntct_rate)) +
+  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate, flat" ) +
+  coord_equal() +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  viridis::scale_fill_viridis(na.value = "white", option="H", limits=c(NA,1.3)) +
+  guides(fill = guide_colorbar(title.position = "top", barwidth = 10)) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(color = NA, fill = "transparent")
+  )
+
 ggsave(file.path(fig.path, "flat-rates.pdf"), plot = p_flat, width = 10, height = 6)
+ggsave(file.path(fig.path, "flat-rates-2.pdf"), plot = p_flat_2, width = 10, height = 6)
 
 # Contact rates
 p_boarding <- ggplot(di_boarding) +
@@ -168,6 +200,23 @@ p_boarding <- ggplot(di_boarding) +
   )
 
 ggsave(file.path(fig.path, "boarding-rates.pdf"), plot = p_boarding, width = 10, height = 6)
+
+# Contact rates
+p_boarding_2 <- ggplot(di_boarding) +
+  geom_tile(aes(x = age, y = alter_age, fill = cntct_rate)) +
+  labs(x = "Participants' age", y = "Contacts' age", fill = "Contact rate, boarding" ) +
+  coord_equal() +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  viridis::scale_fill_viridis(na.value = "white", option="H", limits=c(NA,1.3)) +
+  guides(fill = guide_colorbar(title.position = "top", barwidth = 10)) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    strip.background = element_rect(color = NA, fill = "transparent")
+  )
+
+ggsave(file.path(fig.path, "boarding-rates-2.pdf"), plot = p_boarding_2, width = 10, height = 6)
 
 # # Contact intensity aggregated by age
 # tmp <- di[, list(cntct_intensity = sum(cntct_intensity)), by = c('gender','age')]

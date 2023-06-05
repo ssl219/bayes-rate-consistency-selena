@@ -37,7 +37,7 @@ covimod
 ```
 
 ```{r}
-dt.part
+max(dt.part$hh_p_incl_0)
 ```
 
 
@@ -46,7 +46,7 @@ dt.nhh
 ```
 
 ```{r}
-dt.hh
+dt.hh[hh_met_this_day>0 & hh_met_this_day<1]
 ```
 
 

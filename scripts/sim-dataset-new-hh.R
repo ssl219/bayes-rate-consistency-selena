@@ -1336,7 +1336,7 @@ for (sim_data in 1:10){
              # strip.text = element_text(size = 8),
              legend.text = element_text(size = 8),
              legend.title = element_text(size = 8),
-             legend.margin = margin(l = -6.9, unit = "cm"),
+             legend.margin = margin(l = -6.7, unit = "cm"),
              plot.margin = margin())
   }
   
@@ -1360,7 +1360,7 @@ for (sim_data in 1:10){
              # strip.text = element_text(size = 8),
              legend.text = element_text(size = 8),
              legend.title = element_text(size = 8),
-             legend.margin = margin(l = -6.7, unit = "cm"),
+             legend.margin = margin(l = -6.6, unit = "cm"),
              plot.margin = margin())
   }
   
@@ -1409,7 +1409,7 @@ for (sim_data in 1:10){
              # strip.text = element_text(size = 8),
              legend.text = element_text(size = 8),
              legend.title = element_text(size = 8),
-             legend.margin = margin(l = -6.5, unit = "cm"),
+             legend.margin = margin(l = -6.2, unit = "cm"),
              plot.margin = margin())
     
   }

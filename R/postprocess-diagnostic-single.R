@@ -303,7 +303,7 @@ make_ppd_check_covimod <- function(po, dt.survey, data, outdir=NA, fig.outdir=NA
       saveRDS(po_FM, file.path(outdir, "po_FM.rds"))
       saveRDS(po_MF, file.path(outdir, "po_MF.rds"))
       
-      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p, height = 4, width =4 )
+      ggsave(file.path(fig.outdir, "ppc_plot.png"), plot = p, height = 5, width =5 )
     } else {
       warning("\n outdir is not specified. Results were not saved.")
     }
