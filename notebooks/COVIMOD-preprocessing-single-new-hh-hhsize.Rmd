@@ -280,13 +280,13 @@ d_comb_no_dupl
 
 ```{r}
 p3 <- ggplot(d_comb_no_dupl, aes(age, alter_age_strata)) + 
-  geom_tile(aes(fill = log(y_mean))) + 
+  geom_tile(aes(fill = y_mean)) + 
   facet_grid(hhsize_plot~gender_comb) + 
   viridis::scale_fill_viridis(option='H') +
     scale_x_continuous(expand = c(0,0)) +
   scale_y_discrete(expand = c(0,0)) +
   theme_bw() + 
-  labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of average contact intensity across participants") +
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Average contact intensity across participants") +
   theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=10))
 
 p3
