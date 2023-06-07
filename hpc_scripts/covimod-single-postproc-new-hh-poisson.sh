@@ -9,7 +9,7 @@ MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1"
 
 # Post-processing
 MIXING=FALSE
-PPC=FALSE
+PPC=TRUE
 PLOT=TRUE
 
 module load anaconda3/personal
