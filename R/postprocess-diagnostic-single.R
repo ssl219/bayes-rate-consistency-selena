@@ -668,8 +668,8 @@ posterior_alpha <- function(fit, dt.po, stan_data, type="matrix", outdir=NA, gen
     dt.save <- copy(dt.po)
     saveRDS(dt.save, file.path(outdir, paste0(gender_comb, "_alpha_marginal.rds")))
     
-    dt.po <- dt.po[, .(value = sum(value)), by=c("draw", "age", "part_idx")]
-    dt.po <- dt.po[, value := mean(value), by=c("age")]
+    dt.po <- dt.po[, value = sum(value), by=c("draw", "age", "part_idx")]
+    dt.po <- dt.po[, .(value = sum(value)), by=c("age", "draw")]
     
     dt.po <- dt.po[, list( q=quantile(value, prob=ps, na.rm=T), q_label = p_labs), by="age"]
     gc()

@@ -251,11 +251,47 @@ plot(d.everything.hhsize.plot$household_size, d.everything.hhsize.plot$mean_n)
 ```
 
 ```{r}
-d.everything[d.everything$household_size==2,]
+d.everything
 ```
 ```{r}
-d_comb_no_dupl[household_size==2]
+d_comb_no_dupl[, y_mean := mean(y), by=c("alter_age_strata", "alter_gender", "age", "gender")]
+d_comb_no_dupl[, gender_comb:=fcase(
+  gender=="Male" & alter_gender == "Male", "Male to Male",
+  gender=="Female" & alter_gender == "Female", "Female to Female",
+  gender=="Male" & alter_gender == "Female", "Male to Female",
+  gender=="Female" & alter_gender == "Male", "Female to Male",
+  default=NA
+  
+)]
+
+d_comb_no_dupl[, hhsize_plot:=fcase(
+  household_size==2 , "2",
+  household_size==3 , "3",
+  household_size==4 , "4",
+  household_size>=5 , "5+",
+  default=NA
+  
+)]
 ```
+```{r}
+d_comb_no_dupl
+```
+
+
+```{r}
+p3 <- ggplot(d_comb_no_dupl, aes(age, alter_age_strata)) + 
+  geom_tile(aes(fill = log(y_mean))) + 
+  facet_grid(hhsize_plot~gender_comb) + 
+  viridis::scale_fill_viridis(option='H') +
+    scale_x_continuous(expand = c(0,0)) +
+  scale_y_discrete(expand = c(0,0)) +
+  theme_bw() + 
+  labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of average contact intensity across participants") +
+  theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=10))
+
+p3
+```
+
 
 ## Export data
 ```{r}
