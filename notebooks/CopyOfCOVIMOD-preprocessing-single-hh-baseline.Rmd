@@ -315,10 +315,10 @@ p3 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   scale_y_discrete(expand = c(0,0)) +
   theme_bw() + 
   labs(x = "Age of participants", y = "Age of contacts", fill = "Empirical contact intensity") +
-  theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
+  theme(aspect.ratio = 1, legend.position = "bottom",strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=10))
 
 p3
-ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-per-hhsize.png")), plot = p3)
+# ggsave(file.path(fig.path, paste0("empirical-contact-intensity-hh-per-hhsize.png")), plot = p3)
 
 p4 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = log(y))) + 
@@ -328,10 +328,10 @@ p4 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   scale_y_discrete(expand = c(0,0)) +
   theme_bw() + 
   labs(x = "Age of participants", y = "Age of contacts", fill = "Logarithm of contact counts") +
-  theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
+  theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=10))
 
 p4
-ggsave(file.path(fig.path, paste0("log-contact-counts-hh-per-hhsize.png")), plot = p4)
+# ggsave(file.path(fig.path, paste0("log-contact-counts-hh-per-hhsize.png")), plot = p4)
 ```
 ```{r}
 p5 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) + 
@@ -345,7 +345,7 @@ p5 <- ggplot(d[complete.cases(d), ], aes(age, alter_age_strata)) +
   theme(aspect.ratio = 1, legend.position = "bottom", strip.background = element_rect(color=NA, fill = "transparent"), text = element_text(size=5))
 
 p5
-ggsave(file.path(fig.path, paste0("contact-counts-hh-per-hhsize.png")), plot = p5)
+# ggsave(file.path(fig.path, paste0("contact-counts-hh-per-hhsize.png")), plot = p5)
 ```
 
 

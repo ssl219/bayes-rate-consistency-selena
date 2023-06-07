@@ -44,23 +44,24 @@ cntct_sim_rates_boarding_school <- function(){
                                  # age %in% 11:18  & diff_age %in% c(-27:-26, -22:-21), 0.1,
                                  # age %in% 11:18  & diff_age %in% c(-29:-28, -20:-19), 0.01,
                                  
-                                 age %in% 19:29  & diff_age %in% -5:5, pmax(0, 1 - 0.06 * abs(diff_age)),
-                                 age %in% 19:29  & diff_age %in% c(-9:-6,6:9), 0.16,
-                                 age %in% 19:29  & diff_age %in% c(-13:-10,10:13), 0.008,
-                                 age %in% 19:29  & diff_age %in% c(-15:-14,14:15), 0.002,
-                                 age %in% 19:29  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
-                                 age %in% 19:29  & diff_age %in% c(21:22, 26:27), 0.1,
-                                 age %in% 19:29  & diff_age %in% c(19:20, 28:29), 0.01,
-                                 
+                                 age %in% 20:29  & diff_age %in% -5:5, pmax(0, 1 - 0.06 * abs(diff_age)),
+                                 age %in% 20:29  & diff_age %in% c(-9:-6,6:9), 0.16,
+                                 age %in% 20:29  & diff_age %in% c(-13:-10,10:13), 0.008,
+                                 age %in% 20:29  & diff_age %in% c(-15:-14,14:15), 0.002,
+                              
                                  age %in% 30:39  & diff_age %in% -5:5, pmax(0, 1 - 0.06 * abs(diff_age)),
                                  age %in% 30:39  & diff_age %in% c(-9:-6,6:9), 0.16,
                                  age %in% 30:39  & diff_age %in% c(-13:-10,10:13), 0.0075,
                                  age %in% 30:39  & diff_age %in% c(-15:-14,14:15), 0.0025,
+                                 age %in% 30:39  & diff_age %in% 30:32, pmax(0, 0.8 - 0.5 * abs(diff_age - 31)),
+                                 age %in% 30:39  & diff_age %in% c(28:29, 33:34), 0.1,
+                                 age %in% 30:39  & diff_age %in% c(36:37, 35:36), 0.01,
+                                 
                                  # age %in% 30:39  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
                                  # age %in% 30:39  & diff_age %in% c(21:22, 26:27), 0.1,
                                  # age %in% 30:39  & diff_age %in% c(19:20, 28:29), 0.01,
-                                 age %in% 25:29  & diff_age %in% 21:22, 0.1,
-                                 age %in% 25:29  & diff_age %in% 19:20, 0.01,
+                                 # age %in% 25:29  & diff_age %in% 21:22, 0.1,
+                                 # age %in% 25:29  & diff_age %in% 19:20, 0.01,
                                  # age %in% 29  & diff_age %in% 23, 0.6,
                                  
                                  age %in% 40:54  & diff_age %in% -5:5, pmax(0, 0.9 - 0.06 * abs(diff_age)),
@@ -68,9 +69,9 @@ cntct_sim_rates_boarding_school <- function(){
                                  age %in% 40:54  & diff_age %in% c(-13:-10,10:13), 0.0075,
                                  age %in% 40:54  & diff_age %in% c(-15:-14,14:15), 0.0025,
                                  # minimum age to have contact is 19
-                                 age %in% 43:54  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
-                                 age %in% 43:54  & diff_age %in% c(21:22, 26:27), 0.1,
-                                 age %in% 43:54  & diff_age %in% c(19:20, 28:29), 0.01,
+                                 # age %in% 43:54  & diff_age %in% 23:25, pmax(0, 0.8 - 0.5 * abs(diff_age - 24)),
+                                 # age %in% 43:54  & diff_age %in% c(21:22, 26:27), 0.1,
+                                 # age %in% 43:54  & diff_age %in% c(19:20, 28:29), 0.01,
 
                                  # age %in% 50:59  & diff_age %in% -5:5, pmax(0, 0.65 - 0.06 * abs(diff_age)),
                                  # age %in% 50:59  & diff_age %in% c(-9:-6,6:9), 0.16,
