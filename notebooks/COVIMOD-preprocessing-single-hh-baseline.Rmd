@@ -36,7 +36,7 @@ dt.hh <- dt.hh[wave <= 5]
 covimod
 ```
 ```{r}
-nrow(dt.hh[wave==1])
+nrow(dt.part[wave==1])
 ```
 
 

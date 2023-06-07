@@ -8,8 +8,8 @@ WAVE=1
 MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1"
 
 # Post-processing
-MIXING=TRUE
-PPC=TRUE
+MIXING=FALSE
+PPC=FALSE
 PLOT=TRUE
 
 module load anaconda3/personal

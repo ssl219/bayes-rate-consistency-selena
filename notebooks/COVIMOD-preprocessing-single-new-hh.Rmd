@@ -47,9 +47,10 @@ covimod
 # dt.nhh
 # ```
 # 
-# ```{r}
-# dt.hh
-# ```
+```{r}
+dt.missing <- dt.hh[wave==1 & (is.na(age)| is.na(gender)), ]
+dt.missing
+```
 
 
 
@@ -239,7 +240,7 @@ d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 
 
 ```{r}
-d_comb_no_dupl[wave==1]
+d_comb_no_dupl[age > 84]
 ```
 
 ```{r}

@@ -60,11 +60,11 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
 covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
 args$scenario = "flat"
-args$hhsize = 15
+args$hhsize = 20
 args$divide.Hicb = FALSE
 args$baseline = FALSE
 epsilon = 1e-13
-args$size = 100
+args$size = 500
 args$strata = "COVIMOD"
 N_random <- args$size - 55
 args$random = TRUE
@@ -924,7 +924,12 @@ if (extract_boarding_school){
 
 # calculate means alpha
 d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
-d.everything.final[, alpha:=cntct_rate + epsilon]
+d.everything.final[, present:= fcase(
+  Hic_b > 0, 1,
+  Hic_b ==0, 0,
+  default = 0
+)] 
+d.everything.final[, alpha:=cntct_rate*present]
 
 # plot HH structure
 d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
@@ -1209,10 +1214,14 @@ d.everything.final <- d.everything.final.boarding.school
 
 # calculate means alpha
 d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
-d.everything.final[, alpha:=cntct_rate + epsilon]
-
+d.everything.final[, present:= fcase(
+  Hic_b > 0, 1,
+  Hic_b ==0, 0,
+  default = 0
+)] 
+d.everything.final[, alpha:=cntct_rate*present]
 # plot HH structure
-d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
+d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1), by=c("alter_age","age", "gender", "alter_gender")]
 d.everything.final[, gender_comb := fcase(
   gender == "Male" & alter_gender == "Male", "Male to Male",
   gender == "Male" & alter_gender == "Female", "Male to Female",
