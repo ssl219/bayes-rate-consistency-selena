@@ -5,7 +5,7 @@
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
-MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-hhgreater5"
+MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-hh23"
 
 # Post-processing
 MIXING=FALSE
