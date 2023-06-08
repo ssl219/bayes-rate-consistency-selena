@@ -5,7 +5,7 @@
 
 REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
 WAVE=1
-MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-hh2"
+MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson-1-hh3"
 
 # Post-processing
 MIXING=FALSE
@@ -15,4 +15,4 @@ PLOT=TRUE
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/postprocess-single-new-hh-poisson-hh2.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
+Rscript $REPO_PATH/scripts/postprocess-single-new-hh-poisson-hh3.R --model $MODEL --mixing $MIXING --ppc $PPC --plot $PLOT
