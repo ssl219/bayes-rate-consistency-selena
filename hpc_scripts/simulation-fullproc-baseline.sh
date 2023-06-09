@@ -11,7 +11,7 @@ HSGP_C=1.5
 HSGP_M=20
 N=100
 HHSIZE=4
-SCENARIO="flat"
+SCENARIO="boarding_school"
 SIM_NO=1
 
 # HMC Sampler params
