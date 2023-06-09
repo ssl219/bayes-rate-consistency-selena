@@ -58,12 +58,12 @@ option_list <- list(
 # "/rds/general/user/ssl219/home/bayes-rate-consistency-selena"
 args <- optparse::parse_args(optparse::OptionParser(option_list = option_list))
 
-for (sim_data in 1:10){
+for (sim_data in 1:5){
   args$sim.no <- sim_data
   
   covimod_strata_levels = c("0-4", "5-9", "10-14", "15-19", "20-24", "25-34", "35-44", "45-54", "55-64", "65-69", "70-74", "75-79", "80-84")
   args$scenario = "flat"
-  args$hhsize = 4
+  args$hhsize = 8
   args$divide.Hicb = FALSE
   args$baseline = FALSE
   epsilon = 1e-13
