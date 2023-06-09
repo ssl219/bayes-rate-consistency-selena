@@ -10,7 +10,7 @@ MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
 N=500
-HHSIZE=4
+HHSIZE=2
 SCENARIO="boarding_school"
 SIM_NO=1
 
