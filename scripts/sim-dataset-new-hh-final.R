@@ -928,9 +928,9 @@ for (sim_data in 1:10){
   # calculate means alpha
   d.everything.final <- merge(d.everything.final, dt, by=c("alter_age","age", "gender", "alter_gender", "alter_age_strata"), all.x=TRUE, all.y=FALSE)
   d.everything.final[, alpha:=cntct_rate*Hic_b]
-  
+###############################################################################################################################################################    
   # plot HH structure
-  d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
+  d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1), by=c("alter_age","age", "gender", "alter_gender")]
   d.everything.final[, gender_comb := fcase(
     gender == "Male" & alter_gender == "Male", "Male to Male",
     gender == "Male" & alter_gender == "Female", "Male to Female",
@@ -938,6 +938,31 @@ for (sim_data in 1:10){
     gender == "Female" & alter_gender == "Female", "Female to Female",
     default = NA
   )]
+  
+  alpha_hh_structure_plot <- function(){
+    ggplot(d.everything.final, aes(age, alter_age)) +
+      geom_tile(aes(fill = alpha_hh_structure_plot)) +
+      facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+      scale_fill_viridis(option = "H") +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_continuous(expand = c(0,0)) +
+      labs(x = "Age of participants", y = "Age of contacts", fill = "Average count") +
+      theme_bw() + 
+      guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+      theme( aspect.ratio = 1,
+             axis.text.x = element_text(size = 7),
+             axis.text.y = element_text(size = 7),
+             axis.title.x = element_blank(),
+             axis.title.y = element_text(size = 8),
+             strip.background = element_blank(),
+             strip.text = element_blank(),
+             # strip.text = element_text(size = 8),
+             legend.text = element_text(size = 8),
+             legend.title = element_text(size = 8),
+             legend.margin = margin(l = -6.7, unit = "cm"),
+             plot.margin = margin())
+  }
+  
   
   # simulate contact counts
   d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.final$alpha)]
@@ -1243,7 +1268,7 @@ for (sim_data in 1:10){
   d.everything.final[, alpha:=cntct_rate*Hic_b]
   
   # plot HH structure
-  d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1 + epsilon), by=c("alter_age","age", "gender", "alter_gender")]
+  d.everything.final[, alpha_hh_structure_plot:= mean(Hic_b*1), by=c("alter_age","age", "gender", "alter_gender")]
   d.everything.final[, gender_comb := fcase(
     gender == "Male" & alter_gender == "Male", "Male to Male",
     gender == "Male" & alter_gender == "Female", "Male to Female",
@@ -1251,6 +1276,7 @@ for (sim_data in 1:10){
     gender == "Female" & alter_gender == "Female", "Female to Female",
     default = NA
   )]
+  
   
   # simulate contact counts
   d.everything.final[, y := rpois(nrow(d.everything.final), lambda=d.everything.final$alpha)]
@@ -1342,8 +1368,30 @@ for (sim_data in 1:10){
   saveRDS(d_comb_no_dupl_plot, file=file.path(export.path, paste0("d_comb_no_dupl_plot-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
   saveRDS(d_comb_no_dupl_baseline, file=file.path(export.path, paste0("d_comb_no_dupl_baseline-hh", args$hhsize, "-", args$scenario, "-", args$size, "-amended.rds")))
   
-  
-  
+  alpha_hh_structure_plot <- function(){
+    ggplot(d.everything.final, aes(age, alter_age)) +
+      geom_tile(aes(fill = alpha_hh_structure_plot)) +
+      facet_wrap(~gender_comb, ncol = 4, nrow = 1) + 
+      scale_fill_viridis(option = "H") +
+      scale_x_continuous(expand = c(0,0)) +
+      scale_y_continuous(expand = c(0,0)) +
+      labs(x = "Age of participants", y = "Age of contacts", fill = "Average count") +
+      theme_bw() + 
+      guides(fill = guide_colourbar(barwidth = 0.8, barheight=4)) +
+      theme( aspect.ratio = 1,
+             axis.text.x = element_text(size = 7),
+             axis.text.y = element_text(size = 7),
+             axis.title.x = element_blank(),
+             axis.title.y = element_text(size = 8),
+             strip.background = element_blank(),
+             strip.text = element_blank(),
+             # strip.text = element_text(size = 8),
+             legend.text = element_text(size = 8),
+             legend.title = element_text(size = 8),
+             legend.margin = margin(l = -6.7, unit = "cm"),
+             plot.margin = margin())
+  }
+
   simulated_counts_per_gender <- function(){
     ggplot(d_comb_no_dupl_plot, aes(age, factor(alter_age_strata, levels=covimod_like_strata_levels ))) +
       geom_tile(aes(fill = y_plot_strata)) +
