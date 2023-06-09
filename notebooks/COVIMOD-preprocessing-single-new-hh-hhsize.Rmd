@@ -181,6 +181,8 @@ d.everything <- merge(dt.hh.structure, d_comb_no_dupl, by=c("new_id", "alter_gen
 ```{r}
 d.everything[is.na(d.everything$alter_age),]
 ```
+
+
 ```{r}
 # check
 d.everything[d.everything$new_id=="86be2e09",]
@@ -370,15 +372,17 @@ saveRDS(covimod.single.new.hh.greater5, file=file.path(data.path, "data/COVIMOD/
 ```
 
 ```{r}
-# hh less4
-covimod.single.new.hh.less4 <- list(
-  contacts = d_comb_no_dupl[household_size<=4],
-  offsets = d.everything[d.everything$household_size<=4,],
+# hh greater4
+covimod.single.new.hh.greater4 <- list(
+  contacts = d_comb_no_dupl[household_size>=4],
+  offsets = d.everything[d.everything$household_size>=4,],
   pop = covimod$pop
 )
 
 data.path = "/Users/mac/Documents/M4R/code/bayes_consistency_rate"
-saveRDS(covimod.single.new.hh.less4, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hhless4.rds"))
+saveRDS(covimod.single.new.hh.greater4, file=file.path(data.path, "data/COVIMOD/COVIMOD-single-new-hh-hhgreater4.rds"))
 ```
+
+
 
 
