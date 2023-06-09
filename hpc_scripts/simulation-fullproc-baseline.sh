@@ -9,9 +9,9 @@ WAVE=1
 MODEL="hsgp-eq-rd"
 HSGP_C=1.5
 HSGP_M=20
-N=500
+N=100
 HHSIZE=4
-SCENARIO="boarding_school"
+SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
