@@ -10,7 +10,7 @@ MODEL="hsgp-eq-rd"
 HSGP_C=1.5
 HSGP_M=20
 N=500
-HHSIZE=8
+HHSIZE=2
 SCENARIO="flat"
 SIM_NO=1
 
