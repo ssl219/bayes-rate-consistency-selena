@@ -1,33 +1,29 @@
-d#!/bin/sh
+#!/bin/sh
 
-#PBS -l walltime=08:00:00
-#PBS -l select=1:ncpus=4:ompthreads=1:mem=50gb
-#PBS -J 1-10
+#PBS -l walltime=8:00:00
+#PBS -l select=1:ncpus=8:ompthreads=1:mem=200gb
 
-REPO_PATH=/rds/general/user/sd121/home/covimod-gp
+REPO_PATH=/rds/general/user/ssl219/home/bayes-rate-consistency-selena
+DATA_PATH=/rds/general/user/ssl219/home
+WAVE=1
+MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
+HSGP_C=1.5
+HSGP_M=20
+N=500
+HHSIZE=2
+SCENARIO="flat"
+SIM_NO=1
 
-SEED=1527
-COVID="FALSE"
-N=2000
-STRATA="COVIMOD"
+# HMC Sampler params
+CHAINS=4
+WARMUP=500
+SAMPLING=1000
 
-MODEL="hsgp-m52-rd"
-HSGP_M1=30
-HSGP_M2=20
-
-if [ $COVID = "TRUE" ]
-then
-  DATA=inCOVID_${N}_${STRATA}
-else
-  DATA=preCOVID_${N}_${STRATA}
-fi
-
-if [[ $MODEL = *"hsgp"* ]]
-then
-  MODEL=${MODEL}-${HSGP_M1}-${HSGP_M2}
-fi
+# Post-processing
+MIXING=TRUE
 
 module load anaconda3/personal
 source activate Renv
 
-Rscript $REPO_PATH/scripts/sim-postprocess.R --model $MODEL --data $DATA --idx $PBS_ARRAY_INDEX
+MODEL=${MODEL}-${WAVE}-"sim-hh"${HHSIZE}-${SCENARIO}-${N}-${SIM_NO}
+Rscript $REPO_PATH/scripts/sim-postprocess-single-new-hh.R --model $MODEL --sample_size $N --hhsize $HHSIZE --scenario $SCENARIO --mixing $MIXING --sim.no $SIM_NO

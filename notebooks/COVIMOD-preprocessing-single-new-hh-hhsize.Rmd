@@ -35,8 +35,14 @@ dt.hh <- dt.hh[wave <= n_waves]
 ```
 
 ```{r}
-covimod
+dt.part[wave==1]
 ```
+
+```{r}
+dt.hh[wave==1]
+
+```
+
 
 # ```{r}
 # dt.part
@@ -52,7 +58,7 @@ dt.hh[, hh_met_this_day:=sum(hh_met_this_day), by=c("alter_age_strata", "new_id"
 ```
 
 ```{r}
-dt.hh[wave==1]
+dt.hh[wave==1 & hh_met_this_day>1]
 ```
 
 
@@ -240,12 +246,12 @@ d_comb_no_dupl <- as.data.table(d_comb_no_dupl)
 ```
 
 ```{r}
-d_comb_no_dupl
+d_comb_no_dupl[y>1 & wave==1]
 ```
 
 
 ```{r}
-d.everything
+d.everything[y>1 & wave==1]
 ```
 ```{r}
 d.everything[y > 2 & wave==1]
@@ -286,7 +292,7 @@ d_comb_no_dupl
 
 
 ```{r}
-p3 <- ggplot(d_comb_no_dupl, aes(age, alter_age_strata)) + 
+p3 <- ggplot(d_comb_no_dupl[wave==1], aes(age, alter_age_strata)) + 
   geom_tile(aes(fill = y_mean)) + 
   facet_grid(hhsize_plot~gender_comb) + 
   viridis::scale_fill_viridis(option='H') +
