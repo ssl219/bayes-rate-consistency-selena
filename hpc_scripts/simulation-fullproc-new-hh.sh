@@ -9,9 +9,9 @@ WAVE=1
 MODEL="hsgp-eq-rd-new-hh-dropping-all-zeros-symmetric-poisson"
 HSGP_C=1.5
 HSGP_M=20
-N=100
+N=500
 HHSIZE=8
-SCENARIO="boarding_school"
+SCENARIO="flat"
 SIM_NO=1
 
 # HMC Sampler params
