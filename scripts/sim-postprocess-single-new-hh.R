@@ -172,7 +172,7 @@ if(args$mixing){
   cat("\n Making trace plots")
   bayesplot::color_scheme_set(scheme = "mix-blue-pink")
  
-  pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2', 'f_MF', 'gp_alpha_unif', 'f_MM', 'f_FM', 'f_FF')
+  pars <- c('gp_alpha', 'gp_rho_1', 'gp_rho_2', 'gp_alpha_unif')
   
   pars_po <- fit$draws(pars)
   p <- bayesplot::mcmc_trace(pars_po)
