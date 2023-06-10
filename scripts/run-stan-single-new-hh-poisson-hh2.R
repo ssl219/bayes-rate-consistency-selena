@@ -139,7 +139,7 @@ fit <- model$sample(
   iter_sampling = args$iter.sampling,
   parallel_chains = args$chains,
   max_treedepth = 13,
-  adapt_delta = 0.97
+  adapt_delta=0.96
 )
 cat(" DONE!\n")
 
