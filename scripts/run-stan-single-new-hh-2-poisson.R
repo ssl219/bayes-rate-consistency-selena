@@ -125,13 +125,14 @@ fit <- model$sample(
   iter_warmup = args$iter.warmup,
   iter_sampling = args$iter.sampling,
   parallel_chains = args$chains,
-  max_treedepth = 13
+  max_treedepth = 13,
+  adapt_delta=0.96
 )
 cat(" DONE!\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, ".rds")), save_warmup=FALSE)
 cat(" DONE!\n")
 
 cat("\n Run Stan ALL DONE.\n")

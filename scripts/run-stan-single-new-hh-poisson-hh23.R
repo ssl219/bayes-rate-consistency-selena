@@ -139,7 +139,7 @@ fit <- model$sample(
   iter_sampling = args$iter.sampling,
   parallel_chains = args$chains,
   max_treedepth = 13,
-  adapt_delta = 0.999
+  adapt_delta = 0.97
 )
 cat(" DONE!\n")
 
@@ -147,6 +147,6 @@ cat("\n Run Stan ALL DONE.\n")
 
 cat(" Saving fitted model ...")
 args$model.name <- paste(args$model.name, args$wave, sep="-")
-fit$save_object(file = file.path(export.path, paste0(args$model.name, "-hh23.rds")))
+fit$save_object(file = file.path(export.path, paste0(args$model.name, "-hh23.rds")), save_warmup=FALSE)
 cat(" DONE!\n")
 

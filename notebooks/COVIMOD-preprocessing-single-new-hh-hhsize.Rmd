@@ -47,9 +47,14 @@ covimod
 # dt.nhh
 # ```
 # 
-# ```{r}
-# dt.hh
-# ```
+```{r}
+dt.hh[, hh_met_this_day:=sum(hh_met_this_day), by=c("alter_age_strata", "new_id","alter_gender", "wave" )]
+```
+
+```{r}
+dt.hh[wave==1]
+```
+
 
 
 
@@ -243,7 +248,7 @@ d_comb_no_dupl
 d.everything
 ```
 ```{r}
-d.everything[y > 1]
+d.everything[y > 2 & wave==1]
 
 ```
 ```{r}
